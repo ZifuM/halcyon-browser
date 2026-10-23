@@ -10,8 +10,9 @@
 //! toolkit/components/content-classifier/content_classifier_engine/src/lib.rs).
 //!
 //!   shield-check --corpus corpus.toml --list a.txt --list b.txt [--bench] [--json out.json]
+//!                [--max-build-ms N] [--max-request-us N] [--max-serialized-kb N]
 //!
-//! Exit status 1 if any case doesn't match its expectation.
+//! Exit status 1 if any case doesn't match its expectation or a performance budget is exceeded.
 
 use std::collections::BTreeMap;
 use std::fs;
@@ -101,7 +102,10 @@ fn check(engine: &Engine, case: &Case) -> Result<(bool, Option<String>), String>
 }
 
 fn usage() -> ExitCode {
-    eprintln!("usage: shield-check --corpus FILE --list FILE [--list FILE...] [--bench] [--json OUT]");
+    eprintln!(
+        "usage: shield-check --corpus FILE --list FILE [--list FILE...] [--bench] [--json OUT]\n\
+         \x20                   [--max-build-ms N] [--max-request-us N] [--max-serialized-kb N]"
+    );
     ExitCode::from(2)
 }
 
@@ -110,6 +114,9 @@ fn main() -> ExitCode {
     let mut lists = Vec::new();
     let mut bench = false;
     let mut json_out = None;
+    let mut max_build_ms: Option<f64> = None;
+    let mut max_request_us: Option<f64> = None;
+    let mut max_serialized_kb: Option<usize> = None;
     let mut args = std::env::args().skip(1);
     while let Some(arg) = args.next() {
         match arg.as_str() {
@@ -120,6 +127,9 @@ fn main() -> ExitCode {
             },
             "--bench" => bench = true,
             "--json" => json_out = args.next(),
+            "--max-build-ms" => max_build_ms = args.next().and_then(|v| v.parse().ok()),
+            "--max-request-us" => max_request_us = args.next().and_then(|v| v.parse().ok()),
+            "--max-serialized-kb" => max_serialized_kb = args.next().and_then(|v| v.parse().ok()),
             _ => return usage(),
         }
     }
@@ -246,7 +256,26 @@ fn main() -> ExitCode {
             eprintln!("cannot write {path}: {e}");
         }
     }
-    if report.failures > 0 {
+    let mut over_budget = Vec::new();
+    if let Some(max) = max_build_ms {
+        if report.build_ms > max {
+            over_budget.push(format!("engine build {:.0} ms > budget {max:.0} ms", report.build_ms));
+        }
+    }
+    if let Some(max) = max_serialized_kb {
+        if report.serialized_kb > max {
+            over_budget.push(format!("engine size {} KB > budget {max} KB", report.serialized_kb));
+        }
+    }
+    if let (Some(max), Some(ns)) = (max_request_us, report.per_request_ns) {
+        if ns / 1000.0 > max {
+            over_budget.push(format!("matching {:.2} µs/request > budget {max:.2} µs", ns / 1000.0));
+        }
+    }
+    for line in &over_budget {
+        println!("OVER BUDGET: {line}");
+    }
+    if report.failures > 0 || !over_budget.is_empty() {
         ExitCode::FAILURE
     } else {
         ExitCode::SUCCESS

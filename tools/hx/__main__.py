@@ -24,6 +24,8 @@ CI_SPARSE_BASE = [
     "/toolkit/components/content-classifier/",
     "/third_party/rust/",
     "/gfx/wr/wr_malloc_size_of/",
+    "/Cargo.toml",            # Firefox's [patch.crates-io] table (tools/shield/sync_cargo_patches.py)
+    "/build/rust/",           # the local crate shims that table points at
 ]
 
 

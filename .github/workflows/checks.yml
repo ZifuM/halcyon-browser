@@ -29,7 +29,7 @@ jobs:
           python-version: "3.12"
       - run: python tools/ci/annotate.py "Unit tests" -- python -m unittest discover -s tests -v
       - name: Browser component tests (Node, mocked Firefox APIs)
-        run: python tools/ci/annotate.py "JS tests" -- node --import ./tests/js/register.mjs --test tests/js/test_updates.test.mjs
+        run: python tools/ci/annotate.py "JS tests" -- node --import ./tests/js/register.mjs --test tests/js/test_updates.test.mjs tests/js/test_shield.test.mjs
 
   upstream-compat:
     name: Apply to Firefox and audit
@@ -56,3 +56,47 @@ jobs:
           if grep -rn "lockPref\|sticky_pref" engine/browser/branding/*/pref/; then
             echo "::error::Default prefs must never be locked (ownership promise #2)"; exit 1
           fi
+
+  shield:
+    # Shield's filter lists, assembled by the browser's own list module, run through Firefox's
+    # in-tree adblock engine (the exact call the browser makes) against crates/shield-check/corpus.toml.
+    # Also the first performance budget: engine build time, size and per-request matching cost.
+    name: Shield blocking and performance
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/cache@v4
+        with:
+          path: crates/shield-check/target
+          key: shield-${{ hashFiles('crates/shield-check/Cargo.toml', 'crates/shield-check/src/**', 'project.toml') }}
+      - name: Fetch the Firefox engine and vendored crates (sparse)
+        run: python3 tools/ci/annotate.py "Download" -- ./hx download --sparse-ci
+      - name: Rust toolchain
+        run: rustup toolchain install stable --profile minimal && rustup default stable
+      - name: Firefox's crate patches are mirrored
+        run: |
+          python3 tools/shield/sync_cargo_patches.py
+          git diff --quiet crates/ || echo "::warning::crates/*/Cargo.toml patch table is out of date with this Firefox version; run tools/shield/sync_cargo_patches.py"
+      - name: Build the harness
+        # Run from the crate directory: cargo reads .cargo/config.toml (offline, Firefox-vendored
+        # crates) from the working directory, not from the manifest's.
+        working-directory: crates/shield-check
+        run: python3 ../../tools/ci/annotate.py "Build shield-check" -- cargo build --release
+      - name: Download and assemble the default lists (browser code)
+        run: python3 tools/ci/annotate.py "Assemble lists" -- node tools/shield/assemble.mjs --out lists
+      - name: Corpus and performance budgets
+        shell: bash  # -o pipefail: a failing check must not be hidden by tee
+        run: |
+          set -- $(for f in lists/*.txt; do printf -- '--list %s ' "$f"; done)
+          python3 tools/ci/annotate.py "Shield corpus" -- crates/shield-check/target/release/shield-check \
+            --corpus crates/shield-check/corpus.toml "$@" --bench --json shield.json \
+            --max-build-ms 2000 --max-request-us 50 --max-serialized-kb 32768 | tee shield.txt
+          { echo "## Shield"; echo '```'; cat shield.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: shield-report
+          path: shield.json
