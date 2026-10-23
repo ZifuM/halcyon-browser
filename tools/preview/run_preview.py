@@ -172,8 +172,12 @@ def main() -> int:
         data = json.loads(toolbar.read_text())
         placed = data["placements"]
         checks.append(("Copy-link button sits right after the address", data.get("copyLinkAfterUrlbar") is True))
-        for widget in ("sidebar-button", "back-button", "forward-button", "stop-reload-button", "urlbar-container"):
-            checks.append((f"top bar keeps {widget}", widget in placed))
+        expected = ["sidebar-button", "back-button", "forward-button", "stop-reload-button",
+                    "urlbar-container", "halcyon-copy-link-button"]
+        checks.append(("Top bar: sidebar, back, forward, reload, address, copy link (in order)",
+                       [w for w in placed if w in expected] == expected))
+        checks.append(("No AI or sign-in buttons in the top bar",
+                       not {"ai-window-toggle", "smartwindow-group-tabs-button", "fxa-toolbar-menu-button"} & set(placed)))
     errors = []
     if (out / "console.log").exists():
         errors = [l for l in (out / "console.log").read_text().splitlines()

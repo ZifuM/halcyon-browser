@@ -57,7 +57,6 @@ export const PreviewScenario = {
       ["browser-before-ui-startup", "HalcyonLayout.init"],
       ["browser-window-before-initial-xul-layout", "HalcyonLayout.beforeLayout"],
       ["browser-window-domcontentloaded", "HalcyonLayout.onDOMContentLoaded"],
-      ["browser-window-delayed-startup", "HalcyonLayout.onDelayedStartup"],
     ]) {
       Services.catMan.addCategoryEntry(category, LAYOUT, method, false, true);
     }
@@ -185,17 +184,13 @@ async function runScenario(win) {
   const menu = win.document.getElementById("tabContextMenu");
   const shown = new Promise(resolve => menu.addEventListener("popupshown", resolve, { once: true }));
   const rect = today[1].getBoundingClientRect();
-  today[1].dispatchEvent(
-    new win.MouseEvent("contextmenu", {
-      bubbles: true,
-      cancelable: true,
-      button: 2,
-      clientX: rect.left + 40,
-      clientY: rect.top + rect.height / 2,
-      screenX: win.mozInnerScreenX + rect.left + 40,
-      screenY: win.mozInnerScreenY + rect.top + rect.height / 2,
-    })
-  );
+  const x = win.mozInnerScreenX + rect.left + 40;
+  const y = win.mozInnerScreenY + rect.top + rect.height / 2;
+  const trigger = new win.MouseEvent("contextmenu", { bubbles: true, button: 2, screenX: x, screenY: y });
+  today[1].dispatchEvent(trigger);
+  if (menu.state != "open" && menu.state != "showing") {
+    menu.openPopupAtScreen(x, y, true, trigger);
+  }
   await Promise.race([shown, sleep(3000)]);
   if (menu.state != "open") {
     log("[scenario] context menu did not open from a synthesized click");

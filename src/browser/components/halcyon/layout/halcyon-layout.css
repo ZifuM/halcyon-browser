@@ -159,7 +159,16 @@
     }
   }
 
-  /* The Essentials grid sizes itself; no resize handle between it and the tabs. */
+  /* The Essentials grid sizes itself; no resize handle between it and the tabs, just a line. */
+  #tabbrowser-tabs[orient="vertical"] > #vertical-pinned-tabs-splitter {
+    background-image: none;
+    border-top: 1px solid var(--hx-divider);
+    margin-inline: var(--hx-space-3);
+    min-height: 0;
+    margin-block: 0 var(--hx-space-1);
+    pointer-events: none;
+  }
+
   #tabbrowser-tabs[expanded] > #vertical-pinned-tabs-splitter {
     border-top: 1px solid var(--hx-divider);
     margin-inline: var(--hx-space-3);

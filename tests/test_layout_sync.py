@@ -30,7 +30,6 @@ class LayoutWiringTests(unittest.TestCase):
             ("browser-before-ui-startup", "init"),
             ("browser-window-before-initial-xul-layout", "beforeLayout"),
             ("browser-window-domcontentloaded", "onDOMContentLoaded"),
-            ("browser-window-delayed-startup", "onDelayedStartup"),
         ]:
             self.assertIn(f"category {category} {MODULE_URL} HalcyonLayout.{method}", manifest)
             self.assertRegex(module, rf"\n  {method}\(")

@@ -8,8 +8,8 @@
 // unpatched:
 //   browser-before-ui-startup                init()                    copy-link button
 //   browser-window-before-initial-xul-layout beforeLayout(win)         stylesheets, before paint
-//   browser-window-domcontentloaded          onDOMContentLoaded(win)   sections, compact mode
-//   browser-window-delayed-startup           onDelayedStartup(win)     first-run toolbar setup
+//   browser-window-domcontentloaded          onDOMContentLoaded(win)   top bar (first run),
+//                                                                       sections, compact mode
 //
 // Everything is behind halcyon.layout.enabled; with it off, windows are stock Firefox.
 // Modules here import each other relatively and find their stylesheets next to themselves, so
@@ -27,6 +27,29 @@ ChromeUtils.defineESModuleGetters(lazy, {
 
 export const COPY_LINK_ID = "halcyon-copy-link-button";
 const TOOLBAR_SETUP_PREF = "halcyon.layout.toolbarSetupDone";
+
+/** The top bar on first run, left to right (the address is centred by CSS). */
+export const TOP_BAR = Object.freeze([
+  "sidebar-button",
+  "back-button",
+  "forward-button",
+  "stop-reload-button",
+  "vertical-spacer",
+  "urlbar-container",
+  COPY_LINK_ID,
+  "downloads-button",
+  "unified-extensions-button",
+]);
+
+/** Removed from the top bar on first run: a sign-in prompt, AI buttons (AI is off by default)
+ * and the tab list (the command bar replaces it in C5). All can be added back. */
+export const TOP_BAR_REMOVE = Object.freeze([
+  "fxa-toolbar-menu-button",
+  "smartwindow-group-tabs-button",
+  "ai-window-toggle",
+  "alltabs-button",
+  "home-button",
+]);
 
 export const STRINGS = Object.freeze({
   copyLink: "Copy Link",
@@ -83,33 +106,33 @@ export const HalcyonLayout = {
     });
   },
 
-  // ---- browser-window-delayed-startup -----------------------------------------------------
-
-  onDelayedStartup(win) {
-    if (!this.appliesTo(win)) {
-      return;
-    }
-    try {
-      this._setUpToolbarOnce();
-    } catch (e) {
-      console.error("Halcyon layout: toolbar setup failed", e);
-    }
-  },
-
-  /** First run only: put copy-link right after the address, drop the account button. */
+  /**
+   * First run only: lay out the top bar the Arc way. Firefox has no sensible default for a
+   * profile that starts with vertical tabs (it restores the nav-bar from its vertical-tabs
+   * extras only, dropping reload and the sidebar button), so the whole order is set here once;
+   * after that the toolbar is the user's to customise.
+   */
   _setUpToolbarOnce() {
     if (Services.prefs.getBoolPref(TOOLBAR_SETUP_PREF, false)) {
       return;
     }
     const CUI = lazy.CustomizableUI;
-    const placements = CUI.getWidgetIdsInArea(CUI.AREA_NAVBAR);
-    const urlbarAt = placements.indexOf("urlbar-container");
-    if (urlbarAt >= 0) {
-      CUI.addWidgetToArea(COPY_LINK_ID, CUI.AREA_NAVBAR, urlbarAt + 1);
-    }
-    // A sign-in prompt in the toolbar isn't ours to push; Sync stays in Settings and the menu.
-    if (CUI.getPlacementOfWidget("fxa-toolbar-menu-button")) {
-      CUI.removeWidgetFromArea("fxa-toolbar-menu-button");
+    CUI.beginBatchUpdate();
+    try {
+      TOP_BAR.forEach((id, index) => {
+        try {
+          CUI.addWidgetToArea(id, CUI.AREA_NAVBAR, index);
+        } catch (e) {
+          // Not available in this build (or not movable): skip it.
+        }
+      });
+      for (const id of TOP_BAR_REMOVE) {
+        if (CUI.getPlacementOfWidget(id)?.area == CUI.AREA_NAVBAR) {
+          CUI.removeWidgetFromArea(id);
+        }
+      }
+    } finally {
+      CUI.endBatchUpdate();
     }
     Services.prefs.setBoolPref(TOOLBAR_SETUP_PREF, true);
   },
@@ -146,6 +169,11 @@ export const HalcyonLayout = {
   onDOMContentLoaded(win) {
     if (!win.document.documentElement.hasAttribute("halcyon-layout") || windows.has(win)) {
       return;
+    }
+    try {
+      this._setUpToolbarOnce();
+    } catch (e) {
+      console.error("Halcyon layout: toolbar setup failed", e);
     }
     const parts = { sections: new HalcyonSections(win), compact: new HalcyonCompact(win) };
     for (const part of Object.values(parts)) {
