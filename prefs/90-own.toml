@@ -14,3 +14,9 @@ name = "halcyon.updates.check.intervalHours"
 value = 24
 why = "Minimum hours between update checks."
 own = true
+
+[[pref]]
+name = "halcyon.shield.updates.enabled"
+value = true
+why = "Keep Shield's filter lists up to date (checked hourly, downloaded when a list's own expiry passes). Set false to stop downloads; the last lists keep working."
+own = true

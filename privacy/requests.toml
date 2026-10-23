@@ -60,6 +60,15 @@ trigger = "background"
 switch = "about:config: halcyon.updates.check.enabled = false"
 
 [[request]]
+id = "shield-lists"
+name = "Shield filter list updates"
+purpose = "Downloads the ad and tracker blocking lists (uBlock filters, EasyList, EasyPrivacy, Peter Lowe's) when each list's own expiry passes, typically every 1 to 5 days. No cookies, no identifiers; unchanged lists aren't re-downloaded."
+hosts = ["ublockorigin.github.io", "cdn.jsdelivr.net"]
+state = "on"
+trigger = "background"
+switch = "about:config: halcyon.shield.updates.enabled = false (the last downloaded lists keep blocking)"
+
+[[request]]
 id = "push"
 name = "Web push notifications"
 purpose = "Keeps a connection open only for sites you've allowed to send notifications."

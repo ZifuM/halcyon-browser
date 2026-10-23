@@ -1,0 +1,9 @@
+# Build offline against the crates Firefox vendors, so versions match what ships in the browser.
+[source.crates-io]
+replace-with = "firefox-vendored"
+
+[source.firefox-vendored]
+directory = "../../engine/third_party/rust"
+
+[net]
+offline = true

@@ -16,6 +16,7 @@ page, or if something listed as turned off still connects.
 | Video-call and streaming plugins | Downloads the OpenH264 codec (video calls) and Widevine (DRM streaming, e.g. Netflix) and keeps them updated. | `aus5.mozilla.org`, `ciscobinary.openh264.org`, `*.gvt1.com` | about:config: media.gmp-provider.enabled = false (breaks some video calls and DRM sites) |
 | Phishing and malware protection (Safe Browsing) | Downloads hashed lists of dangerous sites; full hashes are requested only for matches. Needs a Google Safe Browsing API key, which unofficial builds don't have yet (open decision), so it is currently inert. | `safebrowsing.googleapis.com`, `shavar.services.mozilla.com`, `sb-ssl.google.com` | Settings > Privacy & Security > untick Block dangerous and deceptive content |
 | App update check | Once a day, asks GitHub whether a newer release exists and shows a notification bar. Never downloads or installs anything by itself. | `api.github.com` | about:config: halcyon.updates.check.enabled = false |
+| Shield filter list updates | Downloads the ad and tracker blocking lists (uBlock filters, EasyList, EasyPrivacy, Peter Lowe's) when each list's own expiry passes, typically every 1 to 5 days. No cookies, no identifiers; unchanged lists aren't re-downloaded. | `ublockorigin.github.io`, `cdn.jsdelivr.net` | about:config: halcyon.shield.updates.enabled = false (the last downloaded lists keep blocking) |
 
 ## Only after you do something
 

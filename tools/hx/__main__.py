@@ -20,6 +20,10 @@ CI_SPARSE_BASE = [
     "/moz.configure",
     "/build/moz.configure/",
     "/js/moz.configure",
+    # Shield: the in-tree adblock-rust engine and the vendored crates it builds against
+    "/toolkit/components/content-classifier/",
+    "/third_party/rust/",
+    "/gfx/wr/wr_malloc_size_of/",
 ]
 
 

@@ -1,0 +1,22 @@
+# Shield: the built-in ad and tracker blocker. Blocking runs in Firefox's content classifier
+# (the in-tree adblock-rust engine) using the "shield" feature added by
+# patches/toolkit/components/content-classifier/ContentClassifierService.cpp.patch.
+# Users can turn Shield off for a site with the shield icon in the address bar.
+
+[meta]
+title = "Shield ad and tracker blocking"
+
+[[pref]]
+name = "privacy.trackingprotection.content.protection.enabled"
+value = true
+why = "Turn on Firefox's adblock-rust content classifier, which Shield runs on."
+
+[[pref]]
+name = "privacy.trackingprotection.content.protection.engines"
+value = "shield"
+why = "Block with Shield's filter lists in normal windows."
+
+[[pref]]
+name = "privacy.trackingprotection.content.protection.engines.pbmode"
+value = "shield"
+why = "Block with Shield's filter lists in private windows too."

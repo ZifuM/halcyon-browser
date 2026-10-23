@@ -1,0 +1,369 @@
+# Shield test corpus. Each case is one request as the browser would classify it.
+#   url     the request          source  the page making it      type  browser request type
+#   expect  "block" or "allow"    note    why this case matters
+#
+# "allow" cases are as important as "block" ones: they're the sites people notice when an
+# ad blocker breaks them.
+
+# ---- Ad networks and ad tech (should be blocked) -----------------------------------------
+
+[[case]]
+url = "https://securepubads.g.doubleclick.net/tag/js/gpt.js"
+source = "https://www.theguardian.com/world"
+type = "script"
+expect = "block"
+note = "Google Publisher Tag"
+
+[[case]]
+url = "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"
+source = "https://www.example-blog.com/post"
+type = "script"
+expect = "block"
+note = "AdSense"
+
+[[case]]
+url = "https://tpc.googlesyndication.com/simgad/12345678901234567890"
+source = "https://www.example-blog.com/post"
+type = "image"
+expect = "block"
+note = "AdSense creative"
+
+[[case]]
+url = "https://www.googletagservices.com/tag/js/gpt.js"
+source = "https://news.example.co.uk/"
+type = "script"
+expect = "block"
+note = "GPT (legacy host)"
+
+[[case]]
+url = "https://ad.doubleclick.net/ddm/adj/N1234.example/B5678;sz=300x250"
+source = "https://www.example-news.com/"
+type = "script"
+expect = "block"
+note = "Campaign Manager ad"
+
+[[case]]
+url = "https://c.amazon-adsystem.com/aax2/apstag.js"
+source = "https://www.example-news.com/"
+type = "script"
+expect = "block"
+note = "Amazon Publisher Services"
+
+[[case]]
+url = "https://cdn.taboola.com/libtrc/example-network/loader.js"
+source = "https://www.example-news.com/article"
+type = "script"
+expect = "block"
+note = "Taboola"
+
+[[case]]
+url = "https://widgets.outbrain.com/outbrain.js"
+source = "https://www.example-news.com/article"
+type = "script"
+expect = "block"
+note = "Outbrain"
+
+[[case]]
+url = "https://static.criteo.net/js/ld/publishertag.js"
+source = "https://www.example-shop.com/"
+type = "script"
+expect = "block"
+note = "Criteo"
+
+[[case]]
+url = "https://ib.adnxs.com/ut/v3/prebid"
+source = "https://www.example-news.com/"
+type = "xmlhttprequest"
+expect = "block"
+note = "Xandr / AppNexus header bidding"
+
+[[case]]
+url = "https://ads.pubmatic.com/AdServer/js/pwt/12345/678/pwt.js"
+source = "https://www.example-news.com/"
+type = "script"
+expect = "block"
+note = "PubMatic"
+
+[[case]]
+url = "https://cdn.adsafeprotected.com/iasPET.1.js"
+source = "https://www.example-news.com/"
+type = "script"
+expect = "block"
+note = "Integral Ad Science"
+
+[[case]]
+url = "https://secure.quantserve.com/quant.js"
+source = "https://www.example-news.com/"
+type = "script"
+expect = "block"
+note = "Quantcast"
+
+[[case]]
+url = "https://www.yahoo.com/sdarla/php/fc.php?trace=x"
+source = "https://www.yahoo.com/"
+type = "xmlhttprequest"
+expect = "block"
+note = "Yahoo's own ad endpoint, same site (EasyList ||yahoo.com/sdarla/)"
+
+[[case]]
+url = "https://s.yimg.com/rq/darla/4-10-0/js/g-r-min.js"
+source = "https://www.yahoo.com/"
+type = "script"
+expect = "allow"
+note = "EasyList deliberately allows this on Yahoo (@@...$domain=yahoo.com): exceptions must win"
+
+[[case]]
+url = "https://s.yimg.com/rq/darla/4-10-0/js/g-r-min.js"
+source = "https://www.example-news.com/"
+type = "script"
+expect = "allow"
+note = "Same script elsewhere: the $domain= scope must be respected (no over-blocking)"
+
+[[case]]
+url = "https://www.example-blog.com/wp-content/plugins/adrotate/library/jquery.adrotate.dyngroup.js"
+source = "https://www.example-blog.com/post"
+type = "script"
+expect = "block"
+note = "First-party ad plugin (generic rule, same site)"
+
+# ---- Trackers and analytics (should be blocked) -------------------------------------------
+
+[[case]]
+url = "https://www.google-analytics.com/analytics.js"
+source = "https://www.example-shop.com/"
+type = "script"
+expect = "block"
+note = "Google Analytics"
+
+[[case]]
+url = "https://connect.facebook.net/en_US/fbevents.js"
+source = "https://www.example-shop.com/"
+type = "script"
+expect = "block"
+note = "Meta Pixel"
+
+[[case]]
+url = "https://sb.scorecardresearch.com/beacon.js"
+source = "https://www.example-news.com/"
+type = "script"
+expect = "block"
+note = "Comscore"
+
+[[case]]
+url = "https://static.hotjar.com/c/hotjar-1234567.js?sv=6"
+source = "https://www.example-shop.com/"
+type = "script"
+expect = "block"
+note = "Hotjar session recording"
+
+[[case]]
+url = "https://bat.bing.com/bat.js"
+source = "https://www.example-shop.com/"
+type = "script"
+expect = "block"
+note = "Microsoft Ads UET"
+
+[[case]]
+url = "https://mc.yandex.ru/metrika/tag.js"
+source = "https://www.example-shop.com/"
+type = "script"
+expect = "block"
+note = "Yandex Metrica"
+
+[[case]]
+url = "https://js-agent.newrelic.com/nr-spa-1234.min.js"
+source = "https://www.example-shop.com/"
+type = "script"
+expect = "block"
+note = "New Relic browser agent"
+
+[[case]]
+url = "https://cdn.segment.com/analytics.js/v1/abcdef123456/analytics.min.js"
+source = "https://www.example-saas.com/"
+type = "script"
+expect = "block"
+note = "Segment"
+
+[[case]]
+url = "https://www.facebook.com/tr/?id=1234567890&ev=PageView"
+source = "https://www.example-shop.com/"
+type = "image"
+expect = "block"
+note = "Meta Pixel beacon"
+
+[[case]]
+url = "https://snap.licdn.com/li.lms-analytics/insight.min.js"
+source = "https://www.example-saas.com/"
+type = "script"
+expect = "block"
+note = "LinkedIn Insight"
+
+[[case]]
+url = "https://analytics.tiktok.com/i18n/pixel/events.js"
+source = "https://www.example-shop.com/"
+type = "script"
+expect = "block"
+note = "TikTok Pixel"
+
+# ---- Must keep working (should be allowed) -------------------------------------------------
+
+[[case]]
+url = "https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"
+source = "https://www.example-news.com/"
+type = "script"
+expect = "allow"
+note = "Google Hosted Libraries"
+
+[[case]]
+url = "https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"
+source = "https://www.example-saas.com/"
+type = "script"
+expect = "allow"
+note = "cdnjs"
+
+[[case]]
+url = "https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+source = "https://www.example-saas.com/"
+type = "script"
+expect = "allow"
+note = "jsDelivr"
+
+[[case]]
+url = "https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap"
+source = "https://www.example-saas.com/"
+type = "stylesheet"
+expect = "allow"
+note = "Google Fonts CSS"
+
+[[case]]
+url = "https://fonts.gstatic.com/s/inter/v13/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hiA.woff2"
+source = "https://www.example-saas.com/"
+type = "other"
+expect = "allow"
+note = "Google Fonts file"
+
+[[case]]
+url = "https://www.google.com/recaptcha/api.js"
+source = "https://www.example-shop.com/login"
+type = "script"
+expect = "allow"
+note = "reCAPTCHA loader (logins break without it)"
+
+[[case]]
+url = "https://www.gstatic.com/recaptcha/releases/abcdef/recaptcha__en.js"
+source = "https://www.example-shop.com/login"
+type = "script"
+expect = "allow"
+note = "reCAPTCHA"
+
+[[case]]
+url = "https://challenges.cloudflare.com/turnstile/v0/api.js"
+source = "https://www.example-shop.com/login"
+type = "script"
+expect = "allow"
+note = "Cloudflare Turnstile"
+
+[[case]]
+url = "https://js.stripe.com/v3/"
+source = "https://www.example-shop.com/checkout"
+type = "script"
+expect = "allow"
+note = "Stripe checkout"
+
+[[case]]
+url = "https://www.paypal.com/sdk/js?client-id=abc"
+source = "https://www.example-shop.com/checkout"
+type = "script"
+expect = "allow"
+note = "PayPal checkout"
+
+[[case]]
+url = "https://www.youtube.com/embed/dQw4w9WgXcQ"
+source = "https://www.example-blog.com/post"
+type = "subdocument"
+expect = "allow"
+note = "Embedded YouTube video"
+
+[[case]]
+url = "https://player.vimeo.com/video/123456789"
+source = "https://www.example-blog.com/post"
+type = "subdocument"
+expect = "allow"
+note = "Embedded Vimeo video"
+
+[[case]]
+url = "https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg"
+source = "https://www.youtube.com/"
+type = "image"
+expect = "allow"
+note = "YouTube thumbnails"
+
+[[case]]
+url = "https://upload.wikimedia.org/wikipedia/commons/a/a9/Example.jpg"
+source = "https://en.wikipedia.org/wiki/Example"
+type = "image"
+expect = "allow"
+note = "Wikipedia images"
+
+[[case]]
+url = "https://github.githubassets.com/assets/app-bootstrap.js"
+source = "https://github.com/"
+type = "script"
+expect = "allow"
+note = "GitHub"
+
+[[case]]
+url = "https://api.github.com/repos/mozilla-firefox/firefox"
+source = "https://github.com/"
+type = "xmlhttprequest"
+expect = "allow"
+note = "GitHub API"
+
+[[case]]
+url = "https://maps.googleapis.com/maps/api/js?key=abc&callback=initMap"
+source = "https://www.example-shop.com/stores"
+type = "script"
+expect = "allow"
+note = "Google Maps embed"
+
+[[case]]
+url = "https://login.microsoftonline.com/common/oauth2/v2.0/authorize"
+source = "https://www.example-saas.com/"
+type = "subdocument"
+expect = "allow"
+note = "Microsoft sign-in"
+
+[[case]]
+url = "https://accounts.google.com/gsi/client"
+source = "https://www.example-saas.com/"
+type = "script"
+expect = "allow"
+note = "Sign in with Google"
+
+[[case]]
+url = "https://pbs.twimg.com/media/ABCDEFGHIJK.jpg"
+source = "https://x.com/"
+type = "image"
+expect = "allow"
+note = "X/Twitter images"
+
+[[case]]
+url = "https://www.example-news.com/assets/js/main.js"
+source = "https://www.example-news.com/"
+type = "script"
+expect = "allow"
+note = "A site's own script"
+
+[[case]]
+url = "https://www.example-blog.com/uploads/header-image.jpg"
+source = "https://www.example-blog.com/"
+type = "image"
+expect = "allow"
+note = "A site's own image"
+
+[[case]]
+url = "https://www.example-saas.com/api/v1/user"
+source = "https://www.example-saas.com/"
+type = "xmlhttprequest"
+expect = "allow"
+note = "A site's own API"

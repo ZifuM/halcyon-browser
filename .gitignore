@@ -12,3 +12,6 @@ __pycache__/
 
 # CI caches
 /.sccache/
+
+# Rust build output
+/crates/*/target/
