@@ -1,0 +1,90 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+/* Halcyon design tokens. Every colour, size and duration the layout uses comes from here, so a
+ * theme or a Space (C4) changes the look by overriding these properties and nothing else.
+ *
+ * Naming: --hx-<group>-<name>. Colours use light-dark() and follow the OS colour scheme. */
+
+:root[halcyon-layout] {
+  /* ---- Space colour ---------------------------------------------------------------------
+   * The backdrop behind the sidebar, top bar and content card. C4 sets these per Space; this is
+   * the default Space: a calm blue-violet. */
+  --hx-space-hue: 262;
+  --hx-space-chroma: 0.045;
+  --hx-tint-1: light-dark(
+    oklch(0.935 var(--hx-space-chroma) var(--hx-space-hue)),
+    oklch(0.235 calc(var(--hx-space-chroma) * 0.8) var(--hx-space-hue))
+  );
+  --hx-tint-2: light-dark(
+    oklch(0.9 calc(var(--hx-space-chroma) * 1.4) calc(var(--hx-space-hue) + 28)),
+    oklch(0.2 var(--hx-space-chroma) calc(var(--hx-space-hue) + 28))
+  );
+  --hx-backdrop: linear-gradient(160deg, var(--hx-tint-1) 0%, var(--hx-tint-2) 100%);
+
+  /* ---- Surfaces and text ------------------------------------------------------------------ */
+  --hx-surface-card: light-dark(#ffffff, #1f1e25);
+  --hx-text: light-dark(oklch(0.24 0.02 var(--hx-space-hue)), oklch(0.96 0.01 var(--hx-space-hue)));
+  --hx-text-muted: light-dark(oklch(0.45 0.02 var(--hx-space-hue)), oklch(0.78 0.015 var(--hx-space-hue)));
+  --hx-hover: light-dark(rgb(0 0 0 / 0.055), rgb(255 255 255 / 0.07));
+  --hx-active: light-dark(rgb(0 0 0 / 0.09), rgb(255 255 255 / 0.11));
+  --hx-selected: light-dark(rgb(255 255 255 / 0.92), rgb(255 255 255 / 0.13));
+  --hx-selected-text: var(--hx-text);
+  --hx-divider: light-dark(rgb(0 0 0 / 0.09), rgb(255 255 255 / 0.1));
+  --hx-tile: light-dark(rgb(255 255 255 / 0.55), rgb(255 255 255 / 0.07));
+  --hx-tile-hover: light-dark(rgb(255 255 255 / 0.8), rgb(255 255 255 / 0.11));
+  --hx-focus-ring: light-dark(oklch(0.55 0.18 var(--hx-space-hue)), oklch(0.78 0.13 var(--hx-space-hue)));
+
+  /* ---- Shape -------------------------------------------------------------------------------
+   * 4 px grid. 10 px radius on the content card, 8 px on tabs and controls. */
+  --hx-space-1: 4px;
+  --hx-space-2: 8px;
+  --hx-space-3: 12px;
+  --hx-space-4: 16px;
+  --hx-radius-card: 10px;
+  --hx-radius-control: 8px;
+  --hx-radius-tile: 10px;
+  --hx-card-inset: var(--hx-space-2);
+
+  /* ---- Elevation -------------------------------------------------------------------------- */
+  --hx-shadow-card:
+    0 0 0 0.5px light-dark(rgb(0 0 0 / 0.07), rgb(0 0 0 / 0.5)),
+    0 1px 2px light-dark(rgb(0 0 0 / 0.06), rgb(0 0 0 / 0.3)),
+    0 6px 20px -6px light-dark(rgb(0 0 0 / 0.12), rgb(0 0 0 / 0.45));
+  --hx-shadow-selected:
+    0 0 0 0.5px light-dark(rgb(0 0 0 / 0.06), rgb(255 255 255 / 0.06)),
+    0 1px 2px light-dark(rgb(0 0 0 / 0.08), rgb(0 0 0 / 0.3));
+  --hx-shadow-overlay:
+    0 0 0 0.5px light-dark(rgb(0 0 0 / 0.08), rgb(255 255 255 / 0.08)),
+    0 12px 32px -8px rgb(0 0 0 / 0.3);
+
+  /* ---- Type: three sizes in chrome, no more ------------------------------------------------ */
+  --hx-font-small: 11px;
+  --hx-font-body: 13px;
+  --hx-font-large: 15px;
+
+  /* ---- Sidebar ------------------------------------------------------------------------------ */
+  --hx-sidebar-width: 240px;
+  --hx-rail-width: 52px;
+  --hx-tab-height: 34px;
+  --hx-tile-height: 44px;
+  --hx-tile-min-width: 60px;
+  /* Pixels at the window edge that reveal hidden chrome in compact mode. */
+  --hx-reveal-edge: 6px;
+
+  /* ---- Motion -------------------------------------------------------------------------------
+   * 150–250 ms. Only transform and opacity are animated, so motion stays on the compositor. */
+  --hx-duration-fast: 150ms;
+  --hx-duration: 200ms;
+  --hx-duration-slow: 250ms;
+  /* A gentle spring: a small overshoot, settles quickly. */
+  --hx-ease-spring: linear(0, 0.2 6%, 0.53 14%, 0.83 24%, 1.01 36%, 1.05 46%, 1.03 58%, 1 74%, 1);
+  --hx-ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  @media (prefers-reduced-motion: reduce) {
+    --hx-duration-fast: 0ms;
+    --hx-duration: 0ms;
+    --hx-duration-slow: 0ms;
+  }
+}

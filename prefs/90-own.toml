@@ -26,3 +26,27 @@ name = "halcyon.shield.cosmetic.enabled"
 value = true
 why = "Shield element hiding: hides ad containers and leftover blank boxes using the same lists that block requests. Set false to block requests only."
 own = true
+
+[[pref]]
+name = "halcyon.layout.enabled"
+value = true
+why = "The Arc-style layout (tinted backdrop, page as a card, sidebar sections, compact mode). Set false for stock Firefox chrome; applies to new windows."
+own = true
+
+[[pref]]
+name = "halcyon.layout.compact"
+value = false
+why = "Compact mode: sidebar and top bar hide until the pointer reaches the window edge. Ctrl+Alt+C (Cmd+Option+C) toggles it."
+own = true
+
+[[pref]]
+name = "halcyon.layout.compact.hideDelayMs"
+value = 300
+why = "How long compact mode waits after the pointer leaves before hiding the sidebar or top bar."
+own = true
+
+[[pref]]
+name = "halcyon.tabs.newTabPosition"
+value = "top"
+why = "New tabs open at the top of Today, under + New Tab (as in Arc). Set to \"firefox\" for Firefox's placement (after the current tab or at the end)."
+own = true

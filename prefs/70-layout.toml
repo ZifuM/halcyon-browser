@@ -1,0 +1,26 @@
+# The Arc-style layout (C3). Firefox's own vertical tabs carry the sidebar; our layout component
+# (src/browser/components/halcyon/layout/) styles and extends them. All of these are ordinary
+# defaults: Settings and about:config can change any of them.
+
+[meta]
+title = "Arc-style layout"
+
+[[pref]]
+name = "sidebar.verticalTabs"
+value = true
+why = "Tabs live in the sidebar, not a strip across the top (Arc-style)."
+
+[[pref]]
+name = "sidebar.revamp"
+value = true
+why = "The sidebar the vertical tabs and our layout build on (already Firefox's default; set so a change upstream doesn't silently drop it)."
+
+[[pref]]
+name = "sidebar.visibility"
+value = "always-show"
+why = "Sidebar starts expanded; collapse it to an icon rail with the sidebar button, or hide it with compact mode."
+
+[[pref]]
+name = "browser.toolbars.bookmarks.visibility"
+value = "never"
+why = "No bookmarks bar by default: Essentials and Pinned tabs do that job. View > Toolbars brings it back."

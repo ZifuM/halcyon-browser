@@ -1,0 +1,70 @@
+# UI preview: screenshots of our layout in the official Firefox release we're based on, with our
+# modules and prefs loaded through autoconfig. Nothing is compiled, so this runs in a couple of
+# minutes while full builds are paused. Screenshots go to the `ui-previews` branch (and an
+# artifact) so they can be reviewed without downloading anything.
+name: ui-preview
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/browser/components/halcyon/**"
+      - "prefs/**"
+      - "tools/preview/**"
+      - ".github/workflows/ui-preview.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ui-preview
+  cancel-in-progress: true
+
+jobs:
+  preview:
+    name: Layout screenshots (stock Firefox + our layout)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: System packages (virtual display, screenshots, Firefox runtime libraries)
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq xvfb imagemagick libgtk-3-0t64 libasound2t64 libdbus-glib-1-2 fonts-dejavu-core >/dev/null
+      - name: Download Firefox (the release in project.toml)
+        run: |
+          version=$(python3 -c 'import sys; sys.path.insert(0, "tools"); from hx import config; print(config.load().firefox_version)')
+          echo "Firefox $version"
+          url="https://archive.mozilla.org/pub/firefox/releases/${version}/linux-x86_64/en-US/firefox-${version}.tar.xz"
+          curl -fsSL --retry 3 -o firefox.tar.xz "$url"
+          tar -xJf firefox.tar.xz
+          ./firefox/firefox --version
+      - name: Screenshots
+        run: |
+          xvfb-run -a -s "-screen 0 1440x900x24" \
+            python3 tools/preview/run_preview.py --firefox firefox --out previews
+      - name: Summary
+        if: always()
+        run: cat previews/summary.md >> "$GITHUB_STEP_SUMMARY" || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ui-previews
+          path: previews
+      - name: Publish to the ui-previews branch
+        if: always() && github.event_name != 'pull_request'
+        env:
+          TOKEN: ${{ github.token }}
+        run: |
+          [ -d previews ] || exit 0
+          cd previews
+          git init -q -b ui-previews
+          git config user.name "halcyon-ci"
+          git config user.email "halcyon-ci@users.noreply.github.com"
+          git add -A
+          git commit -qm "UI previews for ${GITHUB_SHA::7}"
+          git push -qf "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git" ui-previews
