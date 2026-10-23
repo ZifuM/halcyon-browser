@@ -104,9 +104,13 @@ export class HalcyonSections {
     };
   }
 
-  _lastPinned() {
+  /** The last tab of the Pinned block, not counting `moving` (the tab about to be moved). */
+  _lastPinned(moving = null) {
     let last = null;
     for (const tab of this._standaloneOrder()) {
+      if (tab == moving) {
+        continue;
+      }
       if (!this.isPinned(tab)) {
         break;
       }
@@ -150,10 +154,20 @@ export class HalcyonSections {
 
   /** Move `tab` to the top of Today (right after the last Pinned tab). */
   _moveToTopOfToday(tab) {
-    const last = this._lastPinned();
-    if (last && last != tab) {
+    const last = this._lastPinned(tab);
+    if (last) {
       this.gBrowser.moveTabAfter(tab, last);
-    } else if (!last) {
+    } else {
+      this.gBrowser.moveTabTo(tab, { tabIndex: this.gBrowser.pinnedTabCount });
+    }
+  }
+
+  /** Move `tab` to the end of the Pinned block. */
+  _moveToEndOfPinned(tab) {
+    const last = this._lastPinned(tab);
+    if (last) {
+      this.gBrowser.moveTabAfter(tab, last);
+    } else {
       this.gBrowser.moveTabTo(tab, { tabIndex: this.gBrowser.pinnedTabCount });
     }
   }
@@ -170,13 +184,8 @@ export class HalcyonSections {
     }
     if (pinned) {
       // To the end of Pinned, i.e. just before the first Today tab.
-      const last = this._lastPinned();
       this._setAttr(tab, true);
-      if (last && last != tab) {
-        this.gBrowser.moveTabAfter(tab, last);
-      } else if (!last) {
-        this.gBrowser.moveTabTo(tab, { tabIndex: this.gBrowser.pinnedTabCount });
-      }
+      this._moveToEndOfPinned(tab);
     } else {
       this._setAttr(tab, false);
       this._moveToTopOfToday(tab);

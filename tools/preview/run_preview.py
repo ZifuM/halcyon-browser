@@ -110,6 +110,7 @@ def main() -> int:
     env = dict(os.environ)
     env.update({
         "HALCYON_PREVIEW_SRC": str(ROOT / "src/browser/components/halcyon"),
+        "HALCYON_PREVIEW_TOOLS": str(HERE),
         "HALCYON_PREVIEW_OUT": str(out),
         "HALCYON_PREVIEW_SITE": site,
         "MOZ_ENABLE_WAYLAND": "0",
@@ -171,6 +172,8 @@ def main() -> int:
         errors = [l for l in (out / "console.log").read_text().splitlines()
                   if "halcyon" in l.lower() or "[scenario]" in l]
 
+    if not (out / "started").exists():
+        status += " (autoconfig never ran: check defaults/pref/autoconfig.js and the .cfg)"
     lines = ["# Halcyon UI preview", "", f"Scenario: **{status}**", ""]
     lines += [f"- {'PASS' if ok else 'FAIL'}: {name}" for name, ok in checks]
     lines += ["", f"Screenshots: {', '.join(shots) or 'none'}", ""]
