@@ -29,6 +29,7 @@ class Project:
     channel: str
     patch_budget: int
     security_sla_hours: int
+    update_repo: str = ""
 
     # ---- derived paths -------------------------------------------------
     @property
@@ -78,6 +79,7 @@ class Project:
             # macOS bundle id is built by Firefox as <distribution-id>.<MOZ_MACBUNDLE_ID>
             "DISTRIBUTION_ID": self.bundle_id.rsplit(".", 1)[0],
             "MACBUNDLE_ID": self.bundle_id.rsplit(".", 1)[1],
+            "UPDATE_REPO": self.update_repo,
         }
 
 
@@ -115,6 +117,7 @@ def load(root: Path | None = None) -> Project:
             channel=data["upstream"].get("channel", "release"),
             patch_budget=int(data["policy"]["patch_budget"]),
             security_sla_hours=int(data["policy"]["security_sla_hours"]),
+            update_repo=data.get("updates", {}).get("github_repo", ""),
         )
     except KeyError as exc:
         raise ConfigError(f"project.toml is missing {exc}") from None
@@ -125,6 +128,8 @@ def load(root: Path | None = None) -> Project:
         raise ConfigError("identity.bundle_id must be reverse-DNS, e.g. app.example.browser")
     if not re.match(r"^[A-Za-z][A-Za-z0-9]{1,30}$", project.name):
         raise ConfigError("identity.name must be letters/digits only (it becomes the profile folder name)")
+    if project.update_repo and not re.match(r"^[A-Za-z0-9-]+/[A-Za-z0-9._-]+$", project.update_repo):
+        raise ConfigError("updates.github_repo must look like owner/repo")
     if project.channel != "release":
         raise ConfigError("upstream.channel must be 'release'")
     firefox_tag(project.firefox_version)  # validates

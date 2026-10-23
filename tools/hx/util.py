@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import os
 import re
+import shutil
+import stat
 import subprocess
 import sys
 from pathlib import Path
@@ -106,3 +108,15 @@ def rel_files(base: Path) -> list[Path]:
         if p.is_file() and not p.name.endswith("~"):
             out.append(p.relative_to(base))
     return out
+
+
+def rmtree(path: Path) -> None:
+    """shutil.rmtree that also removes read-only files (git marks its objects read-only on Windows)."""
+    def make_writable_and_retry(func, target, _exc):
+        os.chmod(target, stat.S_IWRITE | stat.S_IREAD)
+        func(target)
+
+    if sys.version_info >= (3, 12):
+        shutil.rmtree(path, onexc=make_writable_and_retry)
+    else:  # pragma: no cover
+        shutil.rmtree(path, onerror=make_writable_and_retry)

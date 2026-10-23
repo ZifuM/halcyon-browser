@@ -45,6 +45,7 @@ The rebase bot (`.github/workflows/upstream.yml`) opens an issue with the log wh
 | File | Why |
 | --- | --- |
 | `browser/moz.configure` | Don't build-enable Normandy: the browser must not change behaviour from server instructions. |
+| `browser/components/moz.build` | Adds `halcyon` to the component directories. All our own components live in `src/browser/components/halcyon/` behind this one-line hook. |
 
 ## Budget log
 

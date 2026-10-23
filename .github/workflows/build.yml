@@ -143,3 +143,51 @@ jobs:
           path: engine/obj-*/dist/*.dmg
           if-no-files-found: error
           retention-days: 30
+
+  network-audit:
+    # Runs the freshly built Linux browser with a fresh profile behind a recording proxy and fails
+    # if it contacts anything not listed in privacy/requests.toml (docs/EVERY-REQUEST.md).
+    needs: linux
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: linux-x86_64-${{ env.PROFILE }}
+          path: dist
+      - name: Install runtime libraries
+        run: sudo apt-get update -q && sudo apt-get install -yq libgtk-3-0t64 libasound2t64 libdbus-glib-1-2
+      - name: Unpack
+        run: mkdir app && tar -xf dist/*.tar.* -C app && ls app
+      - name: Audit 120 s of idle browsing
+        run: |
+          app_name=$(sed -n 's/^app_name *= *"\([^"]*\)".*/\1/p' project.toml)
+          python3 tools/audit/network_audit.py --browser "app/$app_name/$app_name" --seconds 120 \
+            --markdown "$GITHUB_STEP_SUMMARY" --json audit.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: network-audit
+          path: audit.json
+
+  release:
+    # Pushing a tag like v0.2.0 builds everything and publishes a GitHub Release with the
+    # installer attached. The in-browser update notifier reads these releases.
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [windows, linux, network-audit]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: out
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          ls -R out
+          gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --title "$TAG" --generate-notes \
+            out/windows-installer-*/*.installer.exe out/windows-portable-*/*.zip out/linux-x86_64-*/*.tar.*

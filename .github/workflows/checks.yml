@@ -28,6 +28,8 @@ jobs:
         with:
           python-version: "3.12"
       - run: python tools/ci/annotate.py "Unit tests" -- python -m unittest discover -s tests -v
+      - name: Browser component tests (Node, mocked Firefox APIs)
+        run: python tools/ci/annotate.py "JS tests" -- node --import ./tests/js/register.mjs --test tests/js/test_updates.test.mjs
 
   upstream-compat:
     name: Apply to Firefox and audit

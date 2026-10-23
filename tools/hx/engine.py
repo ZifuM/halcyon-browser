@@ -18,12 +18,17 @@ from pathlib import Path, PurePosixPath
 
 from . import prefs as prefs_mod
 from .config import Project
-from .util import HxError, git, info, is_text, ok, rel_files, render, warn
+from .util import HxError, git, info, is_text, ok, rel_files, render, rmtree, warn
 
 STATE_DIR = ".hx"
 EXCLUDES = ("/.hx/", "/obj-*/", "/mozconfig", "/.mozconfig*", "*.rej", "*.orig")
 UPSTREAM_BRANDING = "browser/branding/unofficial"
 BRANDING_PREF_FILE = "pref/firefox-branding.js"
+TMPL = ".tmpl"
+
+
+def _tmpl_target(rel: Path) -> Path:
+    return rel.with_name(rel.name[: -len(TMPL)]) if rel.name.endswith(TMPL) else rel
 
 
 # ---- state ----------------------------------------------------------------
@@ -70,7 +75,7 @@ def download(project: Project, sparse: list[str] | None = None, force: bool = Fa
                 f"{project.firefox_version}. Re-run with --force to replace it."
             )
         info("Removing old engine/")
-        shutil.rmtree(engine)
+        rmtree(engine)
 
     source = repo or project.upstream_repo
     info(f"Fetching {tag} from {source} (shallow{', sparse' if sparse else ''})")
@@ -170,15 +175,21 @@ def import_changes(project: Project, force: bool = False, allow_over_budget: boo
 
     report = ImportReport()
 
-    # 1. src/ overlay: new files only.
+    # 1. src/ overlay: new files only. `name.ext.tmpl` is rendered with {{TOKENS}} to `name.ext`.
+    tokens = project.tokens()
     for rel in rel_files(project.src_dir):
-        rel_posix = PurePosixPath(rel.as_posix())
+        out_rel = _tmpl_target(rel)
+        rel_posix = PurePosixPath(out_rel.as_posix())
         if _exists_in_commit(engine, base, str(rel_posix)):
             raise HxError(f"src/{rel_posix} would replace an upstream file. Edit it in engine/ and "
                           f"`hx export` it as a patch instead.")
-        dest = engine / rel
+        dest = engine / out_rel
         dest.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(project.src_dir / rel, dest)
+        if rel.name.endswith(TMPL):
+            text = (project.src_dir / rel).read_text(encoding="utf-8")
+            dest.write_text(render(text, tokens, f"src/{rel.as_posix()}"), encoding="utf-8", newline="\n")
+        else:
+            shutil.copy2(project.src_dir / rel, dest)
         report.src_files += 1
 
     # 2. branding
@@ -306,6 +317,8 @@ def export(project: Project, paths: list[str], all_dirty: bool = False) -> list[
                 patch.unlink()
                 written.append(f"(removed) patches/{rel}.patch")
         else:
+            if (project.src_dir / f"{rel}{TMPL}").is_file():
+                raise HxError(f"{rel} is generated from src/{rel}{TMPL}. Edit the template instead.")
             src_path = engine / rel
             dest = project.src_dir / rel
             if src_path.is_file():

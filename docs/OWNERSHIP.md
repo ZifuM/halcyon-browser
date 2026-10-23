@@ -27,7 +27,10 @@ These eight rules are release-blocking: a release that breaks one does not ship.
 | 1, 4 | Default-browser nag, sponsored tiles and stories, Suggest, add-on recommendations, VPN/pin/Relay promos and "More from Mozilla" are off. | `prefs/20-no-ads-or-nagging.toml` |
 | 5 | Telemetry upload compiled out; Normandy compiled out; studies, rollouts and crash reports off. | `configs/common.mozconfig`, `patches/browser/moz.configure.patch`, `prefs/10-no-telemetry.toml` |
 | 5 | Every AI feature, local or cloud, off by default; the ML engine doesn't run or download models until the user enables AI in Settings > AI Controls. | `prefs/30-ai-off-by-default.toml` |
-| 5 | No background connections the user didn't ask for. | `prefs/50-quiet-network.toml`, [EVERY-REQUEST.md](EVERY-REQUEST.md) |
+| 5 | No background connections the user didn't ask for; every remaining one is listed with an off switch. | `prefs/50-quiet-network.toml`, `privacy/requests.toml`, [EVERY-REQUEST.md](EVERY-REQUEST.md) |
+| 5 | CI proves it: the network audit runs the real build and fails on any connection that isn't listed, or that is listed as off. | `tools/audit/network_audit.py`, `build` workflow |
+| 2 | No system add-on swaps between releases: the browser only changes when the user updates. | `prefs/50-quiet-network.toml` |
+| 7 | Updates: a daily check shows a notification bar with a link; nothing is downloaded or installed automatically, "Not now" silences that version, and the check can be switched off. | `src/browser/components/halcyon/HalcyonUpdates.sys.mjs` |
 
-Still to build: onboarding (ask-once default browser), update preview and restart control (C1),
-one-click export (C10), and a CI network audit that fails on any undocumented connection (C1).
+Still to build: onboarding (ask-once default browser), a settings toggle for the update check
+(today: about:config), one-click export (C10).

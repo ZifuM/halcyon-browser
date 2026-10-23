@@ -11,6 +11,9 @@ homepage = "https://github.com/ZifuM/halcyon-browser"
 [version]
 display = "0.1.0"                # Halcyon's own version, shown as "0.1.0 (Firefox 158.0.1)"
 
+[updates]
+github_repo = "ZifuM/halcyon-browser"   # where releases are published and checked for
+
 [upstream]
 firefox = "158.0.1"              # Firefox Release this build is based on
 repo = "https://github.com/mozilla-firefox/firefox.git"

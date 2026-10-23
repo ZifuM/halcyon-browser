@@ -1,0 +1,16 @@
+# Prefs that belong to our own code (src/). The audit checks that src/ really reads each one.
+
+[meta]
+title = "Our own features"
+
+[[pref]]
+name = "halcyon.updates.check.enabled"
+value = true
+why = "Daily check for a newer release (notification only; never downloads or installs by itself). Set false to stop it."
+own = true
+
+[[pref]]
+name = "halcyon.updates.check.intervalHours"
+value = 24
+why = "Minimum hours between update checks."
+own = true

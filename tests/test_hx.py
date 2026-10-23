@@ -18,7 +18,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tools"))
 
 from hx import build, config, engine, prefs, upstream  # noqa: E402
-from hx.util import HxError  # noqa: E402
+from hx.util import HxError, rmtree  # noqa: E402
 
 GIT_ENV = {
     "GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@t", "GIT_COMMITTER_NAME": "t",
@@ -122,7 +122,7 @@ class Fixture(unittest.TestCase):
         self.project = config.load(self.root)
 
     def tearDown(self):
-        shutil.rmtree(self.tmp, ignore_errors=True)
+        rmtree(self.tmp)
 
     def ready(self) -> engine.ImportReport:
         engine.download(self.project)
@@ -214,6 +214,28 @@ class EngineTests(Fixture):
         self.assertEqual((report.src_files, report.prefs), (1, 3))
         self.assertEqual(engine.status(self.project), [])
 
+    def test_tmpl_files_are_rendered_and_protected(self):
+        write(self.root / "src/browser/components/testy/Info.sys.mjs.tmpl",
+              'export const v = "{{DISPLAY_VERSION}}", n = "{{NAME}}";\n')
+        self.ready()
+        out = self.project.engine / "browser/components/testy/Info.sys.mjs"
+        self.assertEqual(out.read_text(), 'export const v = "0.1.0", n = "Testy";\n')
+        self.assertFalse(out.with_name("Info.sys.mjs.tmpl").exists())
+        with self.assertRaisesRegex(HxError, "Edit the template"):
+            engine.export(self.project, ["browser/components/testy/Info.sys.mjs"])
+
+    def test_own_prefs_must_be_read_by_src(self):
+        write(self.root / "prefs/90-own.toml",
+              '[[pref]]\nname = "testy.feature"\nvalue = true\nwhy = "w"\nown = true\n')
+        engine.download(self.project)
+        groups = prefs.load_groups(self.root / "prefs")
+        result = prefs.audit(groups, self.project.engine, self.root / "src")
+        self.assertIn("testy.feature", [p.name for p in result.unverified])
+        write(self.root / "src/browser/components/testy/Feature.sys.mjs",
+              'Services.prefs.getBoolPref("testy.feature", true);\n')
+        result = prefs.audit(groups, self.project.engine, self.root / "src")
+        self.assertEqual(result.verified["testy.feature"], "src/ (own)")
+
     def test_src_may_not_shadow_upstream(self):
         write(self.root / "src/browser/moz.configure", "nope\n")
         engine.download(self.project)
@@ -294,6 +316,13 @@ class EngineTests(Fixture):
         with self.assertRaisesRegex(HxError, "exceeds the budget"):
             engine.import_changes(self.project)
         engine.import_changes(self.project, allow_over_budget=True)
+
+    def test_rmtree_removes_read_only_files(self):
+        target = self.tmp / "ro" / "file"
+        write(target, "x")
+        os.chmod(target, 0o444)
+        rmtree(self.tmp / "ro")
+        self.assertFalse((self.tmp / "ro").exists())
 
     def test_download_refuses_version_mismatch(self):
         engine.download(self.project)

@@ -43,4 +43,17 @@ See [PATCHES.md](PATCHES.md). In short: edit in `engine/`, `hx export <file>`, `
 | --- | --- | --- |
 | `checks` | every push / PR | Toolchain tests on 3 OSes; applies our changes to the pinned Firefox and verifies prefs, build options and the patch budget. |
 | `upstream` | twice daily | If Firefox released a new version: rebase, verify, open a PR (labelled `security-sla` for point releases). On conflict, open an issue. |
-| `build` | manual, `v*` tags, weekly | Full builds on Linux, macOS and Windows with an sccache cache; uploads installers. `release` builds need larger or self-hosted runners (set `LINUX_RUNNER` / `MACOS_RUNNER` / `WINDOWS_RUNNER` repository variables). |
+| `build` | manual (pick platforms), `v*` tags, weekly | Full builds with an sccache cache; uploads the Windows `*.installer.exe` + portable `.zip`, Linux `.tar.xz`, macOS `.dmg`. Then the **network audit** runs the Linux build and fails on undocumented connections. On a `v*` tag, a **release** job publishes a GitHub Release with the installers. `release`-profile builds need larger or self-hosted runners (`LINUX_RUNNER` / `MACOS_RUNNER` / `WINDOWS_RUNNER` repository variables). |
+
+## Releasing a version
+
+1. Bump `version.display` in `project.toml` (e.g. `0.2.0`) and commit.
+2. `git tag v0.2.0 && git push origin v0.2.0`
+3. The `build` workflow builds, audits and publishes the release. Running copies of the browser
+   notice it within a day and show a notification bar.
+
+## Running the network audit locally
+
+```sh
+python3 tools/audit/network_audit.py --browser engine/obj-*/dist/bin/halcyon --seconds 120
+```
