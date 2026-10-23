@@ -178,6 +178,14 @@ def main() -> int:
                        [w for w in placed if w in expected] == expected))
         checks.append(("No AI or sign-in buttons in the top bar",
                        not {"ai-window-toggle", "smartwindow-group-tabs-button", "fxa-toolbar-menu-button"} & set(placed)))
+    compact = out / "compact.json"
+    if compact.exists():
+        c = json.loads(compact.read_text())
+        checks.append(("Compact: shortcut hides the chrome", c["afterToggle"] == {"compact": True, "reveal": ""}))
+        checks.append(("Compact: window edge reveals the sidebar", c["afterEdge"]["reveal"] == "sidebar"))
+        checks.append(("Compact: address-bar focus reveals the top bar", c["afterFocus"]["reveal"] == "sidebar toolbar"))
+        checks.append(("Compact: both hide again when left", c["afterLeave"]["reveal"] == ""))
+        checks.append(("Compact: shortcut turns it off", c["afterOff"] == {"compact": False, "reveal": ""}))
     tab_menu = out / "tab-menu.json"
     if tab_menu.exists():
         data = json.loads(tab_menu.read_text())

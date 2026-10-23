@@ -167,18 +167,32 @@ async function runScenario(win) {
   win.SidebarController._state.launcherExpanded = true;
   await sleep(1200);
 
-  Services.prefs.setBoolPref("halcyon.layout.compact", true);
+  // Compact mode through the real wiring: the shortcut's <key>, the edge element, focus.
+  const doc = win.document;
+  const root = doc.documentElement;
+  const compactState = () => ({
+    compact: root.hasAttribute("halcyon-compact"),
+    reveal: root.getAttribute("halcyon-reveal") || "",
+  });
+  doc.getElementById("halcyon-key-compact").doCommand();
   await sleep(1200);
+  const afterToggle = compactState();
   await shot("04-compact");
-  layout.compact.state.add("sidebar", "preview");
+  doc.getElementById("halcyon-edge-sidebar").dispatchEvent(new win.MouseEvent("mouseenter"));
   await sleep(900);
+  const afterEdge = compactState();
   await shot("05-compact-sidebar");
-  layout.compact.state.add("toolbar", "preview");
+  win.gURLBar.focus();
   await sleep(900);
+  const afterFocus = compactState();
   await shot("06-compact-both");
-  layout.compact.state.reset();
-  Services.prefs.setBoolPref("halcyon.layout.compact", false);
+  doc.getElementById("halcyon-edge-sidebar").dispatchEvent(new win.MouseEvent("mouseleave"));
+  gBrowser.selectedBrowser.focus();
   await sleep(1000);
+  const afterLeave = compactState();
+  doc.getElementById("halcyon-key-compact").doCommand();
+  await sleep(1000);
+  await report("compact", { afterToggle, afterEdge, afterFocus, afterLeave, afterOff: compactState() });
 
   // Tab context menu on a Today tab.
   const menu = win.document.getElementById("tabContextMenu");
