@@ -1,8 +1,12 @@
 # Full browser builds. Manual trigger (pick platforms and profile), version tags, and weekly.
 #
 # Runner sizing: free GitHub-hosted runners for public repos (4 vCPU / 16 GB) can finish a `dev`
-# build in ~2-5 h, faster once the sccache cache is warm. `release` (PGO + LTO) needs a larger or
-# self-hosted runner: set the LINUX_RUNNER / MACOS_RUNNER / WINDOWS_RUNNER repository variables.
+# build in ~2-5 h. `release` (PGO + LTO) needs a larger or self-hosted runner: set the
+# LINUX_RUNNER / MACOS_RUNNER / WINDOWS_RUNNER repository variables.
+#
+# Toolchains (clang, the Windows SDK, Rust, Node, ...) are fetched by configure itself
+# (--enable-bootstrap) instead of a separate `mach bootstrap`, which stalled on CI runners.
+# A manual run with "publish" set puts the Windows installer on the `test-build` pre-release.
 name: build
 
 on:
@@ -16,6 +20,10 @@ on:
         type: choice
         options: [dev, release]
         default: dev
+      publish:
+        description: "Publish the Windows installer as the test-build pre-release"
+        type: boolean
+        default: true
   push:
     tags: ["v*"]
   schedule:
@@ -26,60 +34,69 @@ permissions:
 
 env:
   PROFILE: ${{ inputs.profile || 'dev' }}
-  SCCACHE_CACHE_SIZE: 8G
-  HX_MOZCONFIG_EXTRA: "ac_add_options --with-ccache=sccache"
+  # Machine-local mozconfig additions (hx appends them; "\n" separates lines). No debug symbols
+  # on CI: they double the disk and link time and nobody debugs these builds.
+  # Single quotes: the "\n" must reach hx as the two characters, not a newline.
+  HX_MOZCONFIG_EXTRA: 'ac_add_options --enable-bootstrap\nac_add_options --disable-debug-symbols'
+  MACH_NO_TERMINAL_FOOTER: "1"
 
 jobs:
   windows:
     if: contains(inputs.platforms || 'windows,linux', 'windows')
-    # Runs inside MozillaBuild's MSYS2 shell; mach bootstraps its own clang and Windows SDK.
+    # Runs inside MozillaBuild's MSYS2 shell; configure fetches clang and the Windows SDK.
     runs-on: ${{ vars.WINDOWS_RUNNER || 'windows-2022' }}
     timeout-minutes: 355
     env:
       MOZILLABUILD: C:\mozilla-build
       MSYS2_PATH_TYPE: inherit          # let the MozillaBuild shell see git and Python
-      SCCACHE_DIR: D:\sccache
       PYTHONPATH: tools                 # for `python3 -m hx`; hx removes it again for mach
     defaults:
       run:
         shell: C:\mozilla-build\msys2\usr\bin\bash.exe --login -eo pipefail {0}
     steps:
-      - name: Prepare git and install MozillaBuild
+      - name: Prepare git, install MozillaBuild, pick the roomiest drive
         shell: pwsh
         run: |
           git config --global core.autocrlf false
           git config --global core.longpaths true
           Invoke-WebRequest https://ftp.mozilla.org/pub/mozilla/libraries/win32/MozillaBuildSetup-Latest.exe -OutFile mb.exe
           Start-Process -Wait -FilePath .\mb.exe -ArgumentList '/S'
-          Get-PSDrive C, D | Format-Table Name, @{n='FreeGB';e={[int]($_.Free/1GB)}}
+          $drives = Get-PSDrive -PSProvider FileSystem | Where-Object { $_.Name -in 'C','D' }
+          $best = $drives | Sort-Object Free -Descending | Select-Object -First 1
+          $summary = ($drives | ForEach-Object { "$($_.Name): $([int]($_.Free/1GB)) GB free" }) -join ', '
+          Write-Output "::notice title=Disk::$summary; objdir and toolchains on $($best.Name):"
+          $root = "$($best.Name):/hx"
+          New-Item -ItemType Directory -Force -Path "$root/obj", "$root/mozbuild" | Out-Null
+          "OBJDIR=$root/obj" >> $env:GITHUB_ENV
+          "MOZBUILD_STATE_PATH=$root/mozbuild" >> $env:GITHUB_ENV
+          "HX_MOZCONFIG_EXTRA=$env:HX_MOZCONFIG_EXTRA\nmk_add_options MOZ_OBJDIR=$root/obj" >> $env:GITHUB_ENV
       - uses: actions/checkout@v4
-      - uses: actions/cache@v4
-        with:
-          path: D:\sccache
-          key: sccache-windows-${{ env.PROFILE }}-${{ hashFiles('project.toml') }}-${{ github.run_id }}
-          restore-keys: |
-            sccache-windows-${{ env.PROFILE }}-${{ hashFiles('project.toml') }}-
-            sccache-windows-${{ env.PROFILE }}-
       - name: Download Firefox source
         run: cd "$GITHUB_WORKSPACE" && python3 tools/ci/annotate.py "Download" -- python3 -m hx download
       - name: Apply our changes
         run: cd "$GITHUB_WORKSPACE" && python3 tools/ci/annotate.py "Import" -- python3 -m hx import
-      - name: Bootstrap toolchains
-        run: cd "$GITHUB_WORKSPACE" && python3 tools/ci/annotate.py --timeout 2400 "Bootstrap" -- python3 -m hx bootstrap
       - name: Build
-        run: cd "$GITHUB_WORKSPACE" && python3 tools/ci/annotate.py "Build" -- python3 -m hx build --profile "$PROFILE" --os windows
+        run: cd "$GITHUB_WORKSPACE" && python3 tools/ci/annotate.py --timeout 19200 "Build" -- python3 -m hx build --profile "$PROFILE" --os windows
       - name: Package (setup .exe + portable .zip)
         run: cd "$GITHUB_WORKSPACE" && python3 tools/ci/annotate.py "Package" -- python3 -m hx package --os windows
+      - name: Collect the installer
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path out | Out-Null
+          Copy-Item "$env:OBJDIR/dist/install/sea/*.exe", "$env:OBJDIR/dist/*.installer.exe" out/ -ErrorAction SilentlyContinue
+          Copy-Item "$env:OBJDIR/dist/*.zip" out/ -ErrorAction SilentlyContinue
+          Get-ChildItem out | ForEach-Object { Write-Output "::notice title=Built::$($_.Name) ($([int]($_.Length/1MB)) MB)" }
+          if (-not (Get-ChildItem out/*.exe -ErrorAction SilentlyContinue)) { Write-Output "::error title=Package::no installer in $env:OBJDIR/dist"; exit 1 }
       - uses: actions/upload-artifact@v4
         with:
           name: windows-installer-${{ env.PROFILE }}
-          path: engine/obj-*/dist/*.installer.exe
+          path: out/*.exe
           if-no-files-found: error
           retention-days: 30
       - uses: actions/upload-artifact@v4
         with:
           name: windows-portable-${{ env.PROFILE }}
-          path: engine/obj-*/dist/*.zip
+          path: out/*.zip
           retention-days: 30
 
   linux:
@@ -87,7 +104,7 @@ jobs:
     runs-on: ${{ vars.LINUX_RUNNER || 'ubuntu-24.04' }}
     timeout-minutes: 355
     env:
-      SCCACHE_DIR: ${{ github.workspace }}/.sccache
+      MOZBUILD_STATE_PATH: ${{ github.workspace }}/.mozbuild
     steps:
       - name: Free disk space (Firefox needs ~40 GB)
         run: |
@@ -96,17 +113,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
-      - uses: actions/cache@v4
-        with:
-          path: .sccache
-          key: sccache-linux-${{ env.PROFILE }}-${{ hashFiles('project.toml') }}-${{ github.run_id }}
-          restore-keys: |
-            sccache-linux-${{ env.PROFILE }}-${{ hashFiles('project.toml') }}-
-            sccache-linux-${{ env.PROFILE }}-
       - run: python3 tools/ci/annotate.py "Download" -- ./hx download
       - run: python3 tools/ci/annotate.py "Import" -- ./hx import
-      - run: python3 tools/ci/annotate.py --timeout 2400 "Bootstrap" -- ./hx bootstrap
-      - run: python3 tools/ci/annotate.py "Build" -- ./hx build --profile "$PROFILE"
+      - run: python3 tools/ci/annotate.py --timeout 19200 "Build" -- ./hx build --profile "$PROFILE"
       - run: python3 tools/ci/annotate.py "Package" -- ./hx package
       - uses: actions/upload-artifact@v4
         with:
@@ -120,22 +129,14 @@ jobs:
     runs-on: ${{ vars.MACOS_RUNNER || 'macos-14' }}
     timeout-minutes: 355
     env:
-      SCCACHE_DIR: ${{ github.workspace }}/.sccache
+      MOZBUILD_STATE_PATH: ${{ github.workspace }}/.mozbuild
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
-      - uses: actions/cache@v4
-        with:
-          path: .sccache
-          key: sccache-macos-${{ env.PROFILE }}-${{ hashFiles('project.toml') }}-${{ github.run_id }}
-          restore-keys: |
-            sccache-macos-${{ env.PROFILE }}-${{ hashFiles('project.toml') }}-
-            sccache-macos-${{ env.PROFILE }}-
       - run: python3 tools/ci/annotate.py "Download" -- ./hx download
       - run: python3 tools/ci/annotate.py "Import" -- ./hx import
-      - run: python3 tools/ci/annotate.py --timeout 2400 "Bootstrap" -- ./hx bootstrap
-      - run: python3 tools/ci/annotate.py "Build" -- ./hx build --profile "$PROFILE" --os macos
+      - run: python3 tools/ci/annotate.py --timeout 19200 "Build" -- ./hx build --profile "$PROFILE" --os macos
       - run: python3 tools/ci/annotate.py "Package" -- ./hx package --os macos
       - uses: actions/upload-artifact@v4
         with:
@@ -170,6 +171,31 @@ jobs:
         with:
           name: network-audit
           path: audit.json
+
+  publish-test-build:
+    # A manual build with "publish" on: the Windows installer goes on the `test-build`
+    # pre-release (replaced each time), so it can be downloaded without an Actions login.
+    if: github.event_name == 'workflow_dispatch' && inputs.publish && !cancelled()
+    needs: [windows]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: windows-*
+          path: out
+          merge-multiple: true
+      - name: Replace the test-build pre-release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ls -la out
+          gh release delete test-build --repo "$GITHUB_REPOSITORY" --yes --cleanup-tag 2>/dev/null || true
+          gh release create test-build --repo "$GITHUB_REPOSITORY" --prerelease --target "$GITHUB_SHA" \
+            --title "Test build ($(date -u +%Y-%m-%d), ${GITHUB_SHA::7})" \
+            --notes "Unsigned test build of Halcyon for Windows (x64), built from ${GITHUB_SHA::7}. Windows SmartScreen will warn because it isn't code-signed yet: choose More info, then Run anyway. The .zip is a portable copy that needs no install." \
+            out/*
 
   release:
     # Pushing a tag like v0.2.0 builds everything and publishes a GitHub Release with the

@@ -14,13 +14,18 @@ from __future__ import annotations
 
 import collections
 import os
+import re
 import signal
 import subprocess
 import sys
 import threading
+import time
 
 TAIL_LINES = 80
-MAX_CHARS = 60000  # GitHub caps annotation messages at 64 KB
+MAX_CHARS = 30000  # GitHub caps annotation messages at 64 KB; two may be sent
+ERROR_LINES = 60   # first lines that look like compiler/build errors, with context
+ERROR_RE = re.compile(r"(\berror(\[E\d+\])?:|\bfatal error\b|^Error:|\bFAILED\b|Traceback \(most recent)", re.I)
+CONTEXT = 3
 
 
 def escape(text: str) -> str:
@@ -39,6 +44,10 @@ def main(argv: list[str]) -> int:
     title = " ".join(head)
     cmd = argv[argv.index("--") + 1:]
     tail: collections.deque[str] = collections.deque(maxlen=TAIL_LINES)
+    recent: collections.deque[str] = collections.deque(maxlen=CONTEXT)
+    errors: list[str] = []
+    after_error = 0
+    started = time.monotonic()
     # Own process group/tree, so a timeout can stop grandchildren that hold the output pipe open.
     group = {"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP} if os.name == "nt" else {"start_new_session": True}
     proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
@@ -58,16 +67,34 @@ def main(argv: list[str]) -> int:
     for line in proc.stdout:
         sys.stdout.write(line)
         sys.stdout.flush()
-        tail.append(line.rstrip("\n"))
+        text = line.rstrip("\n")
+        tail.append(text)
+        # A parallel build's real error scrolls far above the tail: keep the first ones.
+        if len(errors) < ERROR_LINES:
+            if ERROR_RE.search(text):
+                errors.extend(recent)
+                errors.append(text)
+                after_error = CONTEXT
+            elif after_error:
+                errors.append(text)
+                after_error -= 1
+        recent.append(text)
     code = proc.wait()
+    minutes = (time.monotonic() - started) / 60
     if timed_out.is_set():
         code = 124
         reason = f"timed out after {timeout:.0f} s (last output below)"
     else:
         reason = f"exit {code}"
     if code != 0:
+        if errors:
+            first = "\n".join(errors[:ERROR_LINES])[:MAX_CHARS]
+            print(f"::error title={escape(title)}: first errors::{escape(first)}", flush=True)
         body = "\n".join(tail)[-MAX_CHARS:]
-        print(f"::error title={escape(title)} failed ({escape(reason)})::{escape(body)}", flush=True)
+        print(f"::error title={escape(title)} failed ({escape(reason)}, {minutes:.0f} min)::{escape(body)}",
+              flush=True)
+    else:
+        print(f"::notice title={escape(title)}::done in {minutes:.0f} min", flush=True)
     return code
 
 

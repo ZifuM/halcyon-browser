@@ -47,11 +47,14 @@ See [PATCHES.md](PATCHES.md). In short: edit in `engine/`, `hx export <file>`, `
 
 ## Status of CI builds (Oct 2026)
 
-Full builds are **paused until after cycle C3** (the `build` workflow is disabled in GitHub; enable
-it under Actions → build → Enable workflow). Open issue from the first attempt: `mach bootstrap`
-ran for 25+ minutes on Linux and Windows runners without finishing, and the raw log is not
-readable from the dev workspace. Bootstrap steps now have a 40-minute self-timeout that reports the
-last 80 lines of output as an error annotation, so the next run will show where it stalls.
+Builds resumed after C3. The first attempt's `mach bootstrap` stalled on CI runners for 25+
+minutes, so CI no longer runs it: configure fetches the toolchains it needs itself
+(`--enable-bootstrap`). Windows builds put the object directory on whichever runner drive has
+the most free space and skip debug symbols. A manual run of **build** with *publish* on puts the
+Windows installer on the `test-build` pre-release (Releases page), replaced on each run.
+
+Failures surface as annotations on the run: the first compiler errors (a parallel build's real
+error scrolls far above the end of the log) and the last 80 lines.
 
 ## Releasing a version
 
