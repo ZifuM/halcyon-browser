@@ -32,6 +32,13 @@ const { ShieldCosmetic, ACTOR_NAME, ACTOR_OPTIONS } = await import(
 
 const tick = () => new Promise(r => setImmediate(r));
 const sleep = ms => new Promise(r => setTimeout(r, ms));
+async function waitFor(condition, timeoutMs = 3000) {
+  const start = Date.now();
+  while (!condition()) {
+    if (Date.now() - start > timeoutMs) throw new Error("timed out waiting");
+    await sleep(20);
+  }
+}
 
 // ---- logic ------------------------------------------------------------------------------
 
@@ -295,7 +302,7 @@ test("child: site sheet at document start, generic sheet at DOMContentLoaded, th
     { type: "childList", addedNodes: [injected, { nodeType: 3 }] },
     { type: "attributes", target: new FakeElement("main", ["page"]) },
   ]);
-  await sleep(250);
+  await waitFor(() => page.sheets.length >= 3);
   assert.equal(page.sheets.length, 3);
   assert.equal(page.sheets[2].css, ":is(.ad-late,\n#ad-inner) { display: none !important; }");
   const last = globalThis.__classifierCalls.filter(c => c.generic).at(-1).generic;
@@ -359,5 +366,5 @@ test("actor registration: once, http(s) only, all frames, behind the element-hid
     assert.ok(fs.existsSync(path.join(ROOT, "src", rel)), rel);
   }
   const ownPrefs = fs.readFileSync(path.join(ROOT, "prefs/90-own.toml"), "utf8");
-  assert.match(ownPrefs, /name = "halcyon\.shield\.cosmetic\.enabled"\nvalue = true/);
+  assert.match(ownPrefs, /name = "halcyon\.shield\.cosmetic\.enabled"\r?\nvalue = true/);
 });
