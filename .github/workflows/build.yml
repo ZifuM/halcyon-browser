@@ -82,11 +82,15 @@ jobs:
       - name: Collect the installer
         shell: pwsh
         run: |
+          $version = (Select-String -Path project.toml -Pattern '^display\s*=\s*"([^"]+)"').Matches[0].Groups[1].Value
+          $name = (Select-String -Path project.toml -Pattern '^name\s*=\s*"([^"]+)"').Matches[0].Groups[1].Value
           New-Item -ItemType Directory -Force -Path out | Out-Null
-          Copy-Item "$env:OBJDIR/dist/install/sea/*.exe", "$env:OBJDIR/dist/*.installer.exe" out/ -ErrorAction SilentlyContinue
-          Copy-Item "$env:OBJDIR/dist/*.zip" out/ -ErrorAction SilentlyContinue
+          $setup = Get-ChildItem "$env:OBJDIR/dist/*.installer.exe", "$env:OBJDIR/dist/install/sea/*.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
+          if (-not $setup) { Write-Output "::error title=Package::no installer in $env:OBJDIR/dist"; exit 1 }
+          Copy-Item $setup.FullName "out/$name-$version-setup-win64.exe"
+          $zip = Get-ChildItem "$env:OBJDIR/dist/*.zip" | Where-Object { $_.Name -notmatch 'xpt_artifacts|mozinfo|crashreporter' } | Sort-Object Length -Descending | Select-Object -First 1
+          if ($zip) { Copy-Item $zip.FullName "out/$name-$version-portable-win64.zip" }
           Get-ChildItem out | ForEach-Object { Write-Output "::notice title=Built::$($_.Name) ($([int]($_.Length/1MB)) MB)" }
-          if (-not (Get-ChildItem out/*.exe -ErrorAction SilentlyContinue)) { Write-Output "::error title=Package::no installer in $env:OBJDIR/dist"; exit 1 }
       - uses: actions/upload-artifact@v4
         with:
           name: windows-installer-${{ env.PROFILE }}
@@ -160,7 +164,11 @@ jobs:
       - name: Install runtime libraries
         run: sudo apt-get update -q && sudo apt-get install -yq libgtk-3-0t64 libasound2t64 libdbus-glib-1-2
       - name: Unpack
-        run: mkdir app && tar -xf dist/*.tar.* -C app && ls app
+        # dist/ can hold more than one archive (symbols, test info): unpack the largest, the browser.
+        run: |
+          archive=$(ls -S dist/*.tar.* | head -1)
+          echo "Unpacking $archive"
+          mkdir app && tar -xf "$archive" -C app && ls app
       - name: Audit 120 s of idle browsing
         run: |
           app_name=$(sed -n 's/^app_name *= *"\([^"]*\)".*/\1/p' project.toml)
