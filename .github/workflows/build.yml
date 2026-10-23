@@ -65,7 +65,7 @@ jobs:
       - name: Apply our changes
         run: cd "$GITHUB_WORKSPACE" && python3 tools/ci/annotate.py "Import" -- python3 -m hx import
       - name: Bootstrap toolchains
-        run: cd "$GITHUB_WORKSPACE" && python3 tools/ci/annotate.py "Bootstrap" -- python3 -m hx bootstrap
+        run: cd "$GITHUB_WORKSPACE" && python3 tools/ci/annotate.py --timeout 2400 "Bootstrap" -- python3 -m hx bootstrap
       - name: Build
         run: cd "$GITHUB_WORKSPACE" && python3 tools/ci/annotate.py "Build" -- python3 -m hx build --profile "$PROFILE" --os windows
       - name: Package (setup .exe + portable .zip)
@@ -105,7 +105,7 @@ jobs:
             sccache-linux-${{ env.PROFILE }}-
       - run: python3 tools/ci/annotate.py "Download" -- ./hx download
       - run: python3 tools/ci/annotate.py "Import" -- ./hx import
-      - run: python3 tools/ci/annotate.py "Bootstrap" -- ./hx bootstrap
+      - run: python3 tools/ci/annotate.py --timeout 2400 "Bootstrap" -- ./hx bootstrap
       - run: python3 tools/ci/annotate.py "Build" -- ./hx build --profile "$PROFILE"
       - run: python3 tools/ci/annotate.py "Package" -- ./hx package
       - uses: actions/upload-artifact@v4
@@ -134,7 +134,7 @@ jobs:
             sccache-macos-${{ env.PROFILE }}-
       - run: python3 tools/ci/annotate.py "Download" -- ./hx download
       - run: python3 tools/ci/annotate.py "Import" -- ./hx import
-      - run: python3 tools/ci/annotate.py "Bootstrap" -- ./hx bootstrap
+      - run: python3 tools/ci/annotate.py --timeout 2400 "Bootstrap" -- ./hx bootstrap
       - run: python3 tools/ci/annotate.py "Build" -- ./hx build --profile "$PROFILE" --os macos
       - run: python3 tools/ci/annotate.py "Package" -- ./hx package --os macos
       - uses: actions/upload-artifact@v4
