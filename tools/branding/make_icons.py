@@ -131,6 +131,18 @@ def main() -> None:
     tile(150, 150, 0.6, private=True).save(OUT / "PrivateBrowsing_150.png")
     tile(70, 70, 0.6, private=True).save(OUT / "PrivateBrowsing_70.png")
 
+    # Windows installer (NSIS) art: 24-bit BMPs at the sizes the installer expects.
+    header = Image.new("RGB", (150, 57), (255, 255, 255))
+    m = mark(44)
+    header.paste(m, (150 - 44 - 7, 6), m)
+    header.save(OUT / "wizHeader.bmp")
+    header.transpose(Image.FLIP_LEFT_RIGHT).save(OUT / "wizHeaderRTL.bmp")
+    side = _gradient(314).resize((164, 314)).convert("RGBA")
+    side = Image.blend(side, Image.new("RGBA", side.size, (20, 18, 40, 255)), 0.35)
+    m = mark(96)
+    side.alpha_composite(m, ((164 - 96) // 2, 70))
+    side.convert("RGB").save(OUT / "wizWatermark.bmp")
+
     ico_sizes = [(16, 16), (24, 24), (32, 32), (48, 48), (64, 64), (128, 128), (256, 256)]
     big = mark(256)
     big.save(OUT / "firefox.ico", sizes=ico_sizes)

@@ -6,7 +6,7 @@ name = "Halcyon"                 # Display name (placeholder, not final)
 app_name = "halcyon"             # Binary / package name: lowercase, no spaces
 vendor = "Halcyon"               # Shown in About and installer
 bundle_id = "app.halcyon.browser" # macOS bundle identifier (reverse DNS)
-homepage = "https://halcyon.invalid"
+homepage = "https://github.com/ZifuM/halcyon-browser"
 
 [version]
 display = "0.1.0"                # Halcyon's own version, shown as "0.1.0 (Firefox 158.0.1)"

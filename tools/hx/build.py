@@ -136,9 +136,17 @@ def run_browser(project: Project, extra: list[str]) -> None:
     _mach(project, "run", *extra)
 
 
-def package(project: Project) -> None:
+def package(project: Project, target_os: str | None = None) -> None:
+    """Make the distributable. On Windows, `mach package` builds both the portable .zip and the
+    NSIS setup .exe (toolkit/mozapps/installer/packager.mk: make-package -> windows installer)."""
+    target_os = target_os or host_os()
     _mach(project, "package")
-    ok("Package written to engine/obj-*/dist/")
+    if target_os == "windows":
+        ok("Installer: engine/obj-*/dist/*.installer.exe  (portable: dist/*.zip)")
+    elif target_os == "macos":
+        ok("Disk image: engine/obj-*/dist/*.dmg")
+    else:
+        ok("Archive: engine/obj-*/dist/*.tar.xz")
 
 
 def doctor(project: Project) -> list[str]:

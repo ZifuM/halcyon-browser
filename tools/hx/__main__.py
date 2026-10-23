@@ -201,8 +201,9 @@ def make_parser() -> argparse.ArgumentParser:
     s = sub.add_parser("run", help="launch the built browser")
     s.add_argument("extra", nargs=argparse.REMAINDER)
     s.set_defaults(fn=lambda p, a: build.run_browser(p, a.extra))
-    sub.add_parser("package", help="make an installable package").set_defaults(
-        fn=lambda p, a: build.package(p))
+    s = sub.add_parser("package", help="make an installable package (setup .exe on Windows)")
+    s.add_argument("--os", choices=["linux", "macos", "windows"])
+    s.set_defaults(fn=lambda p, a: build.package(p, a.os))
     sub.add_parser("doctor", help="check this machine can build").set_defaults(fn=cmd_doctor)
     return ap
 
