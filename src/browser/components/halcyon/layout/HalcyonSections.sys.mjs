@@ -96,7 +96,8 @@ export class HalcyonSections {
 
   /** Section of the tab before / after `tab` among non-Essential tabs (null at the ends). */
   _neighbours(tab) {
-    const order = this._standaloneOrder();
+    // Only what the user sees counts: tabs of other Spaces are hidden in between.
+    const order = this._standaloneOrder().filter(t => !t.hidden || t == tab);
     const i = order.indexOf(tab);
     const section = t => (t ? this.isPinned(t) && !t.group && !t.splitview : null);
     return {
@@ -144,7 +145,10 @@ export class HalcyonSections {
     } catch (e) {
       // Private windows and closing tabs have nothing to save to.
     }
+    // Other components (Spaces' launcher sync) follow user-made section changes.
+    tab.dispatchEvent(new this.win.CustomEvent("HalcyonPinnedChange", { bubbles: true, detail: { pinned } }));
   }
+
 
   _updateContainer() {
     this.tabContainer.toggleAttribute(

@@ -219,6 +219,56 @@ async function runScenario(win) {
   });
   await shot("07-tab-menu");
   menu.hidePopup();
+  await sleep(500);
+
+  // ---- Spaces (C4) ----
+  const { HalcyonSpacesStore: Store } = ChromeUtils.importESModule(
+    "resource://halcyon-preview/spaces/HalcyonSpacesStore.sys.mjs"
+  );
+  const spaces = layout.spaces;
+  Store.update(Store.spaces[0].id, { icon: "🏠" });
+  const work = Store.create({ name: "Work", icon: "💼", color: { hue: 155, hue2: 195, chroma: 0.05 } });
+  Store.create({ name: "Weekend", icon: "🎮", color: { hue: 25, hue2: 345, chroma: 0.06, grain: true } });
+  await sleep(300);
+  spaces.switchTo(work.id);
+  await sleep(600);
+  const workTabs = ["docs", "code", "roadmap"].map(p => open(`${p}.html`)).reverse();
+  gBrowser.selectedTab = workTabs[0];
+  layout.sections.setPinned(workTabs[2], true);
+  await sleep(2500);
+  await report("spaces", {
+    names: Store.spaces.map(s => s.name),
+    active: spaces.active == work.id,
+    header: doc.querySelector("#halcyon-space-header .halcyon-space-name")?.textContent,
+    dots: doc.querySelectorAll(".halcyon-space-dot").length,
+    visibleTodayTabs: gBrowser.visibleTabs.filter(t => !t.pinned).map(t => t.label),
+    pinsInWork: Store.get(work.id).pins.map(p => p.title || p.url),
+    hueOnWindow: root.style.getPropertyValue("--hx-space-hue"),
+  });
+  await shot("08-space-work");
+
+  const header = doc.getElementById("halcyon-space-header");
+  const editor = doc.getElementById("halcyon-space-editor");
+  const editorShown = new Promise(resolve => editor.addEventListener("popupshown", resolve, { once: true }));
+  spaces.ui.openEditor(work.id, header);
+  await Promise.race([editorShown, sleep(3000)]);
+  await sleep(400);
+  await shot("09-space-editor");
+  editor.hidePopup();
+  await sleep(400);
+
+  doc.getElementById("halcyon-key-space-next").doCommand();
+  await sleep(900);
+  const afterNext = Store.get(spaces.active)?.name;
+  await shot("10-space-weekend");
+  doc.getElementById("halcyon-key-space-1").doCommand();
+  await sleep(900);
+  await report("spaces-keys", {
+    afterNext,
+    afterJump1: Store.get(spaces.active)?.name,
+    workTabsHiddenInPersonal: workTabs.every(t => t.hidden),
+    selected: gBrowser.selectedTab.label,
+  });
 
   await IOUtils.writeUTF8(PathUtils.join(OUT, "finished"), "ok");
   await sleep(500);

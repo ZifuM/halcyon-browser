@@ -2,6 +2,25 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+/* Space colours animate when switching Spaces: registered so the gradient can interpolate. */
+@property --hx-space-hue {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 262;
+}
+
+@property --hx-space-hue-2 {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 290;
+}
+
+@property --hx-space-chroma {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0.045;
+}
+
 /* Halcyon design tokens. Every colour, size and duration the layout uses comes from here, so a
  * theme or a Space (C4) changes the look by overriding these properties and nothing else.
  *
@@ -11,15 +30,17 @@
   /* ---- Space colour ---------------------------------------------------------------------
    * The backdrop behind the sidebar, top bar and content card. C4 sets these per Space; this is
    * the default Space: a calm blue-violet. */
+  /* Set per window by HalcyonSpaces (inline on the root) from the active Space. */
   --hx-space-hue: 262;
+  --hx-space-hue-2: 290;
   --hx-space-chroma: 0.045;
   --hx-tint-1: light-dark(
     oklch(0.935 var(--hx-space-chroma) var(--hx-space-hue)),
     oklch(0.235 calc(var(--hx-space-chroma) * 0.8) var(--hx-space-hue))
   );
   --hx-tint-2: light-dark(
-    oklch(0.9 calc(var(--hx-space-chroma) * 1.4) calc(var(--hx-space-hue) + 28)),
-    oklch(0.2 var(--hx-space-chroma) calc(var(--hx-space-hue) + 28))
+    oklch(0.9 calc(var(--hx-space-chroma) * 1.4) var(--hx-space-hue-2)),
+    oklch(0.2 var(--hx-space-chroma) var(--hx-space-hue-2))
   );
   --hx-backdrop: linear-gradient(160deg, var(--hx-tint-1) 0%, var(--hx-tint-2) 100%);
 

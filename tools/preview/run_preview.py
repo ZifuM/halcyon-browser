@@ -186,6 +186,19 @@ def main() -> int:
         checks.append(("Compact: address-bar focus reveals the top bar", c["afterFocus"]["reveal"] == "sidebar toolbar"))
         checks.append(("Compact: both hide again when left", c["afterLeave"]["reveal"] == ""))
         checks.append(("Compact: shortcut turns it off", c["afterOff"] == {"compact": False, "reveal": ""}))
+    sp = out / "spaces.json"
+    if sp.exists():
+        d = json.loads(sp.read_text())
+        checks.append(("Spaces: Work is active, its name above Pinned, three dots", d["active"] and d["header"] == "Work" and d["dots"] == 3))
+        checks.append(("Spaces: only Work's tabs are visible", sorted(d["visibleTodayTabs"]) == sorted(
+            ["Q4 planning — Docs", "halcyon-browser: Pull requests", "Roadmap 2027"])))
+        checks.append(("Spaces: Work's pinned tab is a synced launcher", d["pinsInWork"] == ["Roadmap 2027"]))
+        checks.append(("Spaces: the window takes Work's colour", d["hueOnWindow"] == "155"))
+    sk = out / "spaces-keys.json"
+    if sk.exists():
+        d = json.loads(sk.read_text())
+        checks.append(("Spaces: Ctrl+Alt+Right goes to the next Space", d["afterNext"] == "Weekend"))
+        checks.append(("Spaces: Ctrl+Alt+1 jumps to the first; Work's tabs hide", d["afterJump1"] == "Personal" and d["workTabsHiddenInPersonal"]))
     tab_menu = out / "tab-menu.json"
     if tab_menu.exists():
         data = json.loads(tab_menu.read_text())

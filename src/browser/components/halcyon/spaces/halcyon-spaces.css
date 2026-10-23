@@ -1,0 +1,406 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+/* Spaces: the Space name above Pinned, the switcher at the bottom of the sidebar, the editor
+ * panel, and the switch animation. Loaded with the layout sheets (HalcyonLayoutLogic
+ * STYLESHEETS); values come from halcyon-tokens.css. */
+
+/* ---- Colour change and grain ------------------------------------------------------------ */
+
+:root[halcyon-layout] {
+  transition:
+    --hx-space-hue var(--hx-duration-slow) var(--hx-ease-out),
+    --hx-space-hue-2 var(--hx-duration-slow) var(--hx-ease-out),
+    --hx-space-chroma var(--hx-duration-slow) var(--hx-ease-out);
+}
+
+@media not (forced-colors) {
+  :root[halcyon-layout][halcyon-grain]:not([lwtheme]) body {
+    background-image: url("halcyon-grain.svg"), var(--hx-backdrop);
+  }
+}
+
+/* ---- Space name above Pinned -------------------------------------------------------------- */
+
+#halcyon-space-header {
+  display: flex;
+  align-items: center;
+  gap: var(--hx-space-2);
+  margin: var(--hx-space-2) var(--hx-space-2) var(--hx-space-1);
+  padding-inline: var(--hx-space-1);
+  min-height: 28px;
+  color: var(--hx-text-muted);
+  font-size: var(--hx-font-small);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+
+  .halcyon-space-icon {
+    font-size: var(--hx-font-body);
+  }
+
+  .halcyon-space-name {
+    flex: 1;
+    min-width: 0;
+    text-align: start;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    appearance: none;
+    background: none;
+    border: none;
+    padding: var(--hx-space-1);
+    border-radius: var(--hx-radius-control);
+    color: inherit;
+    font: inherit;
+
+    &:hover {
+      background: var(--hx-hover);
+      color: var(--hx-text);
+    }
+  }
+
+  .halcyon-space-more {
+    appearance: none;
+    border: none;
+    width: 24px;
+    height: 24px;
+    border-radius: var(--hx-radius-control);
+    background: url("chrome://global/skin/icons/more.svg") center / 16px no-repeat;
+    -moz-context-properties: fill;
+    fill: currentColor;
+    opacity: 0;
+    transition: opacity var(--hx-duration-fast) var(--hx-ease-out);
+
+    &:hover {
+      background-color: var(--hx-hover);
+    }
+  }
+
+  &:hover .halcyon-space-more,
+  .halcyon-space-more:focus-visible {
+    opacity: 1;
+  }
+
+  /* Rail: just the icon (or nothing). */
+  #tabbrowser-tabs:not([expanded]) & {
+    justify-content: center;
+    margin-inline: 0;
+
+    .halcyon-space-name,
+    .halcyon-space-more {
+      display: none;
+    }
+  }
+}
+
+/* ---- Switcher at the bottom of the sidebar ------------------------------------------------ */
+
+#halcyon-space-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--hx-space-1);
+  padding: var(--hx-space-1) var(--hx-space-2) var(--hx-space-1);
+  flex-shrink: 0;
+
+  .halcyon-space-dots {
+    display: flex;
+    flex: 1;
+    justify-content: center;
+    gap: var(--hx-space-1);
+    min-width: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  button {
+    appearance: none;
+    border: none;
+    margin: 0;
+    padding: 0;
+    color: inherit;
+    font: inherit;
+  }
+
+  .halcyon-space-dot {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: transparent;
+
+    &::before {
+      content: "";
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--hx-dot, var(--hx-backdrop));
+      opacity: 0.55;
+      transition:
+        transform var(--hx-duration-fast) var(--hx-ease-spring),
+        opacity var(--hx-duration-fast) var(--hx-ease-out);
+      grid-area: 1 / 1;
+    }
+
+    &:hover {
+      background: var(--hx-hover);
+
+      &::before {
+        opacity: 0.9;
+      }
+    }
+
+    &[aria-selected="true"]::before {
+      opacity: 1;
+      transform: scale(1.35);
+      box-shadow: 0 0 0 2px var(--hx-surface-card);
+    }
+
+    /* A Space with an icon shows the icon instead of the dot. */
+    .halcyon-space-dot-icon:not(:empty) {
+      grid-area: 1 / 1;
+      font-size: 14px;
+      line-height: 1;
+      opacity: 0.7;
+    }
+
+    &:has(.halcyon-space-dot-icon:not(:empty))::before {
+      opacity: 0;
+    }
+
+    &[aria-selected="true"] .halcyon-space-dot-icon {
+      opacity: 1;
+    }
+
+    &[aria-selected="true"]:has(.halcyon-space-dot-icon:not(:empty)) {
+      background: var(--hx-selected);
+      box-shadow: var(--hx-shadow-selected);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--hx-focus-ring);
+      outline-offset: 1px;
+    }
+  }
+
+  .halcyon-space-add {
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+    border-radius: var(--hx-radius-control);
+    background: url("chrome://global/skin/icons/plus.svg") center / 16px no-repeat;
+    -moz-context-properties: fill;
+    fill: currentColor;
+    color: var(--hx-text-muted);
+
+    &:hover {
+      background-color: var(--hx-hover);
+    }
+  }
+
+  /* Rail: dots stack vertically. */
+  #vertical-tabs:has(#tabbrowser-tabs:not([expanded])) & {
+    flex-direction: column;
+    padding-inline: 0;
+
+    .halcyon-space-dots {
+      flex-direction: column;
+      overflow: visible;
+    }
+  }
+}
+
+/* ---- Switching animation: the tab list slides in from the side it came from --------------- */
+
+@keyframes halcyon-space-in-next {
+  from {
+    transform: translateX(24px);
+    opacity: 0;
+  }
+}
+
+@keyframes halcyon-space-in-prev {
+  from {
+    transform: translateX(-24px);
+    opacity: 0;
+  }
+}
+
+:root[halcyon-space-switch="next"] :is(#tabbrowser-arrowscrollbox, #halcyon-space-header) {
+  animation: halcyon-space-in-next var(--hx-duration-slow) var(--hx-ease-spring);
+}
+
+:root[halcyon-space-switch="prev"] :is(#tabbrowser-arrowscrollbox, #halcyon-space-header) {
+  animation: halcyon-space-in-prev var(--hx-duration-slow) var(--hx-ease-spring);
+}
+
+/* ---- Editor panel ------------------------------------------------------------------------ */
+
+#halcyon-space-editor {
+  --panel-padding: 0;
+
+  .hx-editor {
+    display: flex;
+    flex-direction: column;
+    gap: var(--hx-space-3);
+    width: 300px;
+    padding: var(--hx-space-4);
+    font-size: var(--hx-font-body);
+  }
+
+  .hx-title {
+    margin: 0;
+    font-size: var(--hx-font-large);
+    font-weight: 600;
+  }
+
+  .hx-field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--hx-space-1);
+  }
+
+  .hx-label {
+    font-size: var(--hx-font-small);
+    font-weight: 600;
+    opacity: 0.75;
+  }
+
+  .hx-check {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--hx-space-2);
+  }
+
+  input[type="text"],
+  select {
+    padding: 6px 8px;
+    border-radius: var(--hx-radius-control);
+    border: 1px solid var(--hx-divider);
+    background: Field;
+    color: FieldText;
+    font: inherit;
+  }
+
+  .hx-icon-choices {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: var(--hx-space-1);
+  }
+
+  .hx-icon-choice,
+  .hx-swatch {
+    appearance: none;
+    border: none;
+    border-radius: var(--hx-radius-control);
+    background: var(--hx-hover);
+    font-size: 16px;
+    height: 32px;
+
+    &:hover {
+      background: var(--hx-active);
+    }
+  }
+
+  .hx-color-row {
+    display: flex;
+    gap: var(--hx-space-3);
+    align-items: center;
+  }
+
+  .hx-wheel {
+    position: relative;
+    flex-shrink: 0;
+    width: 112px;
+    height: 112px;
+    border-radius: 50%;
+    background: conic-gradient(
+      oklch(0.75 0.13 0), oklch(0.75 0.13 60), oklch(0.75 0.13 120), oklch(0.75 0.13 180),
+      oklch(0.75 0.13 240), oklch(0.75 0.13 300), oklch(0.75 0.13 360)
+    );
+    cursor: crosshair;
+    touch-action: none;
+  }
+
+  .hx-wheel-center {
+    position: absolute;
+    inset: 28px;
+    border-radius: 50%;
+    background: var(--hx-current, var(--hx-backdrop));
+    box-shadow: 0 0 0 3px var(--hx-surface-card);
+  }
+
+  .hx-wheel-marker {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+
+    &::after {
+      content: "";
+      position: absolute;
+      top: 4px;
+      left: calc(50% - 7px);
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 3px solid white;
+      box-shadow: 0 1px 3px rgb(0 0 0 / 0.4);
+    }
+  }
+
+  .hx-swatches {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: var(--hx-space-1);
+    flex: 1;
+
+    .hx-swatch {
+      height: 24px;
+      border-radius: 50%;
+    }
+  }
+
+  .hx-hint {
+    margin: 0;
+    font-size: var(--hx-font-small);
+    opacity: 0.7;
+  }
+
+  .hx-actions {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--hx-space-2);
+    margin-top: var(--hx-space-1);
+
+    button {
+      padding: 6px 12px;
+      border-radius: var(--hx-radius-control);
+      border: 1px solid var(--hx-divider);
+      background: var(--hx-hover);
+      color: inherit;
+      font: inherit;
+    }
+
+    .hx-primary {
+      background: var(--hx-focus-ring);
+      border-color: transparent;
+      color: white;
+    }
+
+    .hx-danger {
+      color: light-dark(#b42318, #ff8a80);
+
+      &.hx-armed {
+        background: light-dark(#b42318, #ff8a80);
+        color: light-dark(white, black);
+      }
+
+      &:disabled {
+        opacity: 0.4;
+      }
+    }
+  }
+}

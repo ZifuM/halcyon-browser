@@ -9,7 +9,8 @@
 //   browser-before-ui-startup                init()                    copy-link button
 //   browser-window-before-initial-xul-layout beforeLayout(win)         stylesheets, before paint
 //   browser-window-domcontentloaded          onDOMContentLoaded(win)   top bar (first run),
-//                                                                       sections, compact mode
+//                                                                       sections, compact mode,
+//                                                                       Spaces (../spaces/)
 //
 // Everything is behind halcyon.layout.enabled; with it off, windows are stock Firefox.
 // Modules here import each other relatively and find their stylesheets next to themselves, so
@@ -18,11 +19,13 @@
 import { PREFS, STYLESHEETS } from "./HalcyonLayoutLogic.sys.mjs";
 import { HalcyonSections } from "./HalcyonSections.sys.mjs";
 import { HalcyonCompact } from "./HalcyonCompact.sys.mjs";
+import { HalcyonSpaces } from "../spaces/HalcyonSpaces.sys.mjs";
 
 const lazy = {};
 
 ChromeUtils.defineESModuleGetters(lazy, {
   CustomizableUI: "moz-src:///browser/components/customizableui/CustomizableUI.sys.mjs",
+  PrivateBrowsingUtils: "resource://gre/modules/PrivateBrowsingUtils.sys.mjs",
 });
 
 export const COPY_LINK_ID = "halcyon-copy-link-button";
@@ -175,7 +178,12 @@ export const HalcyonLayout = {
     } catch (e) {
       console.error("Halcyon layout: toolbar setup failed", e);
     }
-    const parts = { sections: new HalcyonSections(win), compact: new HalcyonCompact(win) };
+    const sections = new HalcyonSections(win);
+    const parts = { sections, compact: new HalcyonCompact(win) };
+    // Spaces (C4) need the sections; private windows don't get Spaces.
+    if (!lazy.PrivateBrowsingUtils.isWindowPrivate(win)) {
+      parts.spaces = new HalcyonSpaces(win, { sections });
+    }
     for (const part of Object.values(parts)) {
       try {
         part.init();

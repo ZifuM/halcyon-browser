@@ -22,6 +22,13 @@ class LayoutWiringTests(unittest.TestCase):
 
     def test_layout_dir_is_built(self):
         self.assertIn('"layout"', (ROOT / "src/browser/components/halcyon/moz.build").read_text())
+        self.assertIn('"spaces"', (ROOT / "src/browser/components/halcyon/moz.build").read_text())
+
+    def test_every_spaces_file_is_packaged(self):
+        spaces = ROOT / "src/browser/components/halcyon/spaces"
+        listed = set(re.findall(r'"([\w.-]+\.(?:sys\.mjs|css|svg))"', (spaces / "moz.build").read_text()))
+        present = {p.name for p in spaces.iterdir() if p.suffix in (".css", ".mjs", ".svg")}
+        self.assertEqual(listed, present)
 
     def test_window_hooks_are_registered(self):
         manifest = MANIFEST.read_text()
@@ -44,12 +51,12 @@ class LayoutWiringTests(unittest.TestCase):
     def test_modules_import_each_other_relatively(self):
         # The preview harness loads them from resource://, so absolute moz-src imports of our
         # own layout modules would break it.
-        for path in LAYOUT.glob("*.sys.mjs"):
+        for path in [*LAYOUT.glob("*.sys.mjs"), *(LAYOUT.parent / "spaces").glob("*.sys.mjs")]:
             text = path.read_text()
-            self.assertNotRegex(text, r'from "moz-src:///browser/components/halcyon/layout/', path.name)
+            self.assertNotRegex(text, r'from "moz-src:///browser/components/halcyon/(layout|spaces)/', path.name)
 
     def test_layout_prefs_are_declared(self):
-        logic = (LAYOUT / "HalcyonLayoutLogic.sys.mjs").read_text()
+        logic = (LAYOUT / "HalcyonLayoutLogic.sys.mjs").read_text() + (LAYOUT.parent / "spaces/HalcyonSpacesLogic.sys.mjs").read_text()
         names = re.findall(r'"(halcyon\.[\w.]+)"', logic)
         declared = set()
         for f in (ROOT / "prefs").glob("*.toml"):

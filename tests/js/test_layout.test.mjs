@@ -131,6 +131,7 @@ test("RevealState: parts are independent; reset hides everything now", () => {
 // ---- Pinned / Today controller (fake tab strip) ----------------------------------------------
 
 class FakeTab {
+  dispatchEvent() {}
   constructor(name, { pinned = false } = {}) {
     this.label = name;
     this.pinned = pinned;
@@ -208,6 +209,12 @@ function makeWindow(names, essentials = 0) {
     gBrowser,
     document: { getElementById: () => null },
     setTimeout: (fn, ms) => setTimeout(fn, ms),
+    CustomEvent: class {
+      constructor(type, init) {
+        this.type = type;
+        this.detail = init?.detail;
+      }
+    },
   };
   return { win, gBrowser, tabs, tabContainer };
 }
@@ -352,7 +359,7 @@ test("only transform and opacity are animated", () => {
       for (const part of value.split(",")) {
         const prop = part.trim().split(/\s+/)[0];
         assert.ok(
-          ["transform", "opacity", "background-color"].includes(prop),
+          ["transform", "opacity", "background-color"].includes(prop) || prop.startsWith("--hx-space-"),
           `${file} animates ${prop}; only transform/opacity (and colour fades) keep motion on the compositor`
         );
       }
@@ -361,9 +368,10 @@ test("only transform and opacity are animated", () => {
 });
 
 test("stylesheets listed in the logic module exist and are packaged", () => {
-  const mozbuild = fs.readFileSync(path.join(LAYOUT_DIR, "moz.build"), "utf8");
   for (const file of Logic.STYLESHEETS) {
-    assert.ok(fs.existsSync(path.join(LAYOUT_DIR, file)), file);
-    assert.ok(mozbuild.includes(`"${file}"`), `${file} missing from layout/moz.build`);
+    const full = path.join(LAYOUT_DIR, file);
+    assert.ok(fs.existsSync(full), file);
+    const mozbuild = fs.readFileSync(path.join(path.dirname(full), "moz.build"), "utf8");
+    assert.ok(mozbuild.includes(`"${path.basename(full)}"`), `${file} missing from its moz.build`);
   }
 });

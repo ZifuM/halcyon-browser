@@ -50,3 +50,15 @@ name = "halcyon.tabs.newTabPosition"
 value = "top"
 why = "New tabs open at the top of Today, under + New Tab (as in Arc). Set to \"firefox\" for Firefox's placement (after the current tab or at the end)."
 own = true
+
+[[pref]]
+name = "halcyon.spaces"
+value = ""
+why = "Your Spaces (names, icons, colours, containers, pinned tabs, Essentials) as JSON. Edited through the Space editor; empty means one default Space."
+own = true
+
+[[pref]]
+name = "services.sync.prefs.sync.halcyon.spaces"
+value = true
+why = "Firefox Sync carries your Spaces to your other devices (only if you sign in and keep Settings syncing). End-to-end encrypted."
+own = true
