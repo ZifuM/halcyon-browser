@@ -6,9 +6,10 @@
 //
 // Wired in through browser-window categories (halcyon.manifest), so Firefox's files stay
 // unpatched:
-//   browser-before-ui-startup               init()               copy-link button, toolbar setup
-//   browser-window-before-initial-xul-layout beforeLayout(win)   stylesheets, before first paint
-//   browser-window-domcontentloaded          onDOMContentLoaded(win)  sections, compact mode
+//   browser-before-ui-startup                init()                    copy-link button
+//   browser-window-before-initial-xul-layout beforeLayout(win)         stylesheets, before paint
+//   browser-window-domcontentloaded          onDOMContentLoaded(win)   sections, compact mode
+//   browser-window-delayed-startup           onDelayedStartup(win)     first-run toolbar setup
 //
 // Everything is behind halcyon.layout.enabled; with it off, windows are stock Firefox.
 // Modules here import each other relatively and find their stylesheets next to themselves, so
@@ -58,9 +59,8 @@ export const HalcyonLayout = {
     }
     try {
       this._createCopyLinkWidget();
-      this._setUpToolbarOnce();
     } catch (e) {
-      console.error("Halcyon layout: toolbar setup failed", e);
+      console.error("Halcyon layout: copy-link button failed", e);
     }
   },
 
@@ -74,12 +74,26 @@ export const HalcyonLayout = {
       type: "button",
       label: STRINGS.copyLink,
       tooltiptext: STRINGS.copyLinkTooltip,
-      defaultArea: CUI.AREA_NAVBAR,
+      // No defaultArea: CustomizableUI is still settling the toolbars this early (vertical
+      // tabs move widgets around), so the button is placed once the first window is up.
       onCommand(event) {
         const win = event.target.ownerGlobal;
         HalcyonLayout.copyCurrentLink(win, event.target);
       },
     });
+  },
+
+  // ---- browser-window-delayed-startup -----------------------------------------------------
+
+  onDelayedStartup(win) {
+    if (!this.appliesTo(win)) {
+      return;
+    }
+    try {
+      this._setUpToolbarOnce();
+    } catch (e) {
+      console.error("Halcyon layout: toolbar setup failed", e);
+    }
   },
 
   /** First run only: put copy-link right after the address, drop the account button. */

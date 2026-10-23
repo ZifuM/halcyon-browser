@@ -11,3 +11,4 @@ category browser-idle-startup moz-src:///browser/components/halcyon/shield/Shiel
 category browser-before-ui-startup moz-src:///browser/components/halcyon/layout/HalcyonLayout.sys.mjs HalcyonLayout.init
 category browser-window-before-initial-xul-layout moz-src:///browser/components/halcyon/layout/HalcyonLayout.sys.mjs HalcyonLayout.beforeLayout
 category browser-window-domcontentloaded moz-src:///browser/components/halcyon/layout/HalcyonLayout.sys.mjs HalcyonLayout.onDOMContentLoaded
+category browser-window-delayed-startup moz-src:///browser/components/halcyon/layout/HalcyonLayout.sys.mjs HalcyonLayout.onDelayedStartup

@@ -43,10 +43,21 @@ export const PreviewScenario = {
         }
       },
     });
+    // console.error() from modules arrives here, not through the console service.
+    Services.obs.addObserver(subject => {
+      const msg = subject.wrappedJSObject;
+      if (msg?.level == "error" || msg?.level == "warn") {
+        const text = (msg.arguments || []).map(a => (a?.stack ? `${a}\n${a.stack}` : String(a))).join(" ");
+        if (/halcyon/i.test(text) || /halcyon/i.test(msg.filename || "")) {
+          log(`[console.${msg.level}] ${text} (${msg.filename}:${msg.lineNumber})`);
+        }
+      }
+    }, "console-api-log-event");
     for (const [category, method] of [
       ["browser-before-ui-startup", "HalcyonLayout.init"],
       ["browser-window-before-initial-xul-layout", "HalcyonLayout.beforeLayout"],
       ["browser-window-domcontentloaded", "HalcyonLayout.onDOMContentLoaded"],
+      ["browser-window-delayed-startup", "HalcyonLayout.onDelayedStartup"],
     ]) {
       Services.catMan.addCategoryEntry(category, LAYOUT, method, false, true);
     }
@@ -126,6 +137,9 @@ async function runScenario(win) {
       width: Math.round(el.getBoundingClientRect().width),
     })),
     copyLinkWidget: !!CustomizableUI.getWidget("halcyon-copy-link-button")?.provider,
+    copyLinkAfterUrlbar:
+      CustomizableUI.getWidgetIdsInArea("nav-bar").indexOf("halcyon-copy-link-button") ==
+      CustomizableUI.getWidgetIdsInArea("nav-bar").indexOf("urlbar-container") + 1,
     toolbarSetupDone: Services.prefs.getBoolPref("halcyon.layout.toolbarSetupDone", false),
   });
 

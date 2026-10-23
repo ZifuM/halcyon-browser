@@ -167,10 +167,18 @@ def main() -> int:
     if new_tab.exists():
         data = json.loads(new_tab.read_text())
         checks.append(("+ New Tab opens at the top of Today", data["index"] == data["expected"]))
+    toolbar = out / "toolbar.json"
+    if toolbar.exists():
+        data = json.loads(toolbar.read_text())
+        placed = data["placements"]
+        checks.append(("Copy-link button sits right after the address", data.get("copyLinkAfterUrlbar") is True))
+        for widget in ("sidebar-button", "back-button", "forward-button", "stop-reload-button", "urlbar-container"):
+            checks.append((f"top bar keeps {widget}", widget in placed))
     errors = []
     if (out / "console.log").exists():
         errors = [l for l in (out / "console.log").read_text().splitlines()
-                  if "halcyon" in l.lower() or "[scenario]" in l]
+                  if ("halcyon" in l.lower() or "[scenario]" in l)
+                  and "first window ready" not in l and "addons.xpi" not in l]
 
     if not (out / "started").exists():
         status += " (autoconfig never ran: check defaults/pref/autoconfig.js and the .cfg)"
