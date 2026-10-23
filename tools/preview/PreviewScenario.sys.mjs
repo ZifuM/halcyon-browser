@@ -95,7 +95,8 @@ async function runScenario(win) {
   for (const tab of essentials) {
     gBrowser.pinTab(tab);
   }
-  const today = ["news", "recipes", "weather", "code"].map(p => open(`${p}.html`));
+  // New tabs open at the top of Today, so open them oldest first.
+  const today = ["code", "weather", "recipes", "news"].map(p => open(`${p}.html`)).reverse();
   const pinned = ["docs", "design", "roadmap"].map(p => open(`${p}.html`));
   for (const tab of pinned) {
     layout.sections.setPinned(tab, true);
@@ -113,13 +114,28 @@ async function runScenario(win) {
     })),
   });
 
+  const { CustomizableUI } = ChromeUtils.importESModule(
+    "moz-src:///browser/components/customizableui/CustomizableUI.sys.mjs"
+  );
+  const navbar = win.document.getElementById("nav-bar-customization-target");
+  await report("toolbar", {
+    placements: CustomizableUI.getWidgetIdsInArea("nav-bar"),
+    rendered: [...navbar.children].map(el => ({
+      id: el.id,
+      hidden: el.hidden || el.collapsed,
+      width: Math.round(el.getBoundingClientRect().width),
+    })),
+    copyLinkWidget: !!CustomizableUI.getWidget("halcyon-copy-link-button")?.provider,
+    toolbarSetupDone: Services.prefs.getBoolPref("halcyon.layout.toolbarSetupDone", false),
+  });
+
   await shot("01-expanded-light");
 
   // New tab from "+ New Tab": lands at the top of Today.
   win.BrowserCommands.openTab();
   await sleep(1200);
   await report("new-tab", {
-    index: gBrowser.selectedTab._tPos,
+    index: gBrowser.tabs.indexOf(gBrowser.selectedTab),
     expected: gBrowser.pinnedTabCount + pinned.length,
   });
   gBrowser.removeTab(gBrowser.selectedTab);
@@ -155,7 +171,17 @@ async function runScenario(win) {
   const menu = win.document.getElementById("tabContextMenu");
   const shown = new Promise(resolve => menu.addEventListener("popupshown", resolve, { once: true }));
   const rect = today[1].getBoundingClientRect();
-  win.windowUtils.sendMouseEvent("contextmenu", rect.left + 40, rect.top + rect.height / 2, 2, 1, 0);
+  today[1].dispatchEvent(
+    new win.MouseEvent("contextmenu", {
+      bubbles: true,
+      cancelable: true,
+      button: 2,
+      clientX: rect.left + 40,
+      clientY: rect.top + rect.height / 2,
+      screenX: win.mozInnerScreenX + rect.left + 40,
+      screenY: win.mozInnerScreenY + rect.top + rect.height / 2,
+    })
+  );
   await Promise.race([shown, sleep(3000)]);
   if (menu.state != "open") {
     log("[scenario] context menu did not open from a synthesized click");

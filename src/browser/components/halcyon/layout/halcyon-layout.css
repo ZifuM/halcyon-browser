@@ -153,11 +153,8 @@
         background-color: var(--hx-tile-hover);
       }
 
-      .tab-icon-image,
-      .tab-throbber,
-      .tab-icon-pending {
-        width: 20px;
-        height: 20px;
+      .tabbrowser-tab {
+        --icon-size: 20px;
       }
     }
   }
@@ -254,7 +251,10 @@
 
 :root[halcyon-layout] #tabbrowser-tabs[orient="vertical"]:not([expanded]) {
   #tabbrowser-arrowscrollbox-periphery {
-    border-top-color: transparent;
-    margin-inline: 0;
+    margin-inline: var(--hx-space-2);
+
+    > #tabs-newtab-button {
+      margin-inline: calc(var(--tab-margin-inline-inner) - var(--hx-space-2));
+    }
   }
 }
