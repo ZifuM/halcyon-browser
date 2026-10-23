@@ -227,9 +227,16 @@
     padding-block: var(--hx-space-1);
   }
 
+  /* The address and the copy-link button next to it are centred as a pair: free space goes
+   * before the address and after the button. */
   #urlbar-container {
     flex: 0 1 var(--hx-urlbar-width, 680px);
-    margin-inline: auto;
+    margin-inline-start: auto;
+  }
+
+  #urlbar-container + #halcyon-copy-link-button,
+  #urlbar-container:not(:has(+ #halcyon-copy-link-button)) {
+    margin-inline-end: auto;
   }
 
   #vertical-spacer {
@@ -266,4 +273,10 @@
       margin-inline: calc(var(--tab-margin-inline-inner) - var(--hx-space-2));
     }
   }
+}
+
+/* ---- Tab menu --------------------------------------------------------------------------------
+ * Firefox's Pin/Unpin items are replaced by "Add to Essentials" (HalcyonSections). */
+:root[halcyon-layout] :is(#context_pinTab, #context_unpinTab, #context_pinSelectedTabs, #context_unpinSelectedTabs) {
+  display: none;
 }

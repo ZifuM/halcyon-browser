@@ -196,6 +196,13 @@ async function runScenario(win) {
     log("[scenario] context menu did not open from a synthesized click");
   }
   await sleep(500);
+  await report("tab-menu", {
+    open: menu.state == "open",
+    items: [...menu.children]
+      .filter(el => el.localName == "menuitem" || el.localName == "menu")
+      .filter(el => !el.hidden && win.getComputedStyle(el).display != "none")
+      .map(el => ({ id: el.id, label: el.label })),
+  });
   await shot("07-tab-menu");
   menu.hidePopup();
 

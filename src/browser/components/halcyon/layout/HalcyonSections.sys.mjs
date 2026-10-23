@@ -30,6 +30,7 @@ ChromeUtils.defineESModuleGetters(lazy, {
 });
 
 const MENU_ID = "halcyon-context-pin-to-sidebar";
+const ESSENTIALS_MENU_ID = "halcyon-context-essentials";
 
 export const STRINGS = Object.freeze({
   pin: "Pin to Sidebar",
@@ -326,46 +327,57 @@ export class HalcyonSections {
     if (!this.menu || doc.getElementById(MENU_ID)) {
       return;
     }
-    const item = doc.createXULElement("menuitem");
-    item.id = MENU_ID;
-    item.setAttribute("label", STRINGS.pin);
-    item.addEventListener("command", () => {
-      const tab = this.win.TabContextMenu?.contextTab;
-      if (tab) {
-        this.togglePinned(tab);
-      }
-    });
+    const make = (id, onCommand) => {
+      const item = doc.createXULElement("menuitem");
+      item.id = id;
+      item.addEventListener("command", () => {
+        const tab = this.win.TabContextMenu?.contextTab;
+        if (tab) {
+          onCommand(tab);
+        }
+      });
+      return item;
+    };
+    const pinItem = make(MENU_ID, tab => this.togglePinned(tab));
+    // Firefox's pinned tabs are the Essentials here. Its own Pin/Unpin items are hidden by
+    // halcyon-layout.css and replaced by this one, worded for Essentials.
+    const essentialsItem = make(ESSENTIALS_MENU_ID, tab => this.toggleEssential(tab));
     const anchor = doc.getElementById("context_pinTab");
     if (anchor) {
-      anchor.before(item);
+      anchor.before(pinItem, essentialsItem);
     } else {
-      this.menu.prepend(item);
+      this.menu.prepend(pinItem, essentialsItem);
     }
     this.menu.addEventListener("popupshowing", this.handleEvent);
+  }
 
-    // Firefox's pinned tabs are the Essentials here; say so.
-    for (const [id, label] of [
-      ["context_pinTab", STRINGS.addEssential],
-      ["context_unpinTab", STRINGS.removeEssential],
-      ["context_pinSelectedTabs", STRINGS.addEssential],
-      ["context_unpinSelectedTabs", STRINGS.removeEssential],
-    ]) {
-      const node = doc.getElementById(id);
-      if (node) {
-        node.removeAttribute("data-l10n-id");
-        node.setAttribute("label", label);
+  /** Add the tab (or the selected tabs) to Essentials, or take it out. */
+  toggleEssential(tab) {
+    const gBrowser = this.gBrowser;
+    if (tab.multiselected) {
+      if (tab.pinned) {
+        gBrowser.unpinMultiSelectedTabs();
+      } else {
+        gBrowser.pinMultiSelectedTabs();
       }
+    } else if (tab.pinned) {
+      gBrowser.unpinTab(tab);
+    } else {
+      gBrowser.pinTab(tab);
     }
   }
 
   _onContextMenu() {
-    const item = this.win.document.getElementById(MENU_ID);
+    const doc = this.win.document;
+    const item = doc.getElementById(MENU_ID);
+    const essentials = doc.getElementById(ESSENTIALS_MENU_ID);
     const tab = this.win.TabContextMenu?.contextTab;
-    if (!item || !tab) {
+    if (!item || !essentials || !tab) {
       return;
     }
     const pinned = this.isPinned(tab);
-    item.hidden = !pinned && !canPinToSidebar(tab);
+    item.hidden = tab.multiselected || (!pinned && !canPinToSidebar(tab));
     item.setAttribute("label", pinned ? STRINGS.unpin : STRINGS.pin);
+    essentials.setAttribute("label", tab.pinned ? STRINGS.removeEssential : STRINGS.addEssential);
   }
 }

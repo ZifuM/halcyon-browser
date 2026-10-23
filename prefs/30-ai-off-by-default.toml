@@ -27,6 +27,21 @@ value = false
 why = "No AI chatbot sidebar."
 
 [[pref]]
+name = "browser.ml.chat.page"
+value = false
+why = "No \"Ask an AI chatbot\" item in the page and tab menus. Firefox gates it on this, not on the chatbot switch above (found by the UI preview)."
+
+[[pref]]
+name = "browser.ml.chat.menu"
+value = false
+why = "No AI chatbot prompts in menus before a provider is chosen."
+
+[[pref]]
+name = "browser.ml.chat.shortcuts"
+value = false
+why = "No AI shortcut button popping up over selected text."
+
+[[pref]]
 name = "browser.ml.linkPreview.enabled"
 value = false
 why = "No AI key-points in link previews."

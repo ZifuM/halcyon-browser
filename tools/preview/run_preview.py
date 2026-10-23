@@ -178,6 +178,15 @@ def main() -> int:
                        [w for w in placed if w in expected] == expected))
         checks.append(("No AI or sign-in buttons in the top bar",
                        not {"ai-window-toggle", "smartwindow-group-tabs-button", "fxa-toolbar-menu-button"} & set(placed)))
+    tab_menu = out / "tab-menu.json"
+    if tab_menu.exists():
+        data = json.loads(tab_menu.read_text())
+        ids = [i["id"] for i in data["items"]]
+        labels = [i["label"] for i in data["items"]]
+        checks.append(("Tab menu opened", data["open"]))
+        checks.append(("Tab menu has no AI chatbot item", "context_askChat" not in ids))
+        checks.append(("Tab menu offers Pin to Sidebar and Add to Essentials",
+                       "Pin to Sidebar" in labels and "Add to Essentials" in labels and "Pin Tab" not in labels))
     errors = []
     if (out / "console.log").exists():
         errors = [l for l in (out / "console.log").read_text().splitlines()
