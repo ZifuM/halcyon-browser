@@ -1,0 +1,2 @@
+# macOS (Apple Silicon or Intel host). The macOS SDK and clang come from `hx bootstrap`.
+# Universal builds are produced in CI by building both targets and merging.

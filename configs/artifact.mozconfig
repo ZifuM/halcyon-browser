@@ -1,0 +1,4 @@
+# UI-only development (sidebar, Spaces, CSS, JS): skips compiling C++/Rust entirely by downloading
+# Mozilla's prebuilt binaries for this exact Firefox version. Builds in minutes, not hours.
+# Never ship these: Rust/C++ changes (Shield engine, Omni index...) are not included.
+ac_add_options --enable-artifact-builds

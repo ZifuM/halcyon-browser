@@ -1,0 +1,122 @@
+# Strict tracking protection, as Mozilla defines "strict" in Firefox 158
+# (browser.contentblocking.features.strict). Each protection is set individually because Firefox
+# derives the category from these prefs at startup; setting only the category would be
+# overwritten back to "standard". Users can pick Standard or Custom in Settings.
+
+[meta]
+title = "Strict tracking protection and privacy defaults"
+
+[[pref]]
+name = "privacy.trackingprotection.enabled"
+value = true
+why = "Block known trackers in all windows (strict: tp)."
+
+[[pref]]
+name = "privacy.trackingprotection.pbmode.enabled"
+value = true
+why = "Block trackers in private windows (strict: tpPrivate)."
+
+[[pref]]
+name = "network.cookie.cookieBehavior"
+value = 5
+why = "Total Cookie Protection: partition third-party cookies per site (strict: cookieBehavior5)."
+
+[[pref]]
+name = "network.cookie.cookieBehavior.pbmode"
+value = 5
+why = "Total Cookie Protection in private windows (strict: cookieBehaviorPBM5)."
+
+[[pref]]
+name = "privacy.trackingprotection.cryptomining.enabled"
+value = true
+why = "Block cryptominers (strict: cryptoTP)."
+
+[[pref]]
+name = "privacy.trackingprotection.fingerprinting.enabled"
+value = true
+why = "Block known fingerprinters (strict: fp)."
+
+[[pref]]
+name = "privacy.trackingprotection.socialtracking.enabled"
+value = true
+why = "Block social-media trackers (strict: stp)."
+
+[[pref]]
+name = "privacy.trackingprotection.emailtracking.enabled"
+value = true
+why = "Block email tracking pixels (strict: emailTP)."
+
+[[pref]]
+name = "privacy.trackingprotection.emailtracking.pbmode.enabled"
+value = true
+why = "Block email trackers in private windows (strict: emailTPPrivate)."
+
+[[pref]]
+name = "privacy.trackingprotection.consentmanager.skip.enabled"
+value = false
+why = "Strict mode does not exempt consent-manager scripts (strict: -consentmanagerSkip)."
+
+[[pref]]
+name = "privacy.trackingprotection.consentmanager.skip.pbmode.enabled"
+value = false
+why = "Same in private windows (strict: -consentmanagerSkipPrivate)."
+
+[[pref]]
+name = "privacy.annotate_channels.strict_list.enabled"
+value = true
+why = "Use the stricter level-2 tracker list (strict: lvl2)."
+
+[[pref]]
+name = "network.http.referer.disallowCrossSiteRelaxingDefault"
+value = true
+why = "Sites can't loosen the referrer policy for cross-site requests (strict: rp)."
+
+[[pref]]
+name = "network.http.referer.disallowCrossSiteRelaxingDefault.top_navigation"
+value = true
+why = "Same for top-level navigations (strict: rpTop)."
+
+[[pref]]
+name = "privacy.query_stripping.enabled"
+value = true
+why = "Strip known tracking parameters from URLs (strict: qps)."
+
+[[pref]]
+name = "privacy.query_stripping.enabled.pbmode"
+value = true
+why = "Same in private windows (strict: qpsPBM)."
+
+[[pref]]
+name = "privacy.fingerprintingProtection"
+value = true
+why = "Firefox's fingerprinting protection (not full resistFingerprinting, which breaks sites) (strict: fpp)."
+
+[[pref]]
+name = "privacy.fingerprintingProtection.pbmode"
+value = true
+why = "Same in private windows (strict: fppPrivate)."
+
+[[pref]]
+name = "privacy.bounceTrackingProtection.mode"
+value = 1
+why = "Bounce-tracking protection fully enabled: MODE_ENABLED (strict: btp)."
+
+[[pref]]
+name = "network.lna.blocking"
+value = true
+why = "Websites can't reach devices on your local network without permission (strict: lna)."
+
+[[pref]]
+name = "privacy.globalprivacycontrol.enabled"
+value = true
+why = "Send the Global Privacy Control signal: tells sites not to sell or share your data."
+
+[[pref]]
+name = "dom.security.https_only_mode"
+value = true
+why = "HTTPS-Only: upgrade every connection, warn before loading a site over plain HTTP."
+
+[[pref]]
+name = "media.peerconnection.ice.default_address_only"
+value = true
+why = "WebRTC exposes only the default route, not every local IP address."

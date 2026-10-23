@@ -1,0 +1,24 @@
+# Single source of truth for the project's identity and upstream base.
+# Renaming the browser = editing [identity] and re-running `hx import`.
+
+[identity]
+name = "Halcyon"                 # Display name (placeholder, not final)
+app_name = "halcyon"             # Binary / package name: lowercase, no spaces
+vendor = "Halcyon"               # Shown in About and installer
+bundle_id = "app.halcyon.browser" # macOS bundle identifier (reverse DNS)
+homepage = "https://halcyon.invalid"
+
+[version]
+display = "0.1.0"                # Halcyon's own version, shown as "0.1.0 (Firefox 158.0.1)"
+
+[upstream]
+firefox = "158.0.1"              # Firefox Release this build is based on
+repo = "https://github.com/mozilla-firefox/firefox.git"
+channel = "release"              # release only; ESR is deliberately not used
+
+[policy]
+# Patch discipline: maximum number of upstream files we may modify.
+# New files go in src/ (no budget cost). Raising this needs a written reason in docs/PATCHES.md.
+patch_budget = 60
+# Hours allowed between a Firefox security release and our matching release.
+security_sla_hours = 72

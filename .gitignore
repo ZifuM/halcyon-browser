@@ -1,0 +1,14 @@
+# Firefox source, downloaded by `hx download`
+/engine/
+
+# Python
+__pycache__/
+*.pyc
+
+# Editors / OS
+.DS_Store
+.idea/
+.vscode/
+
+# CI caches
+/.sccache/

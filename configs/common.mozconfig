@@ -1,0 +1,21 @@
+# Shared by every build. Values in double braces are filled in from project.toml.
+ac_add_options --enable-application=browser
+ac_add_options --with-app-name={{APP_NAME}}
+ac_add_options --with-app-basename={{NAME}}
+ac_add_options --with-branding={{BRANDING_DIR}}
+ac_add_options --with-distribution-id={{DISTRIBUTION_ID}}
+ac_add_options --enable-update-channel=release
+
+# Ownership promise: nothing phones home that the user didn't choose.
+# - Telemetry upload is compiled out: MOZ_TELEMETRY_REPORTING defaults off unless MOZILLA_OFFICIAL
+#   is set, and we never set it. Normandy (remote experiments) is removed by
+#   patches/browser/moz.configure.patch.
+# - Mozilla's updater is off until our own signed update server lands (cycle C1).
+# - The crash reporter is off until opt-in, ask-every-crash reporting exists.
+# - The Windows "default browser agent" (a scheduled task that reports to Mozilla) is never built.
+ac_add_options --disable-updater
+ac_add_options --disable-crashreporter
+ac_add_options --disable-default-browser-agent
+ac_add_options --disable-tests
+
+mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/obj-{{APP_NAME}}

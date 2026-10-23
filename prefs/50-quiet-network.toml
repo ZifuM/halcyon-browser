@@ -1,0 +1,50 @@
+# The browser makes no connections the user didn't ask for. Each request we turn off here is
+# listed in docs/EVERY-REQUEST.md with how to turn it back on.
+
+[meta]
+title = "No unrequested network connections"
+
+[[pref]]
+name = "network.prefetch-next"
+value = false
+why = "Don't fetch pages a site merely hints you might visit next."
+
+[[pref]]
+name = "network.dns.disablePrefetch"
+value = true
+why = "Don't resolve every link on a page before you click it."
+
+[[pref]]
+name = "network.http.speculative-parallel-limit"
+value = 0
+why = "No speculative connections when hovering links."
+
+[[pref]]
+name = "browser.places.speculativeConnect.enabled"
+value = false
+why = "No speculative connections to history/bookmark results."
+
+[[pref]]
+name = "browser.urlbar.speculativeConnect.enabled"
+value = false
+why = "No connections to address-bar suggestions while typing."
+
+[[pref]]
+name = "network.captive-portal-service.enabled"
+value = false
+why = "No background checks to a Mozilla server for Wi-Fi login pages. Re-enable in about:config if you use hotel or airport Wi-Fi often."
+
+[[pref]]
+name = "network.connectivity-service.enabled"
+value = false
+why = "No background connectivity checks to a Mozilla server."
+
+[[pref]]
+name = "browser.region.update.enabled"
+value = false
+why = "Don't look up your region from a Mozilla server."
+
+[[pref]]
+name = "browser.region.network.url"
+value = ""
+why = "No region-lookup endpoint."

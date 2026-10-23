@@ -1,0 +1,156 @@
+# Ownership promise #1 (no nagging) and #4 (no ads or promotions).
+
+[meta]
+title = "No ads, promotions or nagging"
+
+[[pref]]
+name = "browser.shell.checkDefaultBrowser"
+value = false
+why = "Never nag to become the default browser. Onboarding will ask once, then never again."
+
+[[pref]]
+name = "browser.newtabpage.activity-stream.showSponsored"
+value = false
+why = "No sponsored stories on the new tab page."
+upstream = "browser/extensions/newtab/lib/ActivityStream.sys.mjs"
+match = "showSponsored"
+
+[[pref]]
+name = "browser.newtabpage.activity-stream.showSponsoredTopSites"
+value = false
+why = "No sponsored shortcut tiles."
+upstream = "browser/extensions/newtab/lib/ActivityStream.sys.mjs"
+match = "showSponsoredTopSites"
+
+[[pref]]
+name = "browser.newtabpage.activity-stream.system.showSponsored"
+value = false
+why = "System-level switch for sponsored new-tab content."
+upstream = "browser/extensions/newtab/lib/ActivityStream.sys.mjs"
+match = "system.showSponsored"
+
+[[pref]]
+name = "browser.newtabpage.activity-stream.feeds.section.topstories"
+value = false
+why = "No recommended-stories feed (fetched from a Mozilla server)."
+upstream = "browser/extensions/newtab/lib/ActivityStream.sys.mjs"
+match = "feeds.section.topstories"
+
+[[pref]]
+name = "browser.newtabpage.activity-stream.default.sites"
+value = ""
+why = "No pre-filled partner shortcuts on the new tab page."
+upstream = "browser/extensions/newtab/lib/ActivityStream.sys.mjs"
+match = "default.sites"
+
+[[pref]]
+name = "browser.newtabpage.activity-stream.discoverystream.enabled"
+value = false
+why = "No Discovery Stream content service."
+
+[[pref]]
+name = "browser.newtabpage.activity-stream.showWeather"
+value = false
+why = "Weather widget fetches from a Mozilla service; off until the user turns it on."
+
+[[pref]]
+name = "browser.topsites.contile.enabled"
+value = false
+why = "No sponsored-tile service."
+
+[[pref]]
+name = "browser.urlbar.quicksuggest.enabled"
+value = false
+why = "Pin Firefox Suggest off so it can't be enabled remotely or by a future default change."
+
+[[pref]]
+name = "browser.urlbar.suggest.quicksuggest.sponsored"
+value = false
+why = "No sponsored suggestions in the address bar."
+
+[[pref]]
+name = "browser.urlbar.suggest.quicksuggest.nonsponsored"
+value = false
+why = "No partner (non-sponsored) Suggest results."
+
+[[pref]]
+name = "browser.urlbar.trending.featureGate"
+value = false
+why = "No trending searches in the address bar."
+
+[[pref]]
+name = "browser.urlbar.weather.featureGate"
+value = false
+why = "No weather results from a Mozilla service in the address bar."
+
+[[pref]]
+name = "browser.urlbar.yelp.featureGate"
+value = false
+why = "No partner (Yelp) suggestions."
+
+[[pref]]
+name = "browser.urlbar.addons.featureGate"
+value = false
+why = "No add-on recommendations in the address bar."
+
+[[pref]]
+name = "browser.urlbar.mdn.featureGate"
+value = false
+why = "No partner (MDN) suggestion service."
+
+[[pref]]
+name = "browser.newtabpage.activity-stream.asrouter.userprefs.cfr.addons"
+value = false
+why = "No 'recommended extension' pop-ups while browsing."
+
+[[pref]]
+name = "browser.newtabpage.activity-stream.asrouter.userprefs.cfr.features"
+value = false
+why = "No 'recommended feature' pop-ups while browsing."
+
+[[pref]]
+name = "browser.discovery.enabled"
+value = false
+why = "No personalised extension recommendations in the add-ons manager."
+
+[[pref]]
+name = "extensions.htmlaboutaddons.recommendations.enabled"
+value = false
+why = "No recommendation cards in about:addons."
+
+[[pref]]
+name = "extensions.getAddons.showPane"
+value = false
+why = "Hide the 'Recommendations' pane in about:addons."
+upstream = "toolkit/mozapps/extensions/content/aboutaddons-utils.mjs"
+
+[[pref]]
+name = "browser.vpn_promo.enabled"
+value = false
+why = "No VPN promotions."
+
+[[pref]]
+name = "browser.promo.pin.enabled"
+value = false
+why = "No 'pin to taskbar' promotion."
+
+[[pref]]
+name = "browser.preferences.moreFromMozilla"
+value = false
+why = "No 'More from Mozilla' product pane in settings."
+
+[[pref]]
+name = "signon.firefoxRelay.feature"
+value = "disabled"
+why = "Don't offer Firefox Relay in password fields. Users can enable it in settings."
+
+[[pref]]
+name = "browser.uitour.enabled"
+value = false
+why = "Web pages (mozilla.org tours) can't drive the browser UI."
+
+[[pref]]
+name = "browser.startup.homepage_override.mstone"
+value = "ignore"
+why = "No 'what's new' page after updates."
+upstream = "browser/components/BrowserContentHandler.sys.mjs"

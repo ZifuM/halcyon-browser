@@ -1,0 +1,117 @@
+# Full browser builds on all three platforms. Manual trigger, on version tags, and weekly.
+#
+# Runner sizing: standard GitHub-hosted runners can finish a `dev` build (~2-4 h; faster once the
+# sccache cache is warm). `release` (PGO + LTO) needs a larger runner or a self-hosted machine:
+# set the `linux_runner` / `macos_runner` / `windows_runner` inputs or repository variables.
+name: build
+
+on:
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: "Build profile"
+        type: choice
+        options: [dev, release]
+        default: dev
+  push:
+    tags: ["v*"]
+  schedule:
+    - cron: "0 15 * * 6"   # weekly smoke build
+
+permissions:
+  contents: read
+
+env:
+  PROFILE: ${{ inputs.profile || (startsWith(github.ref, 'refs/tags/v') && 'release') || 'dev' }}
+  SCCACHE_DIR: ${{ github.workspace }}/.sccache
+  SCCACHE_CACHE_SIZE: 8G
+  HX_MOZCONFIG_EXTRA: "ac_add_options --with-ccache=sccache"
+
+jobs:
+  linux:
+    runs-on: ${{ vars.LINUX_RUNNER || 'ubuntu-24.04' }}
+    timeout-minutes: 350
+    steps:
+      - name: Free disk space (Firefox needs ~40 GB)
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          df -h /
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - uses: actions/cache@v4
+        with:
+          path: .sccache
+          key: sccache-linux-${{ env.PROFILE }}-${{ hashFiles('project.toml') }}-${{ github.run_id }}
+          restore-keys: |
+            sccache-linux-${{ env.PROFILE }}-${{ hashFiles('project.toml') }}-
+            sccache-linux-${{ env.PROFILE }}-
+      - run: ./hx download
+      - run: ./hx import
+      - run: ./hx bootstrap
+      - run: ./hx build --profile "$PROFILE"
+      - run: ./hx package
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-x86_64-${{ env.PROFILE }}
+          path: engine/obj-*/dist/*.tar.*
+          retention-days: 14
+
+  macos:
+    runs-on: ${{ vars.MACOS_RUNNER || 'macos-14' }}
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - uses: actions/cache@v4
+        with:
+          path: .sccache
+          key: sccache-macos-${{ env.PROFILE }}-${{ hashFiles('project.toml') }}-${{ github.run_id }}
+          restore-keys: |
+            sccache-macos-${{ env.PROFILE }}-${{ hashFiles('project.toml') }}-
+            sccache-macos-${{ env.PROFILE }}-
+      - run: ./hx download
+      - run: ./hx import
+      - run: ./hx bootstrap
+      - run: ./hx build --profile "$PROFILE" --os macos
+      - run: ./hx package
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-arm64-${{ env.PROFILE }}
+          path: engine/obj-*/dist/*.dmg
+          retention-days: 14
+
+  windows:
+    # Windows builds run inside MozillaBuild's MSYS2 shell, using the runner's Visual Studio 2022.
+    runs-on: ${{ vars.WINDOWS_RUNNER || 'windows-2022' }}
+    timeout-minutes: 350
+    env:
+      MOZILLABUILD: C:\mozilla-build
+    defaults:
+      run:
+        shell: C:\mozilla-build\msys2\usr\bin\bash.exe --login -eo pipefail {0}
+    steps:
+      - name: Install MozillaBuild
+        shell: pwsh
+        run: |
+          Invoke-WebRequest https://ftp.mozilla.org/pub/mozilla/libraries/win32/MozillaBuildSetup-Latest.exe -OutFile mb.exe
+          Start-Process -Wait -FilePath .\mb.exe -ArgumentList '/S'
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: .sccache
+          key: sccache-windows-${{ env.PROFILE }}-${{ hashFiles('project.toml') }}-${{ github.run_id }}
+          restore-keys: |
+            sccache-windows-${{ env.PROFILE }}-${{ hashFiles('project.toml') }}-
+            sccache-windows-${{ env.PROFILE }}-
+      - run: cd "$GITHUB_WORKSPACE" && ./hx download
+      - run: cd "$GITHUB_WORKSPACE" && ./hx import
+      - run: cd "$GITHUB_WORKSPACE" && ./hx bootstrap
+      - run: cd "$GITHUB_WORKSPACE" && ./hx build --profile "$PROFILE" --os windows
+      - run: cd "$GITHUB_WORKSPACE" && ./hx package
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-x86_64-${{ env.PROFILE }}
+          path: engine/obj-*/dist/install/sea/*.exe
+          retention-days: 14

@@ -1,0 +1,2 @@
+# Windows (x86_64), built from the MozillaBuild shell with Visual Studio Build Tools installed.
+ac_add_options --target=x86_64-pc-windows-msvc

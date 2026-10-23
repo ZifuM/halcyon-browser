@@ -1,0 +1,98 @@
+# Ownership promise #5: the browser collects and sends nothing about you.
+# Telemetry upload is also compiled out (no MOZILLA_OFFICIAL / MOZ_TELEMETRY_REPORTING), and
+# Normandy is removed at build time; these defaults are a second, visible layer.
+
+[meta]
+title = "No telemetry, studies or experiments"
+
+[[pref]]
+name = "datareporting.healthreport.uploadEnabled"
+value = false
+why = "Master switch for technical and interaction data upload."
+
+[[pref]]
+name = "datareporting.policy.dataSubmissionEnabled"
+value = false
+why = "Disables the data-submission policy and its first-run notification bar."
+
+[[pref]]
+name = "datareporting.usage.uploadEnabled"
+value = false
+why = "Disables the daily usage ping."
+
+[[pref]]
+name = "toolkit.telemetry.unified"
+value = false
+why = "Turns off unified telemetry collection."
+
+[[pref]]
+name = "toolkit.telemetry.archive.enabled"
+value = false
+why = "Do not keep a local archive of telemetry pings."
+
+[[pref]]
+name = "toolkit.telemetry.newProfilePing.enabled"
+value = false
+why = "No 'new profile' ping."
+
+[[pref]]
+name = "toolkit.telemetry.shutdownPingSender.enabled"
+value = false
+why = "No ping sender process at shutdown."
+
+[[pref]]
+name = "toolkit.telemetry.firstShutdownPing.enabled"
+value = false
+why = "No first-session shutdown ping."
+
+[[pref]]
+name = "toolkit.telemetry.bhrPing.enabled"
+value = false
+why = "No background hang reporter ping."
+
+[[pref]]
+name = "toolkit.coverage.endpoint.base"
+value = ""
+why = "Empty endpoint for the telemetry coverage ping."
+
+[[pref]]
+name = "app.shield.optoutstudies.enabled"
+value = false
+why = "No studies. Mozilla runs experiments on Release users through this switch."
+
+[[pref]]
+name = "app.normandy.enabled"
+value = false
+why = "Normandy is compiled out; keep the pref off too in case a future upstream re-adds it."
+
+[[pref]]
+name = "app.normandy.api_url"
+value = ""
+why = "No Normandy endpoint."
+
+[[pref]]
+name = "nimbus.rollouts.enabled"
+value = false
+why = "No remotely pushed feature rollouts: features change only when the user updates."
+
+[[pref]]
+name = "browser.newtabpage.activity-stream.telemetry"
+value = false
+why = "No new-tab page telemetry."
+upstream = "browser/extensions/newtab/lib/ActivityStream.sys.mjs"
+match = "telemetry"
+
+[[pref]]
+name = "breakpad.reportURL"
+value = ""
+why = "No crash report endpoint (the crash reporter is not built; opt-in reporting comes later)."
+
+[[pref]]
+name = "browser.tabs.crashReporting.sendReport"
+value = false
+why = "Never send tab crash reports."
+
+[[pref]]
+name = "browser.crashReports.unsubmittedCheck.autoSubmit2"
+value = false
+why = "Never auto-submit stored crash reports."

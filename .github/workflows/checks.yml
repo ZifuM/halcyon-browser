@@ -1,0 +1,54 @@
+# Fast checks on every push and pull request (~2 minutes). No compile: verifies that our changes
+# still apply to the pinned Firefox release and that every pref and build option exists upstream.
+name: checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  toolchain-tests:
+    name: hx unit tests (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-14, windows-2022]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m unittest discover -s tests -v
+
+  upstream-compat:
+    name: Apply to Firefox and audit
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Fetch the Firefox files we touch (sparse)
+        run: ./hx download --sparse-ci
+      - name: Apply src/, branding, prefs and patches
+        run: ./hx import
+      - name: Every default pref exists in this Firefox version
+        run: ./hx audit-prefs --strict
+      - name: Every build option exists in this Firefox version
+        run: ./hx check-mozconfig
+      - name: Patch budget
+        run: ./hx patches
+      - name: Ownership promise - nothing is locked
+        run: |
+          if grep -rn "lockPref\|sticky_pref" engine/browser/branding/*/pref/; then
+            echo "::error::Default prefs must never be locked (ownership promise #2)"; exit 1
+          fi

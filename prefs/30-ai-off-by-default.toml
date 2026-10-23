@@ -1,0 +1,48 @@
+# Ownership promise #5: every AI feature, including local/on-device ones, is off by default.
+# Users turn AI on in Settings > AI Controls; nothing is downloaded until they do.
+# The global control is set to "blocked" so the Settings UI shows the true state, and each
+# feature's own switch is off so it stays off even if the global control is unblocked by mistake.
+
+[meta]
+title = "AI off by default"
+
+[[pref]]
+name = "browser.ai.control.default"
+value = "blocked"
+why = "Global AI control starts at Blocked (shown in Settings > AI Controls)."
+
+[[pref]]
+name = "browser.ml.enable"
+value = false
+why = "The on-device machine-learning inference engine is off: no models download or run."
+
+[[pref]]
+name = "extensions.ml.enabled"
+value = false
+why = "Extensions can't use the browser's ML engine unless the user enables AI."
+
+[[pref]]
+name = "browser.ml.chat.enabled"
+value = false
+why = "No AI chatbot sidebar."
+
+[[pref]]
+name = "browser.ml.linkPreview.enabled"
+value = false
+why = "No AI key-points in link previews."
+
+[[pref]]
+name = "browser.tabs.groups.smart.enabled"
+value = false
+why = "No AI tab-group suggestions."
+
+[[pref]]
+name = "browser.translations.enable"
+value = false
+why = "Translations use on-device AI models downloaded from Mozilla; off until the user enables them."
+
+[[pref]]
+name = "pdfjs.enableGuessAltText"
+value = false
+why = "No AI-generated alt text in the PDF editor."
+upstream = "toolkit/components/pdfjs/PdfJsDefaultPrefs.js"

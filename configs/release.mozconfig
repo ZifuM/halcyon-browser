@@ -1,0 +1,10 @@
+# Shipping builds: fully optimised. Expect 2-3x the time of a dev build.
+ac_add_options --enable-release
+ac_add_options --enable-optimize
+ac_add_options --disable-debug
+ac_add_options --enable-hardening
+ac_add_options --enable-rust-simd
+# Cross-language LTO lets the linker optimise across Rust and C++ (needs the clang from `hx bootstrap`).
+ac_add_options --enable-lto=cross
+# Three-stage profile-guided optimisation: build, run a training profile, rebuild with the data.
+ac_add_options MOZ_PGO=1

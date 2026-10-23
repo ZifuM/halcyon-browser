@@ -1,0 +1,97 @@
+# Rebase bot. Twice a day: is there a newer Firefox release? If so, rebase onto it and open a pull
+# request. If our patches no longer apply, open an issue instead. Point releases (x.y.z) are usually
+# security fixes and carry the 72-hour SLA label.
+name: upstream
+
+on:
+  schedule:
+    - cron: "17 */12 * * *"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Firefox version to rebase onto (blank = latest release)"
+        required: false
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: upstream
+  cancel-in-progress: false
+
+jobs:
+  rebase:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Check for a newer Firefox release
+        id: check
+        run: ./hx check-upstream --github-output
+
+      - name: Decide target
+        id: target
+        if: steps.check.outputs.behind == 'true' || inputs.version != ''
+        run: |
+          echo "version=${{ inputs.version || steps.check.outputs.latest }}" >> "$GITHUB_OUTPUT"
+          echo "branch=upstream/firefox-${{ inputs.version || steps.check.outputs.latest }}" >> "$GITHUB_OUTPUT"
+
+      - name: Skip if a PR for this version already exists
+        id: existing
+        if: steps.target.outputs.version
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          n=$(gh pr list --head "${{ steps.target.outputs.branch }}" --state open --json number --jq length)
+          echo "open=$n" >> "$GITHUB_OUTPUT"
+
+      - name: Rebase
+        id: rebase
+        if: steps.target.outputs.version && steps.existing.outputs.open == '0'
+        continue-on-error: true
+        shell: bash  # bash -eo pipefail, so a failed rebase isn't masked by tee
+        run: ./hx rebase --to "${{ steps.target.outputs.version }}" --sparse-ci 2>&1 | tee rebase.log
+
+      - name: Verify build options
+        if: steps.rebase.outcome == 'success'
+        run: ./hx check-mozconfig
+
+      - name: Open pull request
+        if: steps.rebase.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.target.outputs.version }}
+          BRANCH: ${{ steps.target.outputs.branch }}
+          KIND: ${{ steps.check.outputs.kind }}
+        run: |
+          git config user.name "rebase-bot"
+          git config user.email "rebase-bot@users.noreply.github.com"
+          git switch -c "$BRANCH"
+          git add project.toml patches src
+          git commit -m "Rebase onto Firefox $VERSION"
+          git push -u origin "$BRANCH"
+          label="upstream"
+          [ "$KIND" = "point" ] && label="upstream,security-sla"
+          gh label create upstream --color 0E8A16 2>/dev/null || true
+          gh label create security-sla --color B60205 --description "Ship within 72h" 2>/dev/null || true
+          gh pr create --title "Rebase onto Firefox $VERSION" --label "$label" --body \
+            "Automated rebase onto Firefox $VERSION ($KIND update). Patches applied cleanly; prefs and build options verified. A full build runs in the build workflow before merge."
+
+      - name: Open issue on conflict
+        if: steps.rebase.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.target.outputs.version }}
+        run: |
+          gh label create upstream --color 0E8A16 2>/dev/null || true
+          title="Rebase onto Firefox $VERSION needs manual work"
+          if [ -z "$(gh issue list --search "$title in:title" --state open --json number --jq '.[].number')" ]; then
+            { echo "The rebase bot could not apply our changes to Firefox $VERSION."; echo; echo '```'; tail -n 60 rebase.log; echo '```';
+              echo; echo "Fix locally: \`./hx rebase --to $VERSION\`, resolve, \`./hx export <file>\`, \`./hx import\`."; } > body.md
+            gh issue create --title "$title" --label upstream --body-file body.md
+          fi
