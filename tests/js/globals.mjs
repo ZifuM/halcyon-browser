@@ -53,13 +53,30 @@ globalThis.IOUtils = {
   async makeDirectory() {},
 };
 
-// Fake content classifier service, reachable through Cc/Ci like the real one.
+// Fake content classifier service, reachable through Cc/Ci like the real one. Element-hiding
+// answers come from globalThis.__cosmetic (set per test); `throws` simulates "not initialised".
 globalThis.__classifierCalls = [];
+globalThis.__cosmetic = { hide: [], procedural: [], exceptions: [], generichide: false, generic: () => [] };
 globalThis.Ci = { nsIContentClassifierService: "nsIContentClassifierService" };
 globalThis.Cc = {
   "@mozilla.org/content-classifier-service;1": {
     getService: () => ({
       onListsChanged: (updated, removed) => globalThis.__classifierCalls.push({ updated, removed }),
+      getCosmeticResources(url, pb, hide, procedural, exceptions, script, generichide) {
+        const c = globalThis.__cosmetic;
+        globalThis.__classifierCalls.push({ cosmetic: url, pb });
+        if (c.throws) throw new Error("NS_ERROR_NOT_INITIALIZED");
+        hide.value = c.hide;
+        procedural.value = c.procedural;
+        exceptions.value = c.exceptions;
+        script.value = "";
+        generichide.value = c.generichide;
+      },
+      getHiddenClassIdSelectors(pb, classes, ids, exceptions) {
+        globalThis.__classifierCalls.push({ generic: { classes, ids, exceptions }, pb });
+        if (globalThis.__cosmetic.throws) throw new Error("NS_ERROR_NOT_INITIALIZED");
+        return globalThis.__cosmetic.generic(classes, ids, exceptions);
+      },
     }),
   },
 };
@@ -78,4 +95,20 @@ globalThis.ChromeUtils = {
     }
   },
   _preload: (url, mod) => getters.set(url, mod),
+  _actors: new Map(),
+  registerWindowActor(name, options) {
+    if (this._actors.has(name)) throw new Error(`actor ${name} registered twice`);
+    this._actors.set(name, options);
+  },
+};
+
+// JSWindowActor base classes: tests set browsingContext / document / contentWindow and route
+// sendQuery to a parent instance.
+globalThis.JSWindowActorParent = class {};
+globalThis.JSWindowActorChild = class {
+  sendQuery(name, data) {
+    if (!this._parent) return Promise.reject(new Error("no parent"));
+    // Structured clone, like the real IPC boundary.
+    return Promise.resolve(structuredClone(this._parent.receiveMessage({ name, data: structuredClone(data) })));
+  }
 };

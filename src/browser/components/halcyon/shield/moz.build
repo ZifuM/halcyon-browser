@@ -2,10 +2,15 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-# Shield: the built-in ad and tracker blocker's list manager. Blocking itself is done by
-# Firefox's content classifier (toolkit/components/content-classifier, adblock-rust).
+# Shield: the built-in ad and tracker blocker. Network blocking is done by Firefox's content
+# classifier (toolkit/components/content-classifier, adblock-rust) from the lists ShieldLists
+# downloads; element hiding by the ShieldCosmetic actor, using the same engines.
 
 MOZ_SRC_FILES += [
+    "ShieldCosmetic.sys.mjs",
+    "ShieldCosmeticChild.sys.mjs",
+    "ShieldCosmeticLogic.sys.mjs",
+    "ShieldCosmeticParent.sys.mjs",
     "ShieldListLogic.sys.mjs",
     "ShieldLists.sys.mjs",
 ]

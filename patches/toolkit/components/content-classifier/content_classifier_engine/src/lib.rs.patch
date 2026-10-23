@@ -1,0 +1,70 @@
+diff --git a/toolkit/components/content-classifier/content_classifier_engine/src/lib.rs b/toolkit/components/content-classifier/content_classifier_engine/src/lib.rs
+index b739220db109eb60bc042c675624fe1f64f3b66b..6e5b0f8f4b9556d873e0687c478c3d9b7b325f41 100644
+--- a/toolkit/components/content-classifier/content_classifier_engine/src/lib.rs
++++ b/toolkit/components/content-classifier/content_classifier_engine/src/lib.rs
+@@ -182,6 +182,65 @@ pub unsafe extern "C" fn content_classifier_engine_check_network_request_prepars
+     NS_OK
+ }
+ 
++// Halcyon Shield: element hiding. The engine already parses the cosmetic rules in each list;
++// these expose them so a content actor can hide ad containers. See
++// browser/components/halcyon/shield/ShieldCosmetic*.sys.mjs.
++
++fn halcyon_extend(out: &mut ThinVec<nsCString>, items: impl IntoIterator<Item = String>) {
++    out.extend(items.into_iter().map(|s| nsCString::from(s.as_str())));
++}
++
++/// Site-specific resources for a page: selectors to hide, procedural filters (JSON), class/id
++/// exceptions to pass back to `..._hidden_class_id_selectors`, scriptlet code (empty until a
++/// scriptlet library is loaded) and whether a `$generichide` exception applies.
++#[no_mangle]
++pub unsafe extern "C" fn content_classifier_engine_url_cosmetic_resources(
++    engine: *const ContentClassifierFFIEngine,
++    url: &nsACString,
++    out_hide_selectors: &mut ThinVec<nsCString>,
++    out_procedural_actions: &mut ThinVec<nsCString>,
++    out_exceptions: &mut ThinVec<nsCString>,
++    out_injected_script: &mut nsACString,
++    out_generichide: *mut bool,
++) -> nsresult {
++    if engine.is_null() || out_generichide.is_null() {
++        return NS_ERROR_INVALID_ARG;
++    }
++    let url_str = String::from_utf8_lossy(url.as_ref()).to_string();
++    let resources = (*engine).engine.url_cosmetic_resources(&url_str);
++    halcyon_extend(out_hide_selectors, resources.hide_selectors);
++    halcyon_extend(out_procedural_actions, resources.procedural_actions);
++    halcyon_extend(out_exceptions, resources.exceptions);
++    out_injected_script.append(&resources.injected_script);
++    *out_generichide = resources.generichide;
++    NS_OK
++}
++
++/// Generic rules for the classes and ids present in a page.
++#[no_mangle]
++pub unsafe extern "C" fn content_classifier_engine_hidden_class_id_selectors(
++    engine: *const ContentClassifierFFIEngine,
++    classes: &ThinVec<nsCString>,
++    ids: &ThinVec<nsCString>,
++    exceptions: &ThinVec<nsCString>,
++    out_selectors: &mut ThinVec<nsCString>,
++) -> nsresult {
++    if engine.is_null() {
++        return NS_ERROR_INVALID_ARG;
++    }
++    let to_strings = |v: &ThinVec<nsCString>| -> Vec<String> {
++        v.iter().map(|s| String::from_utf8_lossy(s.as_ref()).to_string()).collect()
++    };
++    let exceptions: std::collections::HashSet<String> = to_strings(exceptions).into_iter().collect();
++    let selectors = (*engine).engine.hidden_class_id_selectors(
++        to_strings(classes),
++        to_strings(ids),
++        &exceptions,
++    );
++    halcyon_extend(out_selectors, selectors);
++    NS_OK
++}
++
+ struct SchemelessSiteResolver {}
+ 
+ impl etp_engine::url_parser::ResolvesDomain for SchemelessSiteResolver {

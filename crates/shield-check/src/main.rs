@@ -5,16 +5,20 @@
 //! shield-check: does Shield block what it should, and nothing it shouldn't?
 //!
 //! Loads assembled filter lists into the same engine the browser uses (Firefox's in-tree
-//! `etp_engine`, a fork of brave/adblock-rust) and replays a corpus of requests through the same
-//! call the browser makes (`Request::preparsed` + `check_network_request_subset`, see
-//! toolkit/components/content-classifier/content_classifier_engine/src/lib.rs).
+//! `etp_engine`, a fork of brave/adblock-rust) and replays a corpus through the same calls the
+//! browser makes:
+//!   * network blocking: `Request::preparsed` + `check_network_request_subset`
+//!     (toolkit/components/content-classifier/content_classifier_engine/src/lib.rs)
+//!   * element hiding: `url_cosmetic_resources` + `hidden_class_id_selectors` (the FFI functions
+//!     our patch adds to the same file; see src/browser/components/halcyon/shield/).
 //!
 //!   shield-check --corpus corpus.toml --list a.txt --list b.txt [--bench] [--json out.json]
 //!                [--max-build-ms N] [--max-request-us N] [--max-serialized-kb N]
+//!                [--max-cosmetic-us N]
 //!
 //! Exit status 1 if any case doesn't match its expectation or a performance budget is exceeded.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashSet};
 use std::fs;
 use std::process::ExitCode;
 use std::time::Instant;
@@ -27,6 +31,33 @@ use serde::{Deserialize, Serialize};
 #[derive(Deserialize)]
 struct Corpus {
     case: Vec<Case>,
+    #[serde(default)]
+    cosmetic: Vec<CosmeticCase>,
+}
+
+/// One page load, as the element-hiding actor sees it.
+#[derive(Deserialize, Clone)]
+struct CosmeticCase {
+    page: String,
+    /// Selectors that must be in the page's hide list (site-specific or generic non-class/id).
+    #[serde(default)]
+    hides: Vec<String>,
+    /// Selectors that must not be hidden on this page (exceptions, other sites' rules).
+    #[serde(default)]
+    not_hides: Vec<String>,
+    /// Classes and ids found in the page, sent for generic class/id rules.
+    #[serde(default)]
+    classes: Vec<String>,
+    #[serde(default)]
+    ids: Vec<String>,
+    /// Selectors the generic class/id lookup must return.
+    #[serde(default)]
+    generic_hides: Vec<String>,
+    /// Selectors the generic class/id lookup must not return.
+    #[serde(default)]
+    generic_not_hides: Vec<String>,
+    #[serde(default)]
+    note: String,
 }
 
 #[derive(Deserialize, Clone)]
@@ -57,6 +88,18 @@ struct CaseResult {
 }
 
 #[derive(Serialize)]
+struct CosmeticResult {
+    page: String,
+    hide_selectors: usize,
+    procedural_actions: usize,
+    generichide: bool,
+    missing: Vec<String>,
+    wrongly_hidden: Vec<String>,
+    pass: bool,
+    note: String,
+}
+
+#[derive(Serialize)]
 struct Report {
     rules: usize,
     build_ms: f64,
@@ -68,7 +111,11 @@ struct Report {
     allow_cases: usize,
     allowed_correctly: usize,
     per_request_ns: Option<f64>,
+    cosmetic_cases: usize,
+    cosmetic_failures: usize,
+    per_page_cosmetic_ns: Option<f64>,
     results: Vec<CaseResult>,
+    cosmetic_results: Vec<CosmeticResult>,
 }
 
 /// Multi-label public suffixes common in the corpus. The browser asks Firefox's eTLD service;
@@ -92,6 +139,62 @@ fn base_domain(host: &str) -> String {
     labels[labels.len() - take.min(labels.len())..].join(".")
 }
 
+/// The browser resolves base domains with Firefox's eTLD service; this mirrors `base_domain`.
+struct NaiveResolver;
+
+impl etp_engine::url_parser::ResolvesDomain for NaiveResolver {
+    fn get_host_domain(&self, host: &str) -> (usize, usize) {
+        let base = base_domain(host);
+        (host.len() - base.len(), host.len())
+    }
+}
+
+/// What the element-hiding actor does for one page: site resources, then (unless the page has a
+/// `$generichide` exception) generic rules for the classes and ids it found.
+fn cosmetic(engine: &Engine, case: &CosmeticCase) -> CosmeticResult {
+    let resources = engine.url_cosmetic_resources(&case.page);
+    let generic: HashSet<String> = if resources.generichide {
+        HashSet::new()
+    } else {
+        engine
+            .hidden_class_id_selectors(&case.classes, &case.ids, &resources.exceptions)
+            .into_iter()
+            .collect()
+    };
+    let mut missing = Vec::new();
+    let mut wrongly_hidden = Vec::new();
+    for sel in &case.hides {
+        if !resources.hide_selectors.contains(sel) {
+            missing.push(sel.clone());
+        }
+    }
+    for sel in &case.generic_hides {
+        if !generic.contains(sel) {
+            missing.push(sel.clone());
+        }
+    }
+    for sel in &case.not_hides {
+        if resources.hide_selectors.contains(sel) || generic.contains(sel) {
+            wrongly_hidden.push(sel.clone());
+        }
+    }
+    for sel in &case.generic_not_hides {
+        if generic.contains(sel) {
+            wrongly_hidden.push(sel.clone());
+        }
+    }
+    CosmeticResult {
+        page: case.page.clone(),
+        hide_selectors: resources.hide_selectors.len(),
+        procedural_actions: resources.procedural_actions.len(),
+        generichide: resources.generichide,
+        pass: missing.is_empty() && wrongly_hidden.is_empty(),
+        missing,
+        wrongly_hidden,
+        note: case.note.clone(),
+    }
+}
+
 fn check(engine: &Engine, case: &Case) -> Result<(bool, Option<String>), String> {
     let host = host_of(&case.url).ok_or_else(|| format!("bad url: {}", case.url))?;
     let source_host = host_of(&case.source).ok_or_else(|| format!("bad source: {}", case.source))?;
@@ -104,7 +207,8 @@ fn check(engine: &Engine, case: &Case) -> Result<(bool, Option<String>), String>
 fn usage() -> ExitCode {
     eprintln!(
         "usage: shield-check --corpus FILE --list FILE [--list FILE...] [--bench] [--json OUT]\n\
-         \x20                   [--max-build-ms N] [--max-request-us N] [--max-serialized-kb N]"
+         \x20                   [--max-build-ms N] [--max-request-us N] [--max-serialized-kb N]\n\
+         \x20                   [--max-cosmetic-us N]"
     );
     ExitCode::from(2)
 }
@@ -117,6 +221,7 @@ fn main() -> ExitCode {
     let mut max_build_ms: Option<f64> = None;
     let mut max_request_us: Option<f64> = None;
     let mut max_serialized_kb: Option<usize> = None;
+    let mut max_cosmetic_us: Option<f64> = None;
     let mut args = std::env::args().skip(1);
     while let Some(arg) = args.next() {
         match arg.as_str() {
@@ -130,6 +235,7 @@ fn main() -> ExitCode {
             "--max-build-ms" => max_build_ms = args.next().and_then(|v| v.parse().ok()),
             "--max-request-us" => max_request_us = args.next().and_then(|v| v.parse().ok()),
             "--max-serialized-kb" => max_serialized_kb = args.next().and_then(|v| v.parse().ok()),
+            "--max-cosmetic-us" => max_cosmetic_us = args.next().and_then(|v| v.parse().ok()),
             _ => return usage(),
         }
     }
@@ -159,6 +265,7 @@ fn main() -> ExitCode {
         }
     }
     let rule_count = rules.len();
+    let _ = etp_engine::url_parser::set_domain_resolver(Box::new(NaiveResolver));
 
     let started = Instant::now();
     let engine = Engine::from_rules(rules, ParseOptions::default());
@@ -210,6 +317,21 @@ fn main() -> ExitCode {
         started.elapsed().as_nanos() as f64 / (rounds * corpus.case.len()) as f64
     });
 
+    let cosmetic_results: Vec<CosmeticResult> =
+        corpus.cosmetic.iter().map(|c| cosmetic(&engine, c)).collect();
+    let per_page_cosmetic_ns = (bench && !corpus.cosmetic.is_empty()).then(|| {
+        let rounds = (20_000 / corpus.cosmetic.len()).max(1);
+        let started = Instant::now();
+        let mut total = 0usize;
+        for _ in 0..rounds {
+            for case in &corpus.cosmetic {
+                total += cosmetic(&engine, case).hide_selectors;
+            }
+        }
+        std::hint::black_box(total);
+        started.elapsed().as_nanos() as f64 / (rounds * corpus.cosmetic.len()) as f64
+    });
+
     let count = |expect: &str, pass_only: bool| {
         results.iter().filter(|r| r.expect == expect && (!pass_only || r.pass)).count()
     };
@@ -224,7 +346,11 @@ fn main() -> ExitCode {
         allow_cases: count("allow", false),
         allowed_correctly: count("allow", true),
         per_request_ns,
+        cosmetic_cases: cosmetic_results.len(),
+        cosmetic_failures: cosmetic_results.iter().filter(|r| !r.pass).count(),
+        per_page_cosmetic_ns,
         results,
+        cosmetic_results,
     };
 
     println!(
@@ -251,6 +377,22 @@ fn main() -> ExitCode {
             r.exception.as_ref().map(|e| format!(" [exception: {e}]")).unwrap_or_default()
         );
     }
+    if report.cosmetic_cases > 0 {
+        println!(
+            "Element hiding: {}/{} pages as expected",
+            report.cosmetic_cases - report.cosmetic_failures,
+            report.cosmetic_cases
+        );
+    }
+    if let Some(ns) = report.per_page_cosmetic_ns {
+        println!("Element hiding: {:.2} µs per page (site lookup + generic class/id lookup)", ns / 1000.0);
+    }
+    for r in report.cosmetic_results.iter().filter(|r| !r.pass) {
+        println!(
+            "FAIL element hiding on {}: missing {:?}, wrongly hidden {:?} ({} site selectors, generichide={})",
+            r.page, r.missing, r.wrongly_hidden, r.hide_selectors, r.generichide
+        );
+    }
     if let Some(path) = json_out {
         if let Err(e) = fs::write(&path, serde_json::to_string_pretty(&report).unwrap_or_default()) {
             eprintln!("cannot write {path}: {e}");
@@ -272,10 +414,15 @@ fn main() -> ExitCode {
             over_budget.push(format!("matching {:.2} µs/request > budget {max:.2} µs", ns / 1000.0));
         }
     }
+    if let (Some(max), Some(ns)) = (max_cosmetic_us, report.per_page_cosmetic_ns) {
+        if ns / 1000.0 > max {
+            over_budget.push(format!("element hiding {:.2} µs/page > budget {max:.2} µs", ns / 1000.0));
+        }
+    }
     for line in &over_budget {
         println!("OVER BUDGET: {line}");
     }
-    if report.failures > 0 || !over_budget.is_empty() {
+    if report.failures > 0 || report.cosmetic_failures > 0 || !over_budget.is_empty() {
         ExitCode::FAILURE
     } else {
         ExitCode::SUCCESS

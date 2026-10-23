@@ -26,6 +26,7 @@ CI_SPARSE_BASE = [
     "/gfx/wr/wr_malloc_size_of/",
     "/Cargo.toml",            # Firefox's [patch.crates-io] table (tools/shield/sync_cargo_patches.py)
     "/build/rust/",           # the local crate shims that table points at
+    "/xpcom/rust/nsstring/",  # for type-checking our element-hiding FFI (tools/shield/ffi_check.py)
 ]
 
 

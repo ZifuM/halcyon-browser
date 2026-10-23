@@ -20,3 +20,9 @@ name = "halcyon.shield.updates.enabled"
 value = true
 why = "Keep Shield's filter lists up to date (checked hourly, downloaded when a list's own expiry passes). Set false to stop downloads; the last lists keep working."
 own = true
+
+[[pref]]
+name = "halcyon.shield.cosmetic.enabled"
+value = true
+why = "Shield element hiding: hides ad containers and leftover blank boxes using the same lists that block requests. Set false to block requests only."
+own = true

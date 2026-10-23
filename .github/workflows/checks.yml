@@ -29,7 +29,7 @@ jobs:
           python-version: "3.12"
       - run: python tools/ci/annotate.py "Unit tests" -- python -m unittest discover -s tests -v
       - name: Browser component tests (Node, mocked Firefox APIs)
-        run: python tools/ci/annotate.py "JS tests" -- node --import ./tests/js/register.mjs --test tests/js/test_updates.test.mjs tests/js/test_shield.test.mjs
+        run: python tools/ci/annotate.py "JS tests" -- node --import ./tests/js/register.mjs --test tests/js/test_updates.test.mjs tests/js/test_shield.test.mjs tests/js/test_cosmetic.test.mjs
 
   upstream-compat:
     name: Apply to Firefox and audit
@@ -59,8 +59,9 @@ jobs:
 
   shield:
     # Shield's filter lists, assembled by the browser's own list module, run through Firefox's
-    # in-tree adblock engine (the exact call the browser makes) against crates/shield-check/corpus.toml.
-    # Also the first performance budget: engine build time, size and per-request matching cost.
+    # in-tree adblock engine (the exact calls the browser makes) against crates/shield-check/corpus.toml:
+    # network blocking and element hiding. Also the first performance budgets: engine build time,
+    # size, per-request matching and per-page element-hiding cost.
     name: Shield blocking and performance
     runs-on: ubuntu-24.04
     steps:
@@ -80,6 +81,10 @@ jobs:
         run: |
           python3 tools/shield/sync_cargo_patches.py
           git diff --quiet crates/ || echo "::warning::crates/*/Cargo.toml patch table is out of date with this Firefox version; run tools/shield/sync_cargo_patches.py"
+      - name: Apply our patches (element-hiding FFI)
+        run: python3 tools/ci/annotate.py "Import" -- ./hx import
+      - name: Element-hiding FFI type-checks against this Firefox's crates
+        run: python3 tools/ci/annotate.py "Shield FFI check" -- python3 tools/shield/ffi_check.py
       - name: Build the harness
         # Run from the crate directory: cargo reads .cargo/config.toml (offline, Firefox-vendored
         # crates) from the working directory, not from the manifest's.
@@ -93,7 +98,8 @@ jobs:
           set -- $(for f in lists/*.txt; do printf -- '--list %s ' "$f"; done)
           python3 tools/ci/annotate.py "Shield corpus" -- crates/shield-check/target/release/shield-check \
             --corpus crates/shield-check/corpus.toml "$@" --bench --json shield.json \
-            --max-build-ms 2000 --max-request-us 50 --max-serialized-kb 32768 | tee shield.txt
+            --max-build-ms 2000 --max-request-us 50 --max-serialized-kb 32768 \
+            --max-cosmetic-us 1000 | tee shield.txt
           { echo "## Shield"; echo '```'; cat shield.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
         if: always()

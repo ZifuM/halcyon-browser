@@ -367,3 +367,46 @@ source = "https://www.example-saas.com/"
 type = "xmlhttprequest"
 expect = "allow"
 note = "A site's own API"
+
+# ---- Element hiding -----------------------------------------------------------------------
+# One entry per page load. `hides`: must be in the page's site-specific/generic hide list.
+# `classes`/`ids`: found in the page; `generic_hides` must come back from the generic lookup.
+
+[[cosmetic]]
+page = "https://www.bbc.com/news"
+hides = ["#leaderboard-aside-content"]
+not_hides = ["#js-outbrain-rightrail-ads-module"]
+note = "Site rule for bbc.com, not cnn.com's"
+
+[[cosmetic]]
+page = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+hides = ["#shopping-timely-shelf", "yt-overlay-product-sticker"]
+note = "YouTube's shopping shelf and product stickers (video ads need scriptlets: not shipped yet)"
+
+[[cosmetic]]
+page = "https://www.example-news.com/article/1"
+classes = ["ADBAR", "header", "content", "article-body", "nav"]
+ids = ["AD_300", "main", "footer"]
+generic_hides = [".ADBAR", "#AD_300"]
+generic_not_hides = [".header", ".content", ".article-body", ".nav", "#main", "#footer"]
+hides = ["ins.adsbygoogle[data-ad-client]"]
+note = "Generic ad containers are hidden on any site; ordinary layout classes are not"
+
+[[cosmetic]]
+page = "https://www.dez.ro/"
+ids = ["ad-carousel"]
+generic_not_hides = ["#ad-carousel"]
+note = "dez.ro#@##ad-carousel: the site's own carousel stays visible there..."
+
+[[cosmetic]]
+page = "https://www.example-shop.com/"
+ids = ["ad-carousel"]
+generic_hides = ["#ad-carousel"]
+note = "...but is hidden everywhere else"
+
+[[cosmetic]]
+page = "https://accounts.google.com/signin"
+classes = ["ADBAR"]
+ids = ["AD_300"]
+generic_not_hides = [".ADBAR", "#AD_300"]
+note = "$generichide exception: generic rules must not touch the Google sign-in page"

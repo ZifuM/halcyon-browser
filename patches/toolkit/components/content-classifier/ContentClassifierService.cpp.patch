@@ -1,5 +1,5 @@
 diff --git a/toolkit/components/content-classifier/ContentClassifierService.cpp b/toolkit/components/content-classifier/ContentClassifierService.cpp
-index 3ff3514fb215a5aceb30ae370c58d431255ee499..4947c397a7ada8a02861126e39b1af080b42ca1c 100644
+index 3ff3514fb215a5aceb30ae370c58d431255ee499..437ffd8d0706850e2db5160b3f6a43803e6d7b20 100644
 --- a/toolkit/components/content-classifier/ContentClassifierService.cpp
 +++ b/toolkit/components/content-classifier/ContentClassifierService.cpp
 @@ -67,6 +67,16 @@ constexpr nsLiteralCString kMinorExceptionListIds[] = {
@@ -35,3 +35,54 @@ index 3ff3514fb215a5aceb30ae370c58d431255ee499..4947c397a7ada8a02861126e39b1af08
      {"minor-exceptions"_ns,
       Span<const nsLiteralCString>(kMinorExceptionListIds),
       nsIClassifiedChannel::ClassificationFlags::CLASSIFIED_TRACKING, 0, 0, 0,
+@@ -1248,6 +1267,50 @@ NS_IMETHODIMP ContentClassifierService::ProbeFeature(
+   promise.forget(aPromise);
+   return NS_OK;
+ }
++// Halcyon Shield: element hiding. Synchronous: each lookup is a few hash
++// probes in already-built engines (about 0.1 ms with the default lists).
++NS_IMETHODIMP ContentClassifierService::GetCosmeticResources(
++    const nsACString& aUrl, bool aPrivateBrowsing,
++    nsTArray<nsCString>& aHideSelectors,
++    nsTArray<nsCString>& aProceduralActions, nsTArray<nsCString>& aExceptions,
++    nsACString& aInjectedScript, bool* aGenericHide) {
++  NS_ENSURE_ARG_POINTER(aGenericHide);
++  MOZ_ASSERT(NS_IsMainThread());
++  *aGenericHide = false;
++  if (!IsInitialized()) {
++    return NS_ERROR_NOT_INITIALIZED;
++  }
++  MutexAutoLock lock(mLock);
++  const auto& engines = aPrivateBrowsing ? mCancelEnginesPBM : mCancelEngines;
++  for (const auto& engine : engines) {
++    bool genericHide = false;
++    nsAutoCString script;
++    if (NS_SUCCEEDED(engine->UrlCosmeticResources(
++            aUrl, aHideSelectors, aProceduralActions, aExceptions, script,
++            &genericHide))) {
++      *aGenericHide = *aGenericHide || genericHide;
++      aInjectedScript.Append(script);
++    }
++  }
++  return NS_OK;
++}
++
++NS_IMETHODIMP ContentClassifierService::GetHiddenClassIdSelectors(
++    bool aPrivateBrowsing, const nsTArray<nsCString>& aClasses,
++    const nsTArray<nsCString>& aIds, const nsTArray<nsCString>& aExceptions,
++    nsTArray<nsCString>& aSelectors) {
++  MOZ_ASSERT(NS_IsMainThread());
++  if (!IsInitialized()) {
++    return NS_ERROR_NOT_INITIALIZED;
++  }
++  MutexAutoLock lock(mLock);
++  const auto& engines = aPrivateBrowsing ? mCancelEnginesPBM : mCancelEngines;
++  for (const auto& engine : engines) {
++    (void)engine->HiddenClassIdSelectors(aClasses, aIds, aExceptions,
++                                         aSelectors);
++  }
++  return NS_OK;
++}
+ 
+ // Parses a byte buffer of adblock-format filter list text into rules.
+ // Tolerates both LF and CRLF line endings; skips empty lines.
