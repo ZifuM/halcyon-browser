@@ -42,7 +42,7 @@ def read_state(engine: Path) -> dict:
 def write_state(engine: Path, state: dict) -> None:
     p = _state_path(engine)
     p.parent.mkdir(parents=True, exist_ok=True)
-    p.write_text(json.dumps(state, indent=2) + "\n", encoding="utf-8")
+    p.write_text(json.dumps(state, indent=2) + "\n", encoding="utf-8", newline="\n")
 
 
 # ---- download ---------------------------------------------------------------
@@ -74,7 +74,9 @@ def download(project: Project, sparse: list[str] | None = None, force: bool = Fa
 
     source = repo or project.upstream_repo
     info(f"Fetching {tag} from {source} (shallow{', sparse' if sparse else ''})")
-    args = ["clone", "--quiet", "--depth", "1", "--branch", tag, "-c", "advice.detachedHead=false"]
+    # Firefox needs LF line endings; never let a machine's core.autocrlf (default on Windows) apply.
+    args = ["clone", "--quiet", "--depth", "1", "--branch", tag, "-c", "advice.detachedHead=false",
+            "-c", "core.autocrlf=false", "-c", "core.longpaths=true"]
     if sparse:
         args += ["--filter=blob:none", "--sparse"]
     args += [source, str(engine)]
@@ -87,7 +89,7 @@ def download(project: Project, sparse: list[str] | None = None, force: bool = Fa
 
     exclude = engine / ".git" / "info" / "exclude"
     exclude.parent.mkdir(parents=True, exist_ok=True)
-    with open(exclude, "a", encoding="utf-8") as fh:
+    with open(exclude, "a", encoding="utf-8", newline="\n") as fh:
         fh.write("\n# hx\n" + "\n".join(EXCLUDES) + "\n")
 
     base = git(engine, "rev-parse", "HEAD").strip()
@@ -254,7 +256,8 @@ def _apply_branding(project: Project, base: str) -> tuple[int, int]:
         out = dest / rel
         out.parent.mkdir(parents=True, exist_ok=True)
         if is_text(src):
-            out.write_text(render(src.read_text(encoding="utf-8"), tokens, str(src)), encoding="utf-8")
+            out.write_text(render(src.read_text(encoding="utf-8"), tokens, str(src)), encoding="utf-8",
+                           newline="\n")
         else:
             shutil.copy2(src, out)
         count += 1
@@ -264,7 +267,7 @@ def _apply_branding(project: Project, base: str) -> tuple[int, int]:
     existing = pref_file.read_text(encoding="utf-8") if pref_file.is_file() else ""
     pref_file.parent.mkdir(parents=True, exist_ok=True)
     pref_file.write_text(existing.rstrip("\n") + "\n" + prefs_mod.compile_js(groups, project.name),
-                         encoding="utf-8")
+                         encoding="utf-8", newline="\n")
     return count, sum(len(g.prefs) for g in groups)
 
 
@@ -297,7 +300,7 @@ def export(project: Project, paths: list[str], all_dirty: bool = False) -> list[
             patch = project.patches_dir / f"{rel}.patch"
             if diff.strip():
                 patch.parent.mkdir(parents=True, exist_ok=True)
-                patch.write_text(diff, encoding="utf-8")
+                patch.write_text(diff, encoding="utf-8", newline="\n")
                 written.append(f"patches/{rel}.patch")
             elif patch.exists():
                 patch.unlink()

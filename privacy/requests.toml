@@ -1,0 +1,159 @@
+# Every connection the browser can make on its own.
+#
+# This file is the single source of truth for:
+#   * docs/EVERY-REQUEST.md          (generated: `hx requests --write`)
+#   * the network audit's allowlist  (tools/audit/network_audit.py)
+#
+# Fields
+#   state    "on"  = allowed by default        "off" = we turned it off; seeing it in an audit is a bug
+#   trigger  "background" = may happen with no user action (the audit's idle run must stay inside these)
+#            "user"       = only after the user does something (signs in, allows a site, types, installs)
+#   hosts    exact hostnames, or "*.example.com" for any subdomain
+#   switch   how the user turns it off (state = "on") or back on (state = "off")
+#
+# Hosts were taken from the Firefox 158 source (modules/libpref/init/all.js,
+# browser/app/profile/firefox.js, toolkit/modules/AppConstants.sys.mjs).
+
+[[request]]
+id = "remote-settings"
+name = "Security and configuration lists (Remote Settings)"
+purpose = "Certificate revocation (CRLite), add-on blocklist, tracker lists, search engine list. Signed by Mozilla and verified before use."
+hosts = ["firefox.settings.services.mozilla.com", "firefox-settings-attachments.cdn.mozilla.net"]
+state = "on"
+trigger = "background"
+switch = "Not recommended: blocking revoked certificates and malicious add-ons depends on it."
+
+[[request]]
+id = "addon-updates"
+name = "Add-on updates"
+purpose = "Checks installed add-ons (including built-in ones) for security updates."
+hosts = ["versioncheck.addons.mozilla.org", "versioncheck-bg.addons.mozilla.org", "services.addons.mozilla.org", "addons.mozilla.org"]
+state = "on"
+trigger = "background"
+switch = "about:addons > gear menu > untick Update Add-ons Automatically"
+
+[[request]]
+id = "media-plugins"
+name = "Video-call and streaming plugins"
+purpose = "Downloads the OpenH264 codec (video calls) and Widevine (DRM streaming, e.g. Netflix) and keeps them updated."
+hosts = ["aus5.mozilla.org", "ciscobinary.openh264.org", "*.gvt1.com"]
+state = "on"
+trigger = "background"
+switch = "about:config: media.gmp-provider.enabled = false (breaks some video calls and DRM sites)"
+
+[[request]]
+id = "safe-browsing"
+name = "Phishing and malware protection (Safe Browsing)"
+purpose = "Downloads hashed lists of dangerous sites; full hashes are requested only for matches. Needs a Google Safe Browsing API key, which unofficial builds don't have yet (open decision), so it is currently inert."
+hosts = ["safebrowsing.googleapis.com", "shavar.services.mozilla.com", "sb-ssl.google.com"]
+state = "on"
+trigger = "background"
+switch = "Settings > Privacy & Security > untick Block dangerous and deceptive content"
+
+[[request]]
+id = "app-updates"
+name = "App update check"
+purpose = "Once a day, asks GitHub whether a newer release exists and shows a notification bar. Never downloads or installs anything by itself."
+hosts = ["api.github.com"]
+state = "on"
+trigger = "background"
+switch = "about:config: halcyon.updates.check.enabled = false"
+
+[[request]]
+id = "push"
+name = "Web push notifications"
+purpose = "Keeps a connection open only for sites you've allowed to send notifications."
+hosts = ["push.services.mozilla.com"]
+state = "on"
+trigger = "user"
+switch = "Settings > Privacy & Security > Permissions > Notifications"
+
+[[request]]
+id = "sync"
+name = "Mozilla account and Sync"
+purpose = "Only after you sign in. End-to-end encrypted."
+hosts = ["accounts.firefox.com", "api.accounts.firefox.com", "profile.accounts.firefox.com", "token.services.mozilla.com", "*.sync.services.mozilla.com"]
+state = "on"
+trigger = "user"
+switch = "Settings > Sync > Sign out"
+
+[[request]]
+id = "search-suggestions"
+name = "Search suggestions"
+purpose = "What you type in the address bar is sent to your chosen search engine to suggest searches."
+hosts = []
+state = "on"
+trigger = "user"
+switch = "Settings > Search > untick Show search suggestions"
+
+[[request]]
+id = "certificate-status"
+name = "Certificate status (OCSP)"
+purpose = "When you open an HTTPS site, its certificate authority may be asked whether the certificate is still valid."
+hosts = []
+state = "on"
+trigger = "user"
+switch = "about:config: security.OCSP.enabled = 0 (CRLite still covers most revocations)"
+
+[[request]]
+id = "telemetry"
+name = "Telemetry and usage pings"
+purpose = "Usage and performance data sent to Mozilla."
+hosts = ["incoming.telemetry.mozilla.org"]
+state = "off"
+trigger = "background"
+switch = "Not available: compiled out."
+
+[[request]]
+id = "experiments"
+name = "Experiments, studies and remote rollouts"
+purpose = "Remote changes to browser behaviour (Normandy, Nimbus)."
+hosts = ["normandy.cdn.mozilla.net", "classify-client.services.mozilla.com"]
+state = "off"
+trigger = "background"
+switch = "Not available: Normandy compiled out; nimbus.rollouts.enabled = false."
+
+[[request]]
+id = "captive-portal"
+name = "Wi-Fi login and connectivity checks"
+purpose = "Background requests that detect hotel or airport Wi-Fi login pages."
+hosts = ["firefox-portal-detection.com", "detectportal.firefox.com"]
+state = "off"
+trigger = "background"
+switch = "about:config: network.captive-portal-service.enabled and network.connectivity-service.enabled = true"
+
+[[request]]
+id = "region"
+name = "Region lookup"
+purpose = "Guesses your country from your IP address."
+hosts = ["location.services.mozilla.com"]
+state = "off"
+trigger = "background"
+switch = "about:config: browser.region.update.enabled = true"
+
+[[request]]
+id = "suggest"
+name = "Firefox Suggest, weather and partner suggestions"
+purpose = "Sponsored and partner suggestions in the address bar."
+hosts = ["merino.services.mozilla.com"]
+state = "off"
+trigger = "background"
+switch = "Settings > Search"
+
+[[request]]
+id = "newtab-content"
+name = "New-tab stories, sponsored tiles and ads"
+purpose = "Recommended stories and sponsored content on the new tab page."
+hosts = ["ads.mozilla.org", "contile.services.mozilla.com", "firefox-api-proxy.cdn.mozilla.net", "spocs.getpocket.com"]
+state = "off"
+trigger = "background"
+switch = "Settings > Home"
+
+[[request]]
+id = "system-addon-updates"
+name = "System add-on updates"
+purpose = "Mozilla pushing updated built-in components between releases. Off: the browser changes only when you update it."
+hosts = []
+state = "off"
+trigger = "background"
+switch = "about:config: extensions.systemAddon.update.enabled = true"

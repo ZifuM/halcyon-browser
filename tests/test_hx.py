@@ -37,7 +37,7 @@ def write(path: Path, text: str | bytes) -> None:
     if isinstance(text, bytes):
         path.write_bytes(text)
     else:
-        path.write_text(textwrap.dedent(text).lstrip("\n"), encoding="utf-8")
+        path.write_text(textwrap.dedent(text).lstrip("\n"), encoding="utf-8", newline="\n")
 
 
 UPSTREAM_FILES = {
@@ -224,7 +224,7 @@ class EngineTests(Fixture):
         self.ready()
         eng = self.project.engine
         target = eng / "browser/moz.configure"
-        target.write_text(target.read_text().replace('imply_option("MOZ_NORMANDY", True)\n', ""))
+        target.write_text(target.read_text().replace('imply_option("MOZ_NORMANDY", True)\n', ""), newline="\n")
         write(eng / "browser/components/testy/New.sys.mjs", "export {};\n")
         self.assertEqual(sorted(engine.status(self.project)),
                          ["browser/components/testy/New.sys.mjs", "browser/moz.configure"])
@@ -238,13 +238,13 @@ class EngineTests(Fixture):
         self.assertNotIn("MOZ_NORMANDY", target.read_text())
         self.assertTrue((eng / "browser/components/testy/New.sys.mjs").is_file())
 
-        target.write_text(target.read_text() + "# reverted later\n")
+        target.write_text(target.read_text() + "# reverted later\n", newline="\n")
         engine.export(self.project, ["browser/moz.configure"])
         self.assertIn("reverted later", (self.root / "patches/browser/moz.configure.patch").read_text())
 
     def test_unexported_edits_block_import(self):
         self.ready()
-        (self.project.engine / "browser/moz.configure").write_text("edited\n")
+        (self.project.engine / "browser/moz.configure").write_text("edited\n", newline="\n")
         with self.assertRaisesRegex(HxError, "not exported"):
             engine.import_changes(self.project)
         engine.import_changes(self.project, force=True)
@@ -258,11 +258,11 @@ class EngineTests(Fixture):
     def test_conflicting_patch_after_rebase_is_reported(self):
         self.ready()
         t = self.project.engine / "browser/moz.configure"
-        t.write_text(t.read_text().replace('"MOZ_NORMANDY", True', '"MOZ_NORMANDY", False'))
+        t.write_text(t.read_text().replace('"MOZ_NORMANDY", True', '"MOZ_NORMANDY", False'), newline="\n")
         engine.export(self.project, ["browser/moz.configure"])
         # Upstream releases 159.0 with a conflicting change on the same line.
         f = self.up / "browser/moz.configure"
-        f.write_text(f.read_text().replace('"MOZ_NORMANDY", True', '"MOZ_NORMANDY", "maybe"'))
+        f.write_text(f.read_text().replace('"MOZ_NORMANDY", True', '"MOZ_NORMANDY", "maybe"'), newline="\n")
         sh(self.up, "git", "commit", "-qam", "upstream change")
         sh(self.up, "git", "tag", "FIREFOX_159_0_RELEASE")
         config.set_firefox_version(self.root, "159.0")
@@ -278,7 +278,7 @@ class EngineTests(Fixture):
         # Resolve the conflict in place, export it, and the next import succeeds.
         t = project.engine / "browser/moz.configure"
         self.assertIn("<<<<<<<", t.read_text())
-        t.write_text('imply_option("MOZ_PLACES", True)\nimply_option("MOZ_PROFILE_MIGRATOR", True)\n')
+        t.write_text('imply_option("MOZ_PLACES", True)\nimply_option("MOZ_PROFILE_MIGRATOR", True)\n', newline="\n")
         engine.export(project, ["browser/moz.configure"])
         report = engine.import_changes(project)
         self.assertEqual(report.patches_applied, ["browser/moz.configure"])
@@ -289,7 +289,7 @@ class EngineTests(Fixture):
         self.ready()
         eng = self.project.engine
         for rel in ("moz.configure", "toolkit/moz.configure", "modules/libpref/init/all.js"):
-            (eng / rel).write_text((eng / rel).read_text() + "# change\n")
+            (eng / rel).write_text((eng / rel).read_text() + "# change\n", newline="\n")
         engine.export(self.project, [], all_dirty=True)
         with self.assertRaisesRegex(HxError, "exceeds the budget"):
             engine.import_changes(self.project)

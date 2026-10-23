@@ -103,7 +103,7 @@ def write_mozconfig(project: Project, target_os: str | None = None, profile: str
     if profile not in ("release", "dev", "artifact"):
         raise HxError("profile must be release, dev or artifact")
     path = project.engine / "mozconfig"
-    path.write_text(compose_mozconfig(project, target_os, profile), encoding="utf-8")
+    path.write_text(compose_mozconfig(project, target_os, profile), encoding="utf-8", newline="\n")
     ok(f"Wrote engine/mozconfig ({target_os}, {profile})")
     return path
 
@@ -114,7 +114,8 @@ def _mach(project: Project, *args: str) -> None:
         raise HxError("engine/mach not found. Full (non-sparse) `hx download` needed to build.")
     if read_state(engine).get("sparse"):
         raise HxError("engine/ is a sparse checkout (CI checks only). Run `hx download --force` for a full tree.")
-    env = {"MOZCONFIG": str(engine / "mozconfig")}
+    # Our launcher sets PYTHONPATH for hx itself; mach manages its own virtualenv, so drop it.
+    env = {"MOZCONFIG": str(engine / "mozconfig"), "PYTHONPATH": None}
     run([sys.executable, str(engine / "mach"), *args], cwd=engine, env=env)
 
 

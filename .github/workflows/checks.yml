@@ -27,7 +27,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: python -m unittest discover -s tests -v
+      - run: python tools/ci/annotate.py "Unit tests" -- python -m unittest discover -s tests -v
 
   upstream-compat:
     name: Apply to Firefox and audit
@@ -38,15 +38,17 @@ jobs:
         with:
           python-version: "3.12"
       - name: Fetch the Firefox files we touch (sparse)
-        run: ./hx download --sparse-ci
+        run: python3 tools/ci/annotate.py "Download" -- ./hx download --sparse-ci
       - name: Apply src/, branding, prefs and patches
-        run: ./hx import
+        run: python3 tools/ci/annotate.py "Import" -- ./hx import
       - name: Every default pref exists in this Firefox version
-        run: ./hx audit-prefs --strict
+        run: python3 tools/ci/annotate.py "Pref audit" -- ./hx audit-prefs --strict
       - name: Every build option exists in this Firefox version
-        run: ./hx check-mozconfig
+        run: python3 tools/ci/annotate.py "Build options" -- ./hx check-mozconfig
       - name: Patch budget
         run: ./hx patches
+      - name: Every-request page matches the registry
+        run: python3 tools/ci/annotate.py "Every-request page" -- ./hx requests --check
       - name: Ownership promise - nothing is locked
         run: |
           if grep -rn "lockPref\|sticky_pref" engine/browser/branding/*/pref/; then

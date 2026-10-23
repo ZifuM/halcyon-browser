@@ -48,3 +48,8 @@ why = "Don't look up your region from a Mozilla server."
 name = "browser.region.network.url"
 value = ""
 why = "No region-lookup endpoint."
+
+[[pref]]
+name = "extensions.systemAddon.update.enabled"
+value = false
+why = "No built-in components swapped between releases: the browser only changes when you update it."

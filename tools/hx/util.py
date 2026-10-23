@@ -37,10 +37,13 @@ def run(
     cwd: Path | None = None,
     check: bool = True,
     capture: bool = False,
-    env: dict | None = None,
+    env: dict[str, str | None] | None = None,
     input_text: str | None = None,
 ) -> subprocess.CompletedProcess:
     merged_env = {**os.environ, **(env or {})}
+    for key, value in list(merged_env.items()):
+        if value is None:  # env={"X": None} removes X for the child
+            del merged_env[key]
     result = subprocess.run(
         [str(c) for c in cmd],
         cwd=str(cwd) if cwd else None,

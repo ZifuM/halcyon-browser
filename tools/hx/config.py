@@ -141,4 +141,4 @@ def set_firefox_version(root: Path, version: str) -> None:
     )
     if count != 1:
         raise ConfigError("Could not find a single upstream.firefox entry to update")
-    path.write_text(new, encoding="utf-8")
+    path.write_text(new, encoding="utf-8", newline="\n")

@@ -39,6 +39,7 @@ jobs:
       MOZILLABUILD: C:\mozilla-build
       MSYS2_PATH_TYPE: inherit          # let the MozillaBuild shell see git and Python
       SCCACHE_DIR: D:\sccache
+      PYTHONPATH: tools                 # for `python3 -m hx`; hx removes it again for mach
     defaults:
       run:
         shell: C:\mozilla-build\msys2\usr\bin\bash.exe --login -eo pipefail {0}
@@ -60,15 +61,15 @@ jobs:
             sccache-windows-${{ env.PROFILE }}-${{ hashFiles('project.toml') }}-
             sccache-windows-${{ env.PROFILE }}-
       - name: Download Firefox source
-        run: cd "$GITHUB_WORKSPACE" && ./hx download
+        run: cd "$GITHUB_WORKSPACE" && python3 tools/ci/annotate.py "Download" -- python3 -m hx download
       - name: Apply our changes
-        run: cd "$GITHUB_WORKSPACE" && ./hx import
+        run: cd "$GITHUB_WORKSPACE" && python3 tools/ci/annotate.py "Import" -- python3 -m hx import
       - name: Bootstrap toolchains
-        run: cd "$GITHUB_WORKSPACE" && ./hx bootstrap
+        run: cd "$GITHUB_WORKSPACE" && python3 tools/ci/annotate.py "Bootstrap" -- python3 -m hx bootstrap
       - name: Build
-        run: cd "$GITHUB_WORKSPACE" && ./hx build --profile "$PROFILE" --os windows
+        run: cd "$GITHUB_WORKSPACE" && python3 tools/ci/annotate.py "Build" -- python3 -m hx build --profile "$PROFILE" --os windows
       - name: Package (setup .exe + portable .zip)
-        run: cd "$GITHUB_WORKSPACE" && ./hx package --os windows
+        run: cd "$GITHUB_WORKSPACE" && python3 tools/ci/annotate.py "Package" -- python3 -m hx package --os windows
       - uses: actions/upload-artifact@v4
         with:
           name: windows-installer-${{ env.PROFILE }}
@@ -102,11 +103,11 @@ jobs:
           restore-keys: |
             sccache-linux-${{ env.PROFILE }}-${{ hashFiles('project.toml') }}-
             sccache-linux-${{ env.PROFILE }}-
-      - run: ./hx download
-      - run: ./hx import
-      - run: ./hx bootstrap
-      - run: ./hx build --profile "$PROFILE"
-      - run: ./hx package
+      - run: python3 tools/ci/annotate.py "Download" -- ./hx download
+      - run: python3 tools/ci/annotate.py "Import" -- ./hx import
+      - run: python3 tools/ci/annotate.py "Bootstrap" -- ./hx bootstrap
+      - run: python3 tools/ci/annotate.py "Build" -- ./hx build --profile "$PROFILE"
+      - run: python3 tools/ci/annotate.py "Package" -- ./hx package
       - uses: actions/upload-artifact@v4
         with:
           name: linux-x86_64-${{ env.PROFILE }}
@@ -131,11 +132,11 @@ jobs:
           restore-keys: |
             sccache-macos-${{ env.PROFILE }}-${{ hashFiles('project.toml') }}-
             sccache-macos-${{ env.PROFILE }}-
-      - run: ./hx download
-      - run: ./hx import
-      - run: ./hx bootstrap
-      - run: ./hx build --profile "$PROFILE" --os macos
-      - run: ./hx package --os macos
+      - run: python3 tools/ci/annotate.py "Download" -- ./hx download
+      - run: python3 tools/ci/annotate.py "Import" -- ./hx import
+      - run: python3 tools/ci/annotate.py "Bootstrap" -- ./hx bootstrap
+      - run: python3 tools/ci/annotate.py "Build" -- ./hx build --profile "$PROFILE" --os macos
+      - run: python3 tools/ci/annotate.py "Package" -- ./hx package --os macos
       - uses: actions/upload-artifact@v4
         with:
           name: macos-arm64-${{ env.PROFILE }}

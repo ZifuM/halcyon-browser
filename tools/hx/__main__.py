@@ -8,6 +8,7 @@ import os
 import sys
 
 from . import build, config, engine, prefs, upstream
+from . import requests as req_registry
 from .util import HxError, info, ok, warn
 
 # Upstream paths needed for CI checks without a full 6 GB checkout.
@@ -62,7 +63,7 @@ def cmd_patches(p, a):
 
 def cmd_audit_prefs(p, a):
     groups = prefs.load_groups(p.prefs_dir)
-    result = prefs.audit(groups, p.engine)
+    result = prefs.audit(groups, p.engine, p.src_dir)
     total = sum(len(g.prefs) for g in groups)
     for pref in result.unverified:
         hint = f" (looked in {pref.upstream})" if pref.upstream else ""
@@ -111,7 +112,7 @@ def cmd_rebase(p, a):
     r = engine.import_changes(p, force=True)
     ok(f"Rebased onto Firefox {target}: {len(r.patches_applied)} patches applied cleanly")
     if sparse:
-        result = prefs.audit(prefs.load_groups(p.prefs_dir), p.engine)
+        result = prefs.audit(prefs.load_groups(p.prefs_dir), p.engine, p.src_dir)
         if result.unverified:
             raise HxError("Prefs missing upstream after rebase: " + ", ".join(x.name for x in result.unverified))
 
@@ -131,6 +132,22 @@ def cmd_check_mozconfig(p, a):
         raise HxError(f"{len(problems)} mozconfig option(s) not declared by Firefox {p.firefox_version}")
     ok(f"All mozconfig options exist in Firefox {p.firefox_version} "
        f"({len(build.OS_CHOICES)} platforms x {len(build.PROFILE_CHOICES)} profiles)")
+
+
+def cmd_requests(p, a):
+    registry = req_registry.load(p.root / "privacy" / "requests.toml")
+    page = req_registry.render_markdown(registry, p.name)
+    target = p.root / "docs" / "EVERY-REQUEST.md"
+    if a.write:
+        target.write_text(page, encoding="utf-8", newline="\n")
+        ok(f"Wrote docs/EVERY-REQUEST.md ({len(registry)} entries)")
+    elif a.check:
+        if not target.is_file() or target.read_text(encoding="utf-8") != page:
+            raise HxError("docs/EVERY-REQUEST.md is out of date: run `hx requests --write`")
+        ok("docs/EVERY-REQUEST.md matches privacy/requests.toml")
+    else:
+        for r in registry:
+            print(f"  {r.state:3}  {r.trigger:10}  {r.id:22} {', '.join(r.hosts) or '-'}")
 
 
 def cmd_doctor(p, a):
@@ -190,6 +207,11 @@ def make_parser() -> argparse.ArgumentParser:
     s.add_argument("--print", action="store_true")
     s.set_defaults(fn=cmd_mozconfig)
 
+    s = sub.add_parser("requests", help="the every-request registry (list / --write page / --check)")
+    g = s.add_mutually_exclusive_group()
+    g.add_argument("--write", action="store_true")
+    g.add_argument("--check", action="store_true")
+    s.set_defaults(fn=cmd_requests)
     sub.add_parser("check-mozconfig", help="verify build options exist upstream").set_defaults(
         fn=cmd_check_mozconfig)
     sub.add_parser("bootstrap", help="install Mozilla build toolchains").set_defaults(

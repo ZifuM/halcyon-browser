@@ -35,6 +35,7 @@ class Pref:
     source_file: str
     upstream: str | None = None
     match: str | None = None   # string to look for in `upstream` when the code uses a short key
+    own: bool = False          # defined by our src/ code rather than by Firefox
 
 
 @dataclass(frozen=True)
@@ -57,7 +58,7 @@ def load_groups(prefs_dir: Path) -> list[PrefGroup]:
         prefs = []
         for i, entry in enumerate(data.get("pref", []), start=1):
             where = f"{path.name} entry {i}"
-            unknown = set(entry) - {"name", "value", "why", "upstream", "match"}
+            unknown = set(entry) - {"name", "value", "why", "upstream", "match", "own"}
             if unknown:
                 raise HxError(f"{where}: unknown keys {sorted(unknown)}")
             for key in ("name", "value", "why"):
@@ -77,7 +78,10 @@ def load_groups(prefs_dir: Path) -> list[PrefGroup]:
             seen[name] = path.name
             if "match" in entry and "upstream" not in entry:
                 raise HxError(f"{where}: {name} has 'match' but no 'upstream' file")
-            prefs.append(Pref(name, value, why.strip(), path.name, entry.get("upstream"), entry.get("match")))
+            if entry.get("own") and ("upstream" in entry or "match" in entry):
+                raise HxError(f"{where}: {name} is 'own' and can't also name an upstream file")
+            prefs.append(Pref(name, value, why.strip(), path.name, entry.get("upstream"),
+                              entry.get("match"), bool(entry.get("own", False))))
         groups.append(PrefGroup(path.name, title, tuple(prefs)))
     return groups
 
@@ -123,7 +127,17 @@ def _defined_in(text: str, name: str, is_yaml: bool) -> bool:
     return f'"{name}"' in text or f"'{name}'" in text
 
 
-def audit(groups: list[PrefGroup], engine: Path) -> AuditResult:
+def _own_sources(src_dir: Path | None) -> str:
+    if not src_dir or not src_dir.is_dir():
+        return ""
+    chunks = []
+    for p in sorted(src_dir.rglob("*")):
+        if p.is_file() and p.suffix in {".mjs", ".js", ".jsm", ".xhtml", ".html", ".cpp", ".rs"}:
+            chunks.append(p.read_text(encoding="utf-8", errors="replace"))
+    return "\n".join(chunks)
+
+
+def audit(groups: list[PrefGroup], engine: Path, src_dir: Path | None = None) -> AuditResult:
     cache: dict[str, str | None] = {}
 
     def read(rel: str) -> str | None:
@@ -133,8 +147,17 @@ def audit(groups: list[PrefGroup], engine: Path) -> AuditResult:
         return cache[rel]
 
     result = AuditResult({}, [], set())
+    own_text = None
     for group in groups:
         for pref in group.prefs:
+            if pref.own:
+                if own_text is None:
+                    own_text = _own_sources(src_dir)
+                if _defined_in(own_text, pref.name, False):
+                    result.verified[pref.name] = "src/ (own)"
+                else:
+                    result.unverified.append(pref)
+                continue
             locations = list(DEFAULT_LOCATIONS)
             if pref.upstream:
                 locations.insert(0, pref.upstream)

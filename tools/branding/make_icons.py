@@ -124,7 +124,7 @@ def main() -> None:
     mark(384, private=True).save(content / "about-logo-private@2x.png")
     mark(64).save(content / "about.png")
     svg = SVG.format(top=TOP, mid=MID, bottom=BOTTOM)
-    (content / "about-logo.svg").write_text(svg, encoding="utf-8")
+    (content / "about-logo.svg").write_text(svg, encoding="utf-8", newline="\n")
 
     tile(150, 150, 0.6).save(OUT / "VisualElements_150.png")
     tile(70, 70, 0.6).save(OUT / "VisualElements_70.png")
