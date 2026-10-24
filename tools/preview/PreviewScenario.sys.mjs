@@ -471,8 +471,18 @@ async function commandBarScenario({ win, layout, open, sleep, shot, report }) {
   await report("shortcuts", { editorRows, first, asked, taken, givenBack });
 
   // Duplicate tabs: the same page is open in Personal and in Work.
-  const pages = () => gBrowser.tabs.filter(t => !t.closing).map(t => t.linkedBrowser.currentURI.spec.replace(/#.*/, ""));
-  const repeats = () => pages().filter((u, i, all) => all.indexOf(u) != i && !/^about:/.test(u)).length;
+  // (Pinned tabs and Essentials are never closed, so count only the closable repeats.)
+  const Logic = ChromeUtils.importESModule("resource://halcyon-preview/commandbar/HalcyonCommandLogic.sys.mjs");
+  const repeats = () =>
+    Logic.findDuplicates(
+      gBrowser.tabs.filter(t => !t.closing).map(t => ({
+        url: t.linkedBrowser.currentURI.spec,
+        essential: t.pinned,
+        pinned: t.hasAttribute("halcyon-pinned"),
+        selected: t.selected,
+        lastAccessed: t.lastAccessed,
+      }))
+    ).reduce((n, g) => n + g.close.length, 0);
   const repeatsBefore = repeats();
   newTabKey.doCommand();
   await sleep(800);
