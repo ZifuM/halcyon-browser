@@ -229,6 +229,7 @@ def main() -> int:
         checks.append(("Command bar: @tabs becomes a filter chip and lists only tabs",
                        d["tabsFilter"]["chip"] == "Tabs" and d["tabsFilter"]["rows"] and set(d["tabsFilter"]["rows"]) == {"0"}))
         checks.append(("Command bar: \"> zoom\" lists the zoom actions", [r["title"] for r in d["zoomRows"]][:1] in (["Zoom In"], ["Zoom Out"], ["Reset Zoom"])))
+        checks.append(("Command bar: Backspace on an empty bar removes the filter chip", d.get("chipCleared") is True))
         checks.append(("Command bar: bookmarks are found", any(r["title"] == "Halcyon on GitHub" and r["kind"] == "1" for r in d["bookmarkRows"])))
         checks.append(("Command bar: Enter opens the top result in a new tab and closes the bar",
                        d["afterEnter"]["closed"] and d["afterEnter"]["newTab"] and d["afterEnter"]["url"].startswith("https://www.rust-lang.org/learn")))

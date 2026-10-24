@@ -18,10 +18,16 @@ for _ in $(seq 1 30); do
   sleep 2
 done
 
+# The tag goes on the default branch's tip, not on the built commit: GitHub refuses to let a
+# workflow token create a tag on a commit whose workflow files differ from the default branch's
+# (a build takes hours, and the workflows may change meanwhile). The notes name the built commit.
+branch=$(gh api "repos/$repo" --jq .default_branch)
+tip=$(gh api "repos/$repo/commits/$branch" --jq .sha)
+
 title="Test build ($(date -u +%Y-%m-%d), ${sha::7})"
 notes="Unsigned test build of Halcyon for Windows (x64), built from ${sha::7}. Windows SmartScreen will warn because it isn't code-signed yet: choose More info, then Run anyway. The .zip is a portable copy that needs no install."
 for attempt in 1 2 3; do
-  if err=$(gh release create test-build --repo "$repo" --prerelease --target "$sha" \
+  if err=$(gh release create test-build --repo "$repo" --prerelease --target "$tip" \
              --title "$title" --notes "$notes" out/* 2>&1); then
     echo "::notice title=Published::$(ls out | tr '\n' ' ')"
     exit 0

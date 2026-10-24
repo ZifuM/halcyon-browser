@@ -372,6 +372,11 @@ async function commandBarScenario({ win, layout, open, sleep, shot, report }) {
   await type("> zoom");
   const zoomRows = rows();
   await shot("13-commandbar-actions");
+  // ">" became an "Actions" chip: clear the text, then Backspace removes the chip.
+  await type("");
+  press("Backspace");
+  await sleep(300);
+  const chipCleared = chip.hidden;
   await type("halcyon on");
   const bookmarkRows = rows();
   await type("learn rust");
@@ -431,7 +436,7 @@ async function commandBarScenario({ win, layout, open, sleep, shot, report }) {
     worstMs: +times.at(-1).toFixed(2),
   });
 
-  await report("commandbar", { opened, rustRows, tabsFilter, zoomRows, bookmarkRows, afterEnter, address, newsRows, escapeCloses });
+  await report("commandbar", { opened, rustRows, tabsFilter, zoomRows, chipCleared, bookmarkRows, afterEnter, address, newsRows, escapeCloses });
 
   // Keyboard shortcut editor: give Copy Link Ctrl+Shift+U, then take Ctrl+R (asks first),
   // then give Ctrl+R back.
