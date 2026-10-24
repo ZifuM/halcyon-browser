@@ -17,18 +17,18 @@ SHIELD_SRC = ROOT / "src/browser/components/halcyon/shield"
 
 
 def added_lines(patch: Path) -> str:
-    return "\n".join(line[1:] for line in patch.read_text().splitlines() if line.startswith("+"))
+    return "\n".join(line[1:] for line in patch.read_text(encoding="utf-8").splitlines() if line.startswith("+"))
 
 
 def cpp_list_ids() -> list[str]:
-    added = "\n".join(line[1:] for line in PATCH.read_text().splitlines() if line.startswith("+"))
+    added = "\n".join(line[1:] for line in PATCH.read_text(encoding="utf-8").splitlines() if line.startswith("+"))
     block = re.search(r"kShieldListIds\[\]\s*=\s*\{(.*?)\};", added, re.S)
     assert block, "kShieldListIds not found in the patch"
     return re.findall(r'"shield-([a-z0-9-]+)"_ns', block.group(1))
 
 
 def js_list_ids() -> list[str]:
-    text = CATALOG.read_text()
+    text = CATALOG.read_text(encoding="utf-8")
     catalog = text[text.index("export const SHIELD_LISTS"): text.index("export const PREPROCESSOR_ENV")]
     return re.findall(r'^\s*id: "([a-z0-9-]+)",', catalog, re.M)
 
@@ -39,7 +39,7 @@ class ShieldSyncTests(unittest.TestCase):
         self.assertGreaterEqual(len(js_list_ids()), 8)
 
     def test_feature_registered_in_patch(self):
-        added = PATCH.read_text()
+        added = PATCH.read_text(encoding="utf-8")
         self.assertIn('+    {"shield"_ns, Span<const nsLiteralCString>(kShieldListIds),', added)
 
     def test_prefs_enable_the_shield_engine(self):
@@ -51,9 +51,9 @@ class ShieldSyncTests(unittest.TestCase):
 
     def test_list_hosts_are_in_the_registry(self):
         # Every list downloads from the two base URLs (`both(path)` in the catalog).
-        bases = re.findall(r'^const UASSETS(?:_CDN)? = "https://([^"/]+)/', CATALOG.read_text(), re.M)
+        bases = re.findall(r'^const UASSETS(?:_CDN)? = "https://([^"/]+)/', CATALOG.read_text(encoding="utf-8"), re.M)
         self.assertEqual(len(bases), 2)
-        self.assertNotIn("urls: [", CATALOG.read_text(), "lists must use both(...) so hosts stay known")
+        self.assertNotIn("urls: [", CATALOG.read_text(encoding="utf-8"), "lists must use both(...) so hosts stay known")
         hosts = set(bases)
         with open(ROOT / "privacy/requests.toml", "rb") as fh:
             entries = tomllib.load(fh)["request"]
@@ -90,17 +90,17 @@ class ElementHidingSyncTests(unittest.TestCase):
             self.assertIn(f"engine->{method}(", cpp)
 
     def test_parent_actor_calls_the_idl_methods(self):
-        parent = (SHIELD_SRC / "ShieldCosmeticParent.sys.mjs").read_text()
+        parent = (SHIELD_SRC / "ShieldCosmeticParent.sys.mjs").read_text(encoding="utf-8")
         self.assertIn("classifier.getCosmeticResources(", parent)
         self.assertIn("classifier.getHiddenClassIdSelectors(", parent)
 
     def test_new_modules_are_in_moz_build(self):
-        listed = set(re.findall(r'"(\w+\.sys\.mjs)"', (SHIELD_SRC / "moz.build").read_text()))
+        listed = set(re.findall(r'"(\w+\.sys\.mjs)"', (SHIELD_SRC / "moz.build").read_text(encoding="utf-8")))
         present = {p.name for p in SHIELD_SRC.glob("*.sys.mjs")}
         self.assertEqual(listed, present)
 
     def test_actor_registered_at_startup(self):
-        manifest = (ROOT / "src/browser/components/halcyon/halcyon.manifest").read_text()
+        manifest = (ROOT / "src/browser/components/halcyon/halcyon.manifest").read_text(encoding="utf-8")
         self.assertIn("category browser-before-ui-startup "
                       "moz-src:///browser/components/halcyon/shield/ShieldCosmetic.sys.mjs "
                       "ShieldCosmetic.init", manifest)
