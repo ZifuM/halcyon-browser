@@ -617,7 +617,9 @@ export class HalcyonSpaces {
       const anyOther = this.gBrowser.tabs.some(t => t != tab && !t.closing);
       if (!others.length && anyOther) {
         const userContextId = Store.userContextIdFor(this.activeSpace);
-        this.gBrowser.addTrustedTab(this.win.BROWSER_NEW_TAB_URL, { userContextId, skipAnimation: true });
+        const fresh = this.gBrowser.addTrustedTab(this.win.BROWSER_NEW_TAB_URL, { userContextId, skipAnimation: true });
+        // Firefox picks the next selected tab after this event: make it the fresh one.
+        this.gBrowser.setSuccessor?.(tab, fresh);
       }
     }
   }
