@@ -31,6 +31,9 @@ export const STRINGS = Object.freeze({
   placeholderNewTab: "Search or enter address",
   placeholderAddress: "Go to…",
   placeholderShortcuts: "Find an action",
+  placeholderPick: "Choose a tab to add to the split view",
+  pickHint: "Enter to add · Esc to cancel",
+  nothingToPick: "No other tabs to add",
   search: "Search",
   searchWith: engine => `Search with ${engine}`,
   open: "Open",
@@ -210,12 +213,15 @@ export class PerynCommandBar {
   // ---- opening and closing -----------------------------------------------------------------
 
   /**
-   * @param {"newtab"|"address"|"shortcuts"} mode
+   * @param {"newtab"|"address"|"shortcuts"|"pick"} mode
+   * @param {object} [options]
+   * @param {(tab) => void} [options.onPick] pick mode: called with the chosen tab
    */
-  async open(mode = "newtab") {
-    if (!this.enabled && mode != "shortcuts") {
+  async open(mode = "newtab", { onPick = null } = {}) {
+    if (!this.enabled && mode != "shortcuts" && mode != "pick") {
       return;
     }
+    this._onPick = onPick;
     this.mode = mode;
     this.filter = null;
     this.selected = 0;
@@ -226,7 +232,11 @@ export class PerynCommandBar {
     const value = mode == "address" ? this._currentURL() : "";
     this.input.value = value;
     this.input.placeholder =
-      mode == "address" ? STRINGS.placeholderAddress : mode == "shortcuts" ? STRINGS.placeholderShortcuts : STRINGS.placeholderNewTab;
+      {
+        address: STRINGS.placeholderAddress,
+        shortcuts: STRINGS.placeholderShortcuts,
+        pick: STRINGS.placeholderPick,
+      }[mode] ?? STRINGS.placeholderNewTab;
     this.input.focus();
     this.input.select();
     this._renderFooter();
@@ -306,6 +316,17 @@ export class PerynCommandBar {
     }
     if (this.mode == "shortcuts") {
       this._updateShortcutRows();
+      return;
+    }
+    if (this.mode == "pick") {
+      // Open tabs that can join: not pinned, not already in a split view.
+      const hits = PerynCommandIndex.search(this.input.value.trim(), {
+        kinds: 1 << KIND.tab,
+        limit: Logic.MAX_RESULTS,
+      }).filter(h => !h.entry.data.tab.pinned && !h.entry.data.tab.splitview && h.entry.data.window == this.win);
+      this.rows = hits.slice(0, Logic.MAX_ROWS).map(h => ({ type: "entry", entry: h.entry, score: h.score }));
+      this.selected = 0;
+      this._render();
       return;
     }
     let text = this.input.value;
@@ -467,8 +488,8 @@ export class PerynCommandBar {
       this.html("span", { class: "hx-cb-hint" }, [this.html("kbd", {}, [keys]), " ", label]);
     const enter = this.mac ? "↩" : "Enter";
     const items =
-      this.mode == "shortcuts"
-        ? [this.html("span", { class: "hx-cb-hint" }, [STRINGS.shortcutsHint])]
+      this.mode == "shortcuts" || this.mode == "pick"
+        ? [this.html("span", { class: "hx-cb-hint" }, [this.mode == "pick" ? STRINGS.pickHint : STRINGS.shortcutsHint])]
         : [
             hint(enter, STRINGS.footerOpen),
             hint((this.mac ? "⇧" : "Shift+") + enter, this.mode == "address" ? STRINGS.footerOther : STRINGS.footerOtherCurrent),
@@ -611,9 +632,14 @@ export class PerynCommandBar {
         return;
     }
     const e = row.entry;
+    const picking = this.mode == "pick" ? this._onPick : null;
     this.close({ restoreFocus: false });
     switch (e.kind) {
       case KIND.tab:
+        if (picking) {
+          picking(e.data.tab);
+          return;
+        }
         this._switchToTab(e.data);
         return;
       case KIND.bookmark:
@@ -778,6 +804,18 @@ export class PerynCommandBar {
           gBrowser.removeTabs(close);
         }
         return close.length;
+      },
+      splitAdd() {
+        const split = this.parts.split;
+        if (split) {
+          this.open("pick", { onPick: tab => split.add([tab]) });
+        }
+      },
+      splitLayout() {
+        this.parts.split?.cycleLayout();
+      },
+      splitSeparate() {
+        this.parts.split?.separate();
       },
       editShortcuts() {
         this._cameFromBar = false;

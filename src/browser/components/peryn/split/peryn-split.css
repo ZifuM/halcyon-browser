@@ -1,0 +1,77 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+/* Split view with three or four panes, or stacked (PerynSplit.sys.mjs). Firefox's own two-pane
+ * split view is left alone; these rules apply only while #tabbrowser-tabpanels[peryn-split].
+ * The panels Firefox shows (.split-view-panel-active) are placed on a grid by the area name in
+ * their [peryn-pane]; every other panel keeps filling the whole area underneath, hidden, as it
+ * does normally. */
+
+#tabbrowser-tabpanels[peryn-split] {
+  display: grid !important;
+  grid-template-columns: var(--peryn-split-columns);
+  grid-template-rows: var(--peryn-split-rows);
+  grid-template-areas: var(--peryn-split-areas);
+
+  > * {
+    grid-area: 1 / 1 / -1 / -1;
+  }
+
+  > .split-view-splitter {
+    display: none;
+  }
+
+  > .split-view-panel-active {
+    width: auto !important;
+    max-width: none;
+    min-width: 0;
+    min-height: 0;
+    margin: var(--space-xsmall, 4px) !important;
+  }
+
+  > .split-view-panel-active[peryn-pane="a"] { grid-area: a; }
+  > .split-view-panel-active[peryn-pane="b"] { grid-area: b; }
+  > .split-view-panel-active[peryn-pane="c"] { grid-area: c; }
+  > .split-view-panel-active[peryn-pane="d"] { grid-area: d; }
+
+  /* No page reacts to the pointer while a divider is dragged across it. */
+  &[peryn-split-dragging] > .split-view-panel-active {
+    pointer-events: none;
+  }
+}
+
+/* Dividers: thin handles over the gaps between panes, shown on hover or focus. */
+#peryn-split-handles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
+}
+
+.peryn-split-divider {
+  position: absolute;
+  pointer-events: auto;
+  border-radius: 4px;
+  background-color: var(--hx-focus-ring, AccentColor);
+  opacity: 0;
+  transition: opacity var(--hx-duration-fast) var(--hx-ease-out);
+
+  &[data-kind="x"] {
+    width: 8px;
+    margin-inline-start: -4px;
+    cursor: ew-resize;
+  }
+
+  &:is([data-kind="y"], [data-kind="y-right"]) {
+    height: 8px;
+    margin-top: -4px;
+    cursor: ns-resize;
+  }
+
+  &:hover,
+  &:focus-visible {
+    opacity: 1;
+    outline: none;
+  }
+}

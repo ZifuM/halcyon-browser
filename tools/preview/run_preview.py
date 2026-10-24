@@ -256,6 +256,28 @@ def main() -> int:
                        d["repeatsBefore"] > 0 and d["duplicateRows"][:1] and d["duplicateRows"][0]["title"] == "Close Duplicate Tabs"
                        and all(r["kind"] == "0" for r in d["duplicateRows"][1:])))
         checks.append(("Command bar: Close Duplicate Tabs leaves each page open once", d["repeatsAfter"] == 0))
+    sv = out / "split.json"
+    if sv.exists():
+        d = json.loads(sv.read_text())
+        near = lambda a, b: abs(a - b) <= 0.06
+        two, three, four = d["two"], d["three"], d["four"]
+        checks.append(("Split view: two panes stay Firefox's own side-by-side view",
+                       two["active"] and two["tabs"] == 2 and two["perynSplit"] == ""
+                       and near(two["rects"][0]["w"], 0.5) and two["rects"][1]["x"] > 0.4))
+        a, b, c = three["rects"]
+        checks.append(("Split view: a third pane gives one large pane and two stacked",
+                       three["perynSplit"] == "main" and three["panes"] == 3
+                       and near(a["h"], 1) and near(b["h"], 0.5) and near(c["h"], 0.5) and b["x"] > 0.4 and c["y"] > 0.4))
+        r = four["rects"]
+        checks.append(("Split view: four panes form a 2x2 grid",
+                       four["perynSplit"] == "grid" and all(near(x["w"], 0.5) and near(x["h"], 0.5) for x in r)
+                       and len({(x["x"] > 0.3, x["y"] > 0.3) for x in r}) == 4))
+        checks.append(("Split view: layouts cycle (columns, stacked, grid)", d["cycled"] == ["columns", "rows", "grid"]))
+        checks.append(("Split view: the divider moves with the keyboard",
+                       d["resized"]["hasDivider"] and d["resized"]["after"] > d["resized"]["before"] + 0.02))
+        checks.append(("Split view: closing one of four panes keeps the other three split",
+                       d["afterClose"]["active"] and d["afterClose"]["tabs"] == 3 and d["afterClose"]["perynSplit"] == "main"))
+        checks.append(("Split view: Separate ends it", not d["separated"]["active"] and d["separated"]["perynSplit"] == ""))
     off = out / "commandbar-off.json"
     if off.exists():
         d = json.loads(off.read_text())

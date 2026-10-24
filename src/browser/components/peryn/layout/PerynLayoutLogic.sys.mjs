@@ -21,6 +21,7 @@ export const STYLESHEETS = Object.freeze([
   "peryn-compact.css",
   "../spaces/peryn-spaces.css",
   "../commandbar/peryn-commandbar.css",
+  "../split/peryn-split.css",
 ]);
 
 /** Session-store key that marks a tab as pinned to the sidebar (not an Essential). */

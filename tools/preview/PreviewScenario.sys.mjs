@@ -297,6 +297,9 @@ async function runScenario(win) {
   // ---- Command bar (C5) ----
   await commandBarScenario({ win, layout, open, sleep, shot, report });
 
+  // ---- Split view with up to four panes (C6) ----
+  await splitScenario({ win, layout, open, sleep, shot, report });
+
   await IOUtils.writeUTF8(PathUtils.join(OUT, "finished"), "ok");
   await sleep(500);
   Services.startup.quit(Ci.nsIAppStartup.eForceQuit);
@@ -506,4 +509,65 @@ async function commandBarScenario({ win, layout, open, sleep, shot, report }) {
   Services.prefs.clearUserPref("peryn.commandbar.enabled");
   await sleep(300);
   await report("commandbar-off", { off, backOn: !newTabKey.hasAttribute("command") });
+}
+
+/** Split view: Firefox's two panes, then three and four through Peryn's grid. */
+async function splitScenario({ win, layout, open, sleep, shot, report }) {
+  const { gBrowser } = win;
+  const doc = win.document;
+  const split = layout.split;
+  const panels = doc.getElementById("tabbrowser-tabpanels");
+  const area = () => panels.getBoundingClientRect();
+  const rectOf = tab => {
+    const r = doc.getElementById(tab.linkedPanel).getBoundingClientRect();
+    const a = area();
+    // As fractions of the content area, rounded, so the checks don't depend on window size.
+    const f = v => Math.round(v * 100) / 100;
+    return { x: f((r.left - a.left) / a.width), y: f((r.top - a.top) / a.height), w: f(r.width / a.width), h: f(r.height / a.height) };
+  };
+  const state = () => ({
+    perynSplit: panels.getAttribute("peryn-split") || "",
+    panes: Number(panels.getAttribute("peryn-panes") || 0),
+    active: !!gBrowser.activeSplitView,
+    tabs: gBrowser.activeSplitView?.tabs.length ?? 0,
+  });
+
+  const tabs = ["code", "weather", "recipes", "news"].map(p => open(`${p}.html`));
+  gBrowser.selectedTab = tabs[0];
+  await sleep(1500);
+
+  gBrowser.addTabSplitView([tabs[0], tabs[1]]);
+  await sleep(1200);
+  const two = { ...state(), rects: tabs.slice(0, 2).map(rectOf) };
+
+  split.add([tabs[2]]);
+  await sleep(1200);
+  const three = { ...state(), rects: tabs.slice(0, 3).map(rectOf) };
+  await shot("17-split-three");
+
+  split.add([tabs[3]]);
+  await sleep(1200);
+  const four = { ...state(), rects: tabs.map(rectOf) };
+  await shot("18-split-grid");
+
+  const cycled = [split.cycleLayout(), split.cycleLayout(), split.cycleLayout()];
+  await sleep(600);
+  const divider = doc.querySelector('.peryn-split-divider[data-kind="x"]');
+  const before = rectOf(tabs[0]).w;
+  divider?.dispatchEvent(new win.KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }));
+  await sleep(600);
+  const resized = { hasDivider: !!divider, before, after: rectOf(tabs[0]).w };
+
+  gBrowser.removeTab(tabs[3]);
+  await sleep(1500);
+  const afterClose = { ...state(), rects: tabs.slice(0, 3).map(rectOf) };
+
+  split.separate();
+  await sleep(1000);
+  const separated = state();
+  await report("split", { two, three, four, cycled, resized, afterClose, separated });
+  for (const tab of tabs.slice(0, 3)) {
+    gBrowser.removeTab(tab);
+  }
+  await sleep(500);
 }
