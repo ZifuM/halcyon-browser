@@ -282,6 +282,10 @@ def main() -> int:
         checks.append(("Split view: closing one of four panes keeps the other three split",
                        d["afterClose"]["active"] and d["afterClose"]["tabs"] == 3 and d["afterClose"]["perynSplit"] == "main"))
         checks.append(("Split view: Separate ends it", not d["separated"]["active"] and d["separated"]["perynSplit"] == ""))
+        dr = d.get("dropped") or {}
+        checks.append(("Split view: a tab dropped on the page's bottom edge stacks below it",
+                       dr.get("canDrop") and dr.get("active") and dr.get("tabs") == 2 and dr.get("perynSplit") == "rows"
+                       and dr["rects"][0]["y"] < 0.1 and dr["rects"][1]["y"] > 0.4))
     gl = out / "glance.json"
     if gl.exists():
         d = json.loads(gl.read_text())

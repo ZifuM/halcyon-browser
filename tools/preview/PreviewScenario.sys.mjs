@@ -571,7 +571,16 @@ async function splitScenario({ win, layout, open, sleep, shot, report }) {
   split.separate();
   await sleep(1000);
   const separated = state();
-  await report("split", { two, three, four, cycled, resized, afterClose, separated });
+  // A tab dropped on the page's bottom edge: the two stacked.
+  gBrowser.selectedTab = tabs[0];
+  await sleep(600);
+  const canDrop = split.canDrop(tabs[1]);
+  split.dropTab(tabs[1], "bottom");
+  await sleep(1200);
+  const dropped = { canDrop, ...state(), rects: tabs.slice(0, 2).map(rectOf) };
+  split.separate();
+  await sleep(600);
+  await report("split", { two, three, four, cycled, resized, afterClose, separated, dropped });
   for (const tab of tabs.slice(0, 3)) {
     gBrowser.removeTab(tab);
   }
