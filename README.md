@@ -11,8 +11,9 @@ it. See [docs/OWNERSHIP.md](docs/OWNERSHIP.md) for the eight release-blocking pr
 ## Status
 
 Phase 1 (Foundation) done: **C0 build pipeline**, **C1 privacy baseline**, **C2 Shield**.
-Phase 2 (Core experience): **C3 Arc-style layout** done and checked in the official Firefox
-158.0.1 (see below). Builds resume next, then C4 (Spaces).
+Phase 2 (Core experience): **C3 Arc-style layout** and **C4 Spaces** done, checked in the
+official Firefox 158.0.1 (see below). Test installers are on the **test-build** pre-release.
+Next: C5, the command bar.
 
 ![Halcyon: Essentials, Pinned and Today in the sidebar; the page as a card](docs/images/layout-light.png)
 
@@ -24,6 +25,7 @@ Phase 2 (Core experience): **C3 Arc-style layout** done and checked in the offic
 | Shield | uBlock Origin's default lists in Firefox's in-tree adblock-rust engine: network blocking and element hiding, ~11 µs per request. See [docs/SHIELD.md](docs/SHIELD.md) |
 | Performance budgets | checked in CI: [docs/PERFORMANCE.md](docs/PERFORMANCE.md) |
 | Layout | Arc-style: Essentials grid, Pinned and Today, centred address, page as a card, rail, compact mode (Ctrl+Alt+C). Built on Firefox's own vertical tabs with no patches. See [docs/LAYOUT.md](docs/LAYOUT.md) |
+| Spaces | Named Spaces with their own colour, icon, Pinned tabs and optional container; switch by dot, swipe or Ctrl+Alt+arrows; synced with Firefox Sync. See [docs/SPACES.md](docs/SPACES.md) |
 | UI preview | CI loads our layout into stock Firefox 158.0.1, screenshots every state and checks behaviour in the real browser (`ui-previews` branch) |
 | Compiled out | telemetry upload, Normandy experiments, crash reporter, Mozilla updater, Windows default-browser agent |
 | Every-request registry | `privacy/requests.toml` → [docs/EVERY-REQUEST.md](docs/EVERY-REQUEST.md) |
@@ -31,14 +33,14 @@ Phase 2 (Core experience): **C3 Arc-style layout** done and checked in the offic
 | Updates | notification-only update check against GitHub Releases; never auto-installs |
 | Windows installer | `hx package` on Windows → `*.installer.exe` (built by the `build` workflow) |
 | Patches to Firefox | 7 of a 60-file budget ([docs/PATCHES.md](docs/PATCHES.md)) |
-| CI | tests on 3 OSes, upstream checks, Shield corpus and budgets, twice-daily rebase bot; 3-OS builds, network audit and releases (paused until after C3) |
+| CI | tests on 3 OSes, upstream checks, Shield corpus and budgets, UI preview, twice-daily rebase bot; Windows and Linux builds, network audit, test-build pre-release, releases on `v*` tags |
 
-Next: resume builds (fix the stalled bootstrap, Windows installer), then C4: Spaces.
+Next: C5, the command bar (Rust index over tabs, history, bookmarks, settings and actions).
 
 ## Get the browser
 
-Builds are paused until after C3, so there is no installer yet. Once they resume: download the
-Windows installer from the latest successful **build** run (Actions tab →
+Download the Windows installer from the **test-build** pre-release on the Releases page (or
+from the latest successful **build** run (Actions tab →
 build → `windows-installer-dev`), or from **Releases** once a version is tagged. The build is not
 code-signed yet, so Windows SmartScreen will warn: choose *More info → Run anyway*.
 

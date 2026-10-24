@@ -82,9 +82,8 @@ Screenshots are published to the `ui-previews` branch on every change.
 
 | Item | Plan |
 | --- | --- |
-| Space name above Pinned, Space dots and archive in the bottom row | C4 (Spaces) |
-| Per-Space colours (the tokens are ready for it) | C4 |
-| Arc's "pinned tab resets to its URL when closed" | C4, with Spaces |
+| Archive button in the bottom row | With auto-archive (C8) |
+| Arc's "pinned tab resets to its URL when closed" | Later; Pinned tabs are synced launchers already ([SPACES.md](SPACES.md)) |
 | Command bar on Ctrl/Cmd+T and Ctrl/Cmd+L | C5 |
 | Localised strings (menu labels are English-only) | With the browser's own localisation files |
 | Frame-time measurement of the motion | When builds resume (Xvfb in CI renders in software, so its timings mean little) |
