@@ -44,7 +44,7 @@ export class PerynGlanceChild extends JSWindowActorChild {
 
   handleEvent(event) {
     // TEMPORARY (C6 diagnosis): what the last event looked like, for the preview's ping.
-    this._last = { type: event.type, alt: event.altKey, button: event.button, prevented: event.defaultPrevented, link: event.type == "click" ? linkFromEvent(event) : null };
+    this._last = { type: event.type, alt: event.altKey, ctrl: event.ctrlKey, meta: event.metaKey, shift: event.shiftKey, button: event.button, prevented: event.defaultPrevented, link: event.type == "click" ? linkFromEvent(event) : null, matched: isGlanceClick(event), sent: false };
     if (event.type == "keydown") {
       if (event.key == "Escape" && !event.repeat && !event.defaultPrevented && !event.altKey) {
         this.sendAsyncMessage("Glance:Escape");
@@ -61,5 +61,6 @@ export class PerynGlanceChild extends JSWindowActorChild {
     event.preventDefault();
     event.stopPropagation();
     this.sendAsyncMessage("Glance:Open", { url, referrer: this.document.location.href });
+    this._last.sent = true;
   }
 }

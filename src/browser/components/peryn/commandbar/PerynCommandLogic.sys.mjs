@@ -169,6 +169,7 @@ export const ACTIONS = Object.freeze([
   { id: "welcome", title: "Welcome and Import", keywords: "onboarding setup start first run tour", run: "showWelcome" },
   { id: "import-browser", title: "Import from Another Browser", keywords: "chrome edge safari brave bookmarks passwords history migrate", run: "importBrowser" },
   { id: "import-arc", title: "Import from Arc", keywords: "arc spaces favorites pinned migrate", run: "importArc" },
+  { id: "import-zen", title: "Import from Zen", keywords: "zen spaces workspaces essentials pinned migrate", run: "importZen" },
   { id: "compact", title: "Toggle Compact Mode", keywords: "hide sidebar toolbar focus", run: "toggleCompact", key: "peryn-key-compact" },
   { id: "sidebar", title: "Collapse or Expand Sidebar", keywords: "rail tabs", run: "toggleSidebar" },
   { id: "new-space", title: "New Space", keywords: "create add workspace", run: "newSpace" },

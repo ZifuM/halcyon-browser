@@ -26,8 +26,8 @@ pre-release. C6 in progress: split view, Glance, and the first-run welcome with 
 | Performance budgets | checked in CI: [docs/PERFORMANCE.md](docs/PERFORMANCE.md) |
 | Layout | Arc-style: Essentials grid, Pinned and Today, centred address, page as a card, rail, compact mode (Ctrl+Alt+C). Built on Firefox's own vertical tabs with no patches. See [docs/LAYOUT.md](docs/LAYOUT.md) |
 | Spaces | Named Spaces with their own colour, icon, Pinned tabs and optional container; switch by dot, swipe or Ctrl+Alt+arrows; synced with Firefox Sync. See [docs/SPACES.md](docs/SPACES.md) |
-| Split view and Glance | Up to four panes (grid, one large plus two, stacked) with draggable dividers; Alt+click a link to preview it in a card over the page. See [docs/SPLIT-AND-GLANCE.md](docs/SPLIT-AND-GLANCE.md) |
-| First run | A short welcome: import from any browser (Firefox's wizard) or from Arc (Spaces, pinned tabs, Favorites), look, protection level, default browser asked once. See [docs/ONBOARDING.md](docs/ONBOARDING.md) |
+| Split view and Glance | Up to four panes (grid, one large plus two, stacked): drag a tab onto the page to split, drag the dividers; Alt+click a link to preview it in a card over the page. See [docs/SPLIT-AND-GLANCE.md](docs/SPLIT-AND-GLANCE.md) |
+| First run | A short welcome: import from any browser (Firefox's wizard), or from Arc or Zen (Spaces, pinned tabs, Favorites or Essentials), look, protection level, default browser asked once. See [docs/ONBOARDING.md](docs/ONBOARDING.md) |
 | Command bar | Ctrl/Cmd+T and Ctrl/Cmd+L: tabs in every Space, bookmarks, history, actions and search in one box; a Rust index (WebAssembly) answers each keystroke in a few ms over 100,000 entries; custom keyboard shortcuts. See [docs/COMMANDBAR.md](docs/COMMANDBAR.md) |
 | UI preview | CI loads our layout into stock Firefox 158.0.1, screenshots every state and checks behaviour in the real browser (`ui-previews` branch) |
 | Compiled out | telemetry upload, Normandy experiments, crash reporter, Mozilla updater, Windows default-browser agent |

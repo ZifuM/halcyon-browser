@@ -6,4 +6,5 @@ MOZ_SRC_FILES += [
     "peryn-onboarding.css",
     "PerynArcImport.sys.mjs",
     "PerynOnboarding.sys.mjs",
+    "PerynZenImport.sys.mjs",
 ]

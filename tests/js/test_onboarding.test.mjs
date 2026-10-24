@@ -180,3 +180,57 @@ test("the welcome shows itself once, in the first normal window", () => {
   assert.equal(Onboarding.PROTECTION.balanced, "standard");
   assert.equal(Onboarding.THEMES.dark, "firefox-compact-dark@mozilla.org");
 });
+
+// ---- Zen ---------------------------------------------------------------------------------
+
+const Zen = await import("moz-src:///browser/components/peryn/onboarding/PerynZenImport.sys.mjs");
+
+const zenTab = (url, extra = {}) => ({ entries: [{ url: "https://old.example/", title: "Old" }, { url, title: `T ${url.split("/")[2]}` }], index: 2, ...extra });
+
+function zenFile() {
+  return {
+    spaces: [
+      { uuid: "{b}", name: "Work", icon: "💻", position: 2000, theme: { gradientColors: [{ c: [40, 90, 240] }, { c: [140, 60, 230] }] } },
+      { uuid: "{a}", name: "Home", icon: "chrome://browser/skin/zen-icons/heart.svg", position: 1000 },
+    ],
+    tabs: [
+      zenTab("https://mail.example/", { pinned: true, zenEssential: true, zenWorkspace: null }),
+      zenTab("https://github.com/", { pinned: true, zenWorkspace: "{b}" }),
+      zenTab("https://docs.example/", { pinned: true, zenWorkspace: "{b}", groupId: "f1" }),
+      zenTab("https://news.example/", { pinned: false, zenWorkspace: "{b}" }),
+      zenTab("https://recipes.example/", { pinned: true, zenWorkspace: "{a}" }),
+      zenTab("about:newtab", { pinned: true, zenWorkspace: "{a}" }),
+      zenTab("https://github.com/", { pinned: true, zenWorkspace: "{b}" }),
+    ],
+    folders: [{ id: "f1", name: "Docs", workspaceId: "{b}" }],
+  };
+}
+
+test("Zen: Spaces in Zen's order, pinned tabs per Space, Essentials", () => {
+  const parsed = Zen.parseZenSession(zenFile());
+  assert.deepEqual(parsed.spaces.map(s => s.name), ["Home", "Work"]);
+  const [home, work] = parsed.spaces;
+  assert.equal(home.icon, "", "Zen's own SVG icons don't carry over");
+  assert.equal(work.icon, "💻");
+  assert.ok(work.color.hue > 230 && work.color.hue < 300, `blue, got ${work.color.hue}`);
+  assert.deepEqual(work.pins.map(p => p.url), ["https://github.com/", "https://docs.example/"], "folders flattened, unpinned left out, repeats once");
+  assert.equal(work.pins[0].title, "T github.com", "the tab's current page, not its history");
+  assert.deepEqual(home.pins.map(p => p.url), ["https://recipes.example/"]);
+  assert.deepEqual(parsed.essentials.map(e => e.url), ["https://mail.example/"]);
+  assert.equal(parsed.skipped, 1, "about:newtab");
+});
+
+test("Zen: older session files keep tabs under windows and flags under attributes", () => {
+  const old = { windows: [{ tabs: [zenTab("https://a.example/", { attributes: { zenEssential: "true" } }), zenTab("https://b.example/", { pinned: true, zenWorkspace: "{x}" })] }], spaces: [{ uuid: "{x}", name: "Main" }] };
+  const parsed = Zen.parseZenSession(old);
+  assert.deepEqual(parsed.essentials.map(e => e.url), ["https://a.example/"]);
+  assert.deepEqual(parsed.spaces[0].pins.map(p => p.url), ["https://b.example/"]);
+});
+
+test("Zen: a file that isn't Zen's gives a clear message; merge names clashes (Zen)", () => {
+  assert.throws(() => Zen.parseZenSession(null), /isn't Zen's/);
+  assert.throws(() => Zen.parseZenSession({ hello: [1, 2] }), /no Spaces or tabs/);
+  let mine = Logic.updateSpace(Logic.defaultData(), "s-personal", { name: "Home", pins: [{ id: "p-x", url: "https://x.test/", title: "" }] });
+  const { data } = Arc.mergeImport(mine, Zen.parseZenSession(zenFile()), { source: "Zen", random });
+  assert.deepEqual(data.spaces.map(s => s.name), ["Home", "Home (Zen)", "Work"]);
+});

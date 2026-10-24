@@ -833,6 +833,10 @@ export class PerynCommandBar {
         this.parts.onboarding?.show(1);
         this.parts.onboarding?.importFromArc();
       },
+      importZen() {
+        this.parts.onboarding?.show(1);
+        this.parts.onboarding?.importFromZen();
+      },
       editShortcuts() {
         this._cameFromBar = false;
         this.open("shortcuts");

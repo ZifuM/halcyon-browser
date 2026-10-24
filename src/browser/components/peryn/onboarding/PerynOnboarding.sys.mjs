@@ -11,7 +11,8 @@
  */
 
 import { PerynSpacesStore as Store } from "../spaces/PerynSpacesStore.sys.mjs";
-import { ARC_PATHS, parseArcSidebar, mergeArcImport } from "./PerynArcImport.sys.mjs";
+import { ARC_PATHS, parseArcSidebar, mergeImport } from "./PerynArcImport.sys.mjs";
+import { ZEN_PATHS, parseZenSession } from "./PerynZenImport.sys.mjs";
 
 const lazy = {};
 ChromeUtils.defineESModuleGetters(lazy, {
@@ -47,8 +48,8 @@ export function shouldShow({ done, isPrivate, otherWindows }) {
   return !done && !isPrivate && otherWindows == 0;
 }
 
-/** A one-line summary of an Arc import. */
-export function importSummary({ added, dropped }, skipped = 0) {
+/** A one-line summary of an import from Arc or Zen. */
+export function importSummary({ added, dropped }, skipped = 0, source = "Arc") {
   const n = (count, one, many) => `${count} ${count == 1 ? one : many}`;
   const parts = [];
   if (added.spaces) {
@@ -58,9 +59,9 @@ export function importSummary({ added, dropped }, skipped = 0) {
     parts.push(n(added.pins, "pinned tab", "pinned tabs"));
   }
   if (added.essentials) {
-    parts.push(n(added.essentials, "Favorite (now Essentials)", "Favorites (now Essentials)"));
+    parts.push(source == "Arc" ? n(added.essentials, "Favorite (now Essentials)", "Favorites (now Essentials)") : n(added.essentials, "Essential", "Essentials"));
   }
-  let text = parts.length ? `Imported ${joinList(parts)} from Arc.` : "Nothing new to import from Arc.";
+  let text = parts.length ? `Imported ${joinList(parts)} from ${source}.` : `Nothing new to import from ${source}.`;
   const left = dropped + skipped;
   if (left) {
     text += ` ${n(left, "item was", "items were")} left out (over the limits, or not a web page).`;
@@ -78,12 +79,15 @@ export const STRINGS = Object.freeze({
     "A calm browser that blocks ads and trackers, sends no telemetry, and keeps your tabs in a sidebar. A few quick choices and you're set; you can skip any of them.",
   start: "Get started",
   importTitle: "Bring your things",
-  importText: "Bookmarks, history and passwords come over with Firefox's import. From Arc, your Spaces, pinned tabs and Favorites come over too.",
+  importText: "Bookmarks, history and passwords come over with Firefox's import. From Arc or Zen, your Spaces, pinned tabs and Favorites or Essentials come over too.",
   importBrowser: "From another browser…",
   importBrowserHint: "Chrome, Edge, Firefox, Safari, Brave and others",
   importArc: "From Arc",
   importArcHint: "Spaces, pinned tabs and Favorites",
   arcPick: "Choose Arc's StorableSidebar.json",
+  importZen: "From Zen",
+  importZenHint: "Spaces, pinned tabs and Essentials (quit Zen first)",
+  zenPick: "Choose Zen's zen-sessions.jsonlz4 (in your Zen profile folder)",
   lookTitle: "Pick a look",
   lookText: "Follow your system, or keep it light or dark.",
   auto: "Match system",
@@ -247,14 +251,87 @@ export class PerynOnboarding {
     }
     try {
       const parsed = parseArcSidebar(await IOUtils.readUTF8(path));
-      const result = mergeArcImport(Store.data, parsed);
+      const result = mergeImport(Store.data, parsed, { source: "Arc" });
       Store.set(result.data, { imported: "arc" });
-      const text = importSummary(result, parsed.skipped);
+      const text = importSummary(result, parsed.skipped, "Arc");
       say(text);
       return { ...result, text };
     } catch (e) {
       say(e.message.startsWith("This isn't") || e.message.startsWith("Arc's") ? e.message : "Couldn't read that file.");
       console.error("Peryn onboarding: Arc import failed", e);
+      return null;
+    }
+  }
+
+  /** Zen's session file in its most recently used profile, if Zen is installed. */
+  async findZenFile() {
+    try {
+      const platform = lazy.AppConstants.platform;
+      let root;
+      if (platform == "win") {
+        root = PathUtils.join(Services.dirsvc.get("AppData", Ci.nsIFile).path, ...ZEN_PATHS.win);
+      } else if (platform == "macosx") {
+        root = PathUtils.join(Services.dirsvc.get("ULibDir", Ci.nsIFile).path, "Application Support", ...ZEN_PATHS.macosx);
+      } else {
+        root = PathUtils.join(Services.dirsvc.get("Home", Ci.nsIFile).path, ...ZEN_PATHS.linux);
+      }
+      if (!(await IOUtils.exists(root))) {
+        return null;
+      }
+      let best = null;
+      for (const dir of await IOUtils.getChildren(root)) {
+        for (const name of ZEN_PATHS.sessionFiles) {
+          const path = PathUtils.join(dir, name);
+          const info = await IOUtils.stat(path).catch(() => null);
+          if (info?.type == "regular" && (!best || info.lastModified > best.at)) {
+            best = { path, at: info.lastModified };
+          }
+          if (info) {
+            break; // the newer file name wins within a profile
+          }
+        }
+      }
+      return best?.path ?? null;
+    } catch (e) {
+      console.error("Peryn onboarding: looking for Zen failed", e);
+      return null;
+    }
+  }
+
+  pickZenFile() {
+    return new Promise(resolve => {
+      const picker = Cc["@mozilla.org/filepicker;1"].createInstance(Ci.nsIFilePicker);
+      picker.init(this.win.browsingContext, STRINGS.zenPick, Ci.nsIFilePicker.modeOpen);
+      picker.appendFilter("Zen session (zen-sessions.jsonlz4, sessionstore.jsonlz4)", "*.jsonlz4");
+      picker.open(result => resolve(result == Ci.nsIFilePicker.returnOK ? picker.file.path : null));
+    });
+  }
+
+  /** Import Spaces, pinned tabs and Essentials from Zen's session file (found, or picked). */
+  async importFromZen({ path = null } = {}) {
+    const status = this.root?.querySelector(".peryn-ob-status");
+    const say = text => {
+      if (status) {
+        status.textContent = text;
+      }
+    };
+    path ??= (await this.findZenFile()) ?? (await this.pickZenFile());
+    if (!path) {
+      say("");
+      return null;
+    }
+    try {
+      // Zen's session files are Firefox's compressed JSON (mozLz4).
+      const json = await IOUtils.readJSON(path, { decompress: true });
+      const parsed = parseZenSession(json);
+      const result = mergeImport(Store.data, parsed, { source: "Zen" });
+      Store.set(result.data, { imported: "zen" });
+      const text = importSummary(result, parsed.skipped, "Zen");
+      say(text);
+      return { ...result, text };
+    } catch (e) {
+      say(/^(This isn't|Zen's)/.test(e.message) ? e.message : "Couldn't read Zen's session file. Quit Zen and try again.");
+      console.error("Peryn onboarding: Zen import failed", e);
       return null;
     }
   }
@@ -366,6 +443,7 @@ export class PerynOnboarding {
         e("div", { class: "peryn-ob-choices" }, [
           this._choice("import", "browser", STRINGS.importBrowser, STRINGS.importBrowserHint, () => this.importFromBrowser()),
           this._choice("import", "arc", STRINGS.importArc, STRINGS.importArcHint, () => this.importFromArc()),
+          this._choice("import", "zen", STRINGS.importZen, STRINGS.importZenHint, () => this.importFromZen()),
           e("p", { class: "peryn-ob-status", role: "status" }),
         ]),
         [back(), skip(), next()]

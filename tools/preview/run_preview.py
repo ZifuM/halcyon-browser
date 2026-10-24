@@ -311,6 +311,9 @@ def main() -> int:
         checks.append(("Welcome: Arc's Spaces, pinned tabs and Favorites come over",
                        i["ok"] and i["spacesAdded"] >= 1 and i["studioPins"] == ["Design", "Roadmap"] and i["studioIcon"] == "🎨"
                        and i["essential"] and i["text"].startswith("Imported")))
+        z = i.get("zen") or {}
+        checks.append(("Welcome: Zen's Spaces, pinned tabs and Essentials come over from its compressed session file",
+                       z.get("ok") and z.get("pins") == ["News"] and z.get("icon") == "📚" and z.get("essential") and z.get("text", "").startswith("Imported")))
         p = d["protection"]
         checks.append(("Welcome: the protection choice sets Firefox's category", p["balanced"] == "standard" and p["pressed"] == "balanced" and p["strict"] == "strict"))
         checks.append(("Welcome: Esc closes it and it won't show again by itself", not d["closed"]["open"] and d["closed"]["done"]))

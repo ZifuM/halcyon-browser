@@ -95,7 +95,7 @@ export function hueOf({ red, green, blue }) {
 }
 
 /** Every {red, green, blue} colour found in a Space's customInfo, in order. */
-function colorsIn(value, out = [], depth = 0) {
+export function colorsIn(value, out = [], depth = 0) {
   if (!value || typeof value != "object" || depth > 12) {
     return out;
   }
@@ -230,6 +230,14 @@ export function isUntouched(data) {
  * @returns {{data, added: {spaces: number, pins: number, essentials: number}, dropped: number}}
  */
 export function mergeArcImport(data, imported, random = Math.random) {
+  return mergeImport(data, imported, { source: "Arc", random });
+}
+
+/**
+ * The same merge for any browser's Spaces, pinned tabs and Essentials (Arc, Zen); a name
+ * already taken gets " (<source>)".
+ */
+export function mergeImport(data, imported, { source = "Arc", random = Math.random } = {}) {
   let next = isUntouched(data) ? { ...data, spaces: [] } : { ...data, spaces: [...data.spaces] };
   const names = new Set(next.spaces.map(s => s.name.toLowerCase()));
   const urls = new Set([...next.essentials.map(e => e.url)]);
@@ -244,7 +252,7 @@ export function mergeArcImport(data, imported, random = Math.random) {
     }
     let name = space.name;
     if (names.has(name.toLowerCase())) {
-      name = Logic.cleanName(`${name} (Arc)`);
+      name = Logic.cleanName(`${name} (${source})`);
     }
     names.add(name.toLowerCase());
     const pins = space.pins.slice(0, Logic.MAX_LAUNCHERS).map(launcher);

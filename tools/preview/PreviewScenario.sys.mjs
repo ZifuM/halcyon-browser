@@ -623,6 +623,21 @@ async function glanceScenario({ win, layout, open, sleep, shot, report }) {
     return call.tab ?? null;
   };
   const sameController = win.PerynGlance === glance;
+  // And what the browser-side actor receives.
+  const parentGot = [];
+  const { PerynGlanceParent } = ChromeUtils.importESModule("resource://peryn-preview/glance/PerynGlanceParent.sys.mjs");
+  const realReceive = PerynGlanceParent.prototype.receiveMessage;
+  PerynGlanceParent.prototype.receiveMessage = function (message) {
+    let note = message.name;
+    try {
+      const browser = this.browsingContext.top.embedderElement;
+      note += ` browser=${!!browser} controller=${!!browser?.ownerGlobal?.PerynGlance}`;
+    } catch (e) {
+      note += ` error=${e}`;
+    }
+    parentGot.push(note);
+    return realReceive.call(this, message);
+  };
   // Alt+click on the lead link, sent to the window like a real click. First a plain click on
   // the same link in a scratch tab tells us whether synthesized clicks reach pages at all, and
   // which way (straight through, or through async pan/zoom) works here.
@@ -667,6 +682,7 @@ async function glanceScenario({ win, layout, open, sleep, shot, report }) {
   }
   viaClick = !!glance.current;
   glance.open = realOpen;
+  PerynGlanceParent.prototype.receiveMessage = realReceive;
   let childSaw = null;
   try {
     const actor = parent.linkedBrowser.browsingContext.currentWindowGlobal.getActor("PerynGlance");
@@ -697,6 +713,7 @@ async function glanceScenario({ win, layout, open, sleep, shot, report }) {
     pageSaw,
     sameController,
     childSaw,
+    parentGot,
     openCalls: afterOpen,
     pageUrlAfter,
     viaClick,
@@ -845,6 +862,31 @@ async function onboardingScenario({ win, layout, sleep, shot, report }) {
     ok: !!result,
   };
   await shot("22-import-arc");
+
+  // Zen: a compressed session file like Zen 1.18+ writes.
+  const zenPath = PathUtils.join(OUT, "zen-sessions.jsonlz4");
+  await IOUtils.writeJSON(
+    zenPath,
+    {
+      spaces: [{ uuid: "{z1}", name: "Reading", icon: "📚", position: 1000 }],
+      tabs: [
+        { entries: [{ url: SITE + "news.html", title: "News" }], index: 1, pinned: true, zenWorkspace: "{z1}" },
+        { entries: [{ url: SITE + "music.html", title: "Music" }], index: 1, pinned: true, zenEssential: true },
+        { entries: [{ url: SITE + "code.html", title: "Code" }], index: 1, pinned: false, zenWorkspace: "{z1}" },
+      ],
+    },
+    { compress: true }
+  );
+  const zenResult = await ob.importFromZen({ path: zenPath });
+  await sleep(800);
+  const reading = Store.spaces.find(s => s.name == "Reading");
+  imported.zen = {
+    ok: !!zenResult,
+    text: root.querySelector(".peryn-ob-status").textContent,
+    pins: reading?.pins.map(p => p.title) ?? [],
+    icon: reading?.icon ?? "",
+    essential: Store.data.essentials.some(e => e.url.endsWith("music.html")),
+  };
 
   ob.go(3);
   ob.setProtection("balanced");

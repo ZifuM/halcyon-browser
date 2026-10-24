@@ -13,10 +13,11 @@ adds a third and fourth pane and other arrangements on top of it.
 | 3 | One large and two small, Side by side, Stacked |
 | 4 | Grid, Side by side, Stacked |
 
-- **Start one**: select two tabs and use Firefox's *Add Split View*, or the command bar's
-  *Split View* action.
-- **Add a pane**: right-click a tab > *Add to Split View*, or the command bar's *Add Tab to
-  Split View*, which opens a tab picker.
+- **Start one**: drag a tab from the sidebar onto the page. The half it would take lights up:
+  drop it on the left or right edge for side by side, on the top or bottom edge to stack them.
+  Or select two tabs and use Firefox's *Add Split View*, or the command bar's *Split View*.
+- **Add a pane**: drag another tab onto the page, right-click a tab > *Add to Split View*, or
+  use the command bar's *Add Tab to Split View*, which opens a tab picker.
 - **Change the layout**: command bar > *Change Split View Layout* cycles through the layouts.
 - **Resize**: drag the thin handle between panes (it shows on hover), or focus it and use the
   arrow keys. Panes stay between 20% and 80%.
