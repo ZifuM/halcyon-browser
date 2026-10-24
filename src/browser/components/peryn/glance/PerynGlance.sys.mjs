@@ -165,7 +165,8 @@ export class PerynGlance {
     }
     const parent = this.parentOf(tab);
     this._forget(tab);
-    if (parent?.isConnected && !parent.pinned && !parent.splitview && tab._tPos != parent._tPos + 1) {
+    const tabs = this.gBrowser.tabs;
+    if (parent?.isConnected && !parent.pinned && !parent.splitview && tabs.indexOf(tab) != tabs.indexOf(parent) + 1) {
       this.gBrowser.moveTabAfter(tab, parent);
     }
     return tab;

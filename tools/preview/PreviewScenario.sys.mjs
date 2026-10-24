@@ -588,6 +588,15 @@ async function glanceScenario({ win, layout, open, sleep, shot, report }) {
   gBrowser.selectedTab = parent;
   await sleep(2000);
 
+  // Is Glance's page-side code running in the page?
+  let actorReady = "no actor";
+  try {
+    const actor = parent.linkedBrowser.browsingContext.currentWindowGlobal.getActor("PerynGlance");
+    actorReady = await Promise.race([actor.sendQuery("Glance:Ping").then(r => (r?.ready ? "ready" : "bad reply")), sleep(3000).then(() => "timeout")]);
+  } catch (e) {
+    actorReady = `error: ${e}`;
+  }
+  let clickPath = "";
   // Alt+click on the lead link, sent to the window like a real click.
   const area = doc.getElementById("tabbrowser-tabpanels").getBoundingClientRect();
   const x = area.left + area.width / 2;
@@ -598,8 +607,10 @@ async function glanceScenario({ win, layout, open, sleep, shot, report }) {
     for (const type of ["mousedown", "mouseup"]) {
       if (typeof win.synthesizeMouseEvent == "function") {
         // Firefox 158 moved this from windowUtils onto chrome windows.
+        clickPath = "window";
         win.synthesizeMouseEvent(type, x, y, { button: 0, modifiers: alt });
       } else if (typeof utils.synthesizeMouseEvent == "function") {
+        clickPath = "windowUtils";
         utils.synthesizeMouseEvent(type, x, y, { button: 0, clickCount: 1, modifiers: alt });
       } else {
         utils.sendMouseEvent(type, x, y, 0, 1, alt);
@@ -626,6 +637,8 @@ async function glanceScenario({ win, layout, open, sleep, shot, report }) {
     return el?.localName == "browser" ? (gBrowser.getTabForBrowser(el) == card ? "card" : el == parent.linkedBrowser ? "page" : "other-browser") : el?.className || el?.localName || "";
   };
   const opened = {
+    actorReady,
+    clickPath,
     viaClick,
     open: !!card,
     url: card?.linkedBrowser.currentURI.spec ?? "",
@@ -662,15 +675,16 @@ async function glanceScenario({ win, layout, open, sleep, shot, report }) {
   glance.open(SITE + "weather.html");
   await sleep(1500);
   const kept = glance.current;
-  const positions = { before: [kept._tPos, parent._tPos] };
+  const at = tab => gBrowser.tabs.indexOf(tab);
+  const positions = { before: [at(kept), at(parent)] };
   doc.querySelector(".peryn-glance-expand").click();
   await sleep(800);
-  positions.after = [kept._tPos, parent._tPos];
+  positions.after = [at(kept), at(parent)];
   const expanded = {
     positions,
     selected: gBrowser.selectedTab == kept,
     ordinary: !kept.hasAttribute("peryn-glance"),
-    nextToPage: kept._tPos == parent._tPos + 1,
+    nextToPage: at(kept) == at(parent) + 1,
     inSidebar: win.getComputedStyle(kept).display != "none",
     cardGone: !doc.documentElement.hasAttribute("peryn-glance-open"),
   };

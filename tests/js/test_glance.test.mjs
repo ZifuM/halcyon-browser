@@ -131,7 +131,6 @@ function makeWindow(labels = ["a", "b"]) {
       return browser == selected.linkedBrowser || this._printPreviewBrowsers.has(browser);
     },
   };
-  for (const t of tabs) Object.defineProperty(t, "_tPos", { get: () => tabs.indexOf(t) });
   const documentElement = new El("html");
   const win = {
     gBrowser,
@@ -218,6 +217,11 @@ test("other clicks, other links and the off switch are left to the page", () => 
 test("the nearest link wins, image-map areas count", () => {
   assert.equal(linkFromEvent(click({ path: [{ localName: "area", href: "http://x.test/" }, { localName: "a", href: "https://y.test/" }] })), "http://x.test/");
   assert.ok(isGlanceClick(click()));
+});
+
+test("the page answers a readiness ping", () => {
+  assert.deepEqual(child().receiveMessage({ name: "Glance:Ping" }), { ready: true });
+  assert.equal(child().receiveMessage({ name: "Other" }), null);
 });
 
 test("Esc is passed on, once per press", () => {

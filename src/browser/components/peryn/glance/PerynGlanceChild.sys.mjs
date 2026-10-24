@@ -34,6 +34,14 @@ export function isGlanceClick(event) {
 }
 
 export class PerynGlanceChild extends JSWindowActorChild {
+  receiveMessage(message) {
+    // Lets the browser check that previews can be opened from this page.
+    if (message.name == "Glance:Ping") {
+      return { ready: true };
+    }
+    return null;
+  }
+
   handleEvent(event) {
     if (event.type == "keydown") {
       if (event.key == "Escape" && !event.repeat && !event.defaultPrevented && !event.altKey) {
