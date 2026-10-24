@@ -541,7 +541,7 @@ export class PerynPrivacy {
 
 function kindLabel(kind) {
   return {
-    tracker: "Trackers",
+    tracker: "Trackers and ads",
     social: "Social media trackers",
     fingerprinter: "Fingerprinters",
     cryptominer: "Cryptominers",

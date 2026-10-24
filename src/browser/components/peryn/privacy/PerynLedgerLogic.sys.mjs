@@ -22,7 +22,7 @@ export const MAX_SITES_PER_DAY = 5000;
 
 /** Kinds of blocking, from Firefox's content blocking log flags (nsIWebProgressListener). */
 export const BLOCK_KINDS = Object.freeze({
-  tracker: "Trackers",
+  tracker: "Trackers and ads", // Shield's blocks are reported as tracking content
   social: "Social media trackers",
   fingerprinter: "Fingerprinters",
   cryptominer: "Cryptominers",

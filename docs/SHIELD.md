@@ -41,9 +41,18 @@ discarded.
 | --- | --- |
 | uBlock filters, Badware risks, Privacy, Quick fixes, Unbreak | on |
 | EasyList, EasyPrivacy, Peter Lowe's | on |
-| EasyList Cookie, uBlock Cookie Notices | off (they hide cookie banners, which some people want to see) |
+| EasyList Cookie, uBlock Cookie Notices | on (C7): cookie consent pop-ups are hidden and the scripts that show them blocked, so a site never gets a "yes" |
+| EasyList Newsletter pop-ups, Notification prompts | on (C7): "subscribe" overlays and "allow notifications?" nags |
+| EasyList Chat widgets, Social widgets | off: some people use them |
 
-Lists come from `ublockorigin.github.io`, with `cdn.jsdelivr.net` as a mirror. Requests carry no
+Why lists and not a "Reject" click: Firefox 158 removed its own cookie-banner handling (the
+`cookiebanners.*` prefs are gone), so there's no built-in auto-reject to turn on. Hiding the
+banner and blocking its script leaves the site without consent, which under the GDPR means no.
+A rule engine that clicks "Reject" for the big consent platforms is a possible follow-up.
+
+Lists come from `ublockorigin.github.io` (the uAssets gh-pages branch, where third-party lists
+sit directly in `thirdparties/`), with `cdn.jsdelivr.net` (the master branch, where they're in
+subfolders) as a mirror; Peter Lowe's list is only on the mirror. Requests carry no
 cookies or referrer, and ETags mean unchanged lists aren't downloaded again. See
 [EVERY-REQUEST.md](EVERY-REQUEST.md).
 

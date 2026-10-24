@@ -8,7 +8,9 @@
 
 const UASSETS = "https://ublockorigin.github.io/uAssets/";
 const UASSETS_CDN = "https://cdn.jsdelivr.net/gh/uBlockOrigin/uAssets@master/";
-const both = path => [UASSETS + path, UASSETS_CDN + path];
+// The github.io site serves the repository's gh-pages branch, where third-party lists sit
+// directly in thirdparties/; the CDN mirrors master, where they're in subfolders.
+const both = (pagesPath, masterPath = pagesPath) => [UASSETS + pagesPath, UASSETS_CDN + masterPath];
 
 /**
  * The lists Shield knows about. `defaultEnabled` mirrors uBlock Origin's default selection.
@@ -66,7 +68,7 @@ export const SHIELD_LISTS = Object.freeze([
     name: "EasyList",
     category: "ads",
     defaultEnabled: true,
-    urls: both("thirdparties/easylist/easylist.txt"),
+    urls: both("thirdparties/easylist.txt", "thirdparties/easylist/easylist.txt"),
     license: "GPL-3.0 OR CC-BY-SA-3.0",
     homepage: "https://easylist.to/",
   },
@@ -75,7 +77,7 @@ export const SHIELD_LISTS = Object.freeze([
     name: "EasyPrivacy",
     category: "privacy",
     defaultEnabled: true,
-    urls: both("thirdparties/easylist/easyprivacy.txt"),
+    urls: both("thirdparties/easyprivacy.txt", "thirdparties/easylist/easyprivacy.txt"),
     license: "GPL-3.0 OR CC-BY-SA-3.0",
     homepage: "https://easylist.to/",
   },
@@ -85,16 +87,20 @@ export const SHIELD_LISTS = Object.freeze([
     category: "ads",
     defaultEnabled: true,
     format: "hosts",
-    urls: both("thirdparties/pgl.yoyo.org/as/serverlist"),
+    // Only on master (the github.io site doesn't carry it).
+    urls: [UASSETS_CDN + "thirdparties/pgl.yoyo.org/as/serverlist"],
     license: "McRae General Public License",
     homepage: "https://pgl.yoyo.org/adservers/",
   },
+  // Cookie notices and nags (C7). Firefox 158 no longer has its own cookie-banner handling, so
+  // these hide consent pop-ups and block the scripts that show them: without an answer, a site
+  // has no consent. They're on by default.
   {
     id: "easylist-cookies",
     name: "EasyList Cookie notices",
     category: "annoyances",
-    defaultEnabled: false,
-    urls: both("thirdparties/easylist/easylist-cookies.txt"),
+    defaultEnabled: true,
+    urls: both("thirdparties/easylist-cookies.txt", "thirdparties/easylist/easylist-cookies.txt"),
     license: "GPL-3.0 OR CC-BY-SA-3.0",
     homepage: "https://easylist.to/",
   },
@@ -102,10 +108,46 @@ export const SHIELD_LISTS = Object.freeze([
     id: "ublock-cookies",
     name: "uBlock filters – Cookie notices",
     category: "annoyances",
-    defaultEnabled: false,
+    defaultEnabled: true,
     urls: both("filters/annoyances-cookies.txt"),
     license: "GPL-3.0",
     homepage: "https://github.com/uBlockOrigin/uAssets",
+  },
+  {
+    id: "easylist-newsletters",
+    name: "EasyList Newsletter pop-ups",
+    category: "annoyances",
+    defaultEnabled: true,
+    urls: both("thirdparties/easylist-newsletters.txt", "thirdparties/easylist/easylist-newsletters.txt"),
+    license: "GPL-3.0 OR CC-BY-SA-3.0",
+    homepage: "https://easylist.to/",
+  },
+  {
+    id: "easylist-notifications",
+    name: "EasyList Notification prompts",
+    category: "annoyances",
+    defaultEnabled: true,
+    urls: both("thirdparties/easylist-notifications.txt", "thirdparties/easylist/easylist-notifications.txt"),
+    license: "GPL-3.0 OR CC-BY-SA-3.0",
+    homepage: "https://easylist.to/",
+  },
+  {
+    id: "easylist-chat",
+    name: "EasyList Chat widgets",
+    category: "annoyances",
+    defaultEnabled: false,
+    urls: both("thirdparties/easylist-chat.txt", "thirdparties/easylist/easylist-chat.txt"),
+    license: "GPL-3.0 OR CC-BY-SA-3.0",
+    homepage: "https://easylist.to/",
+  },
+  {
+    id: "easylist-social",
+    name: "EasyList Social widgets",
+    category: "annoyances",
+    defaultEnabled: false,
+    urls: both("thirdparties/easylist-social.txt", "thirdparties/easylist/easylist-social.txt"),
+    license: "GPL-3.0 OR CC-BY-SA-3.0",
+    homepage: "https://easylist.to/",
   },
 ]);
 

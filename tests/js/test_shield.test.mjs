@@ -108,17 +108,22 @@ test("expiry parsing and staleness", () => {
   assert.equal(Logic.isStale({ fetchedAtSec: 5000 }, 1000), true, "clock went backwards");
 });
 
-test("catalog: unique ids, two mirrors each, uBO defaults on, annoyances off", () => {
+test("catalog: unique ids, mirrors at the right paths, uBO defaults plus cookie notices and nags on", () => {
   const ids = Logic.SHIELD_LISTS.map(l => l.id);
   assert.equal(new Set(ids).size, ids.length);
   for (const list of Logic.SHIELD_LISTS) {
-    assert.equal(list.urls.length, 2, list.id);
+    assert.ok(list.urls.length >= 1 && list.urls.length <= 2, list.id);
     assert.ok(list.urls.every(u => u.startsWith("https://")), list.id);
+    // github.io serves the gh-pages branch, flat; the CDN serves master, in subfolders.
+    for (const u of list.urls.filter(u => u.includes("github.io"))) {
+      assert.doesNotMatch(u, /thirdparties\/(easylist|pgl\.yoyo\.org)\//, `${list.id}: not served on github.io`);
+    }
   }
   const defaults = Logic.SHIELD_LISTS.filter(l => l.defaultEnabled).map(l => l.id);
   assert.deepEqual(defaults, [
     "ublock-filters", "ublock-badware", "ublock-privacy", "ublock-quick-fixes",
     "ublock-unbreak", "easylist", "easyprivacy", "peter-lowe",
+    "easylist-cookies", "ublock-cookies", "easylist-newsletters", "easylist-notifications",
   ]);
 });
 

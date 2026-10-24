@@ -1,8 +1,8 @@
 diff --git a/toolkit/components/content-classifier/ContentClassifierService.cpp b/toolkit/components/content-classifier/ContentClassifierService.cpp
-index 3ff3514fb215a5aceb30ae370c58d431255ee499..ec3f9fe5b415e2f65241e58c16b16ed9fac71433 100644
+index 3ff3514fb215a5aceb30ae370c58d431255ee499..eb9516a063c4a65b1f1f0807e6f8f3997c906626 100644
 --- a/toolkit/components/content-classifier/ContentClassifierService.cpp
 +++ b/toolkit/components/content-classifier/ContentClassifierService.cpp
-@@ -67,6 +67,16 @@ constexpr nsLiteralCString kMinorExceptionListIds[] = {
+@@ -67,6 +67,18 @@ constexpr nsLiteralCString kMinorExceptionListIds[] = {
      "mozilla-minor-exceptions"_ns};
  constexpr nsLiteralCString kHarmfulAddonListIds[] = {
      "mozilla-harmful-addon"_ns};
@@ -15,11 +15,13 @@ index 3ff3514fb215a5aceb30ae370c58d431255ee499..ec3f9fe5b415e2f65241e58c16b16ed9
 +    "shield-ublock-privacy"_ns, "shield-ublock-quick-fixes"_ns,
 +    "shield-ublock-unbreak"_ns, "shield-easylist"_ns,
 +    "shield-easyprivacy"_ns,    "shield-peter-lowe"_ns,
-+    "shield-easylist-cookies"_ns, "shield-ublock-cookies"_ns};
++    "shield-easylist-cookies"_ns, "shield-ublock-cookies"_ns,
++    "shield-easylist-newsletters"_ns, "shield-easylist-notifications"_ns,
++    "shield-easylist-chat"_ns, "shield-easylist-social"_ns};
  constexpr nsLiteralCString kTestBlockListIds[] = {"test_block"_ns};
  constexpr nsLiteralCString kTestAnnotateListIds[] = {"test_annotate"_ns};
  
-@@ -134,6 +144,15 @@ constexpr ContentClassifierFeature kFeatures[] = {
+@@ -134,6 +146,15 @@ constexpr ContentClassifierFeature kFeatures[] = {
       NS_ERROR_HARMFULADDON_URI, false, true, Nothing(),
       &ContentClassifierFeatureUtils::IsNonRecommendedAddonRequest,
       &ContentClassifierFeatureUtils::HarmfulAddonCancelChannelCallback},
@@ -35,7 +37,7 @@ index 3ff3514fb215a5aceb30ae370c58d431255ee499..ec3f9fe5b415e2f65241e58c16b16ed9
      {"minor-exceptions"_ns,
       Span<const nsLiteralCString>(kMinorExceptionListIds),
       nsIClassifiedChannel::ClassificationFlags::CLASSIFIED_TRACKING, 0, 0, 0,
-@@ -1248,6 +1267,50 @@ NS_IMETHODIMP ContentClassifierService::ProbeFeature(
+@@ -1248,6 +1269,50 @@ NS_IMETHODIMP ContentClassifierService::ProbeFeature(
    promise.forget(aPromise);
    return NS_OK;
  }

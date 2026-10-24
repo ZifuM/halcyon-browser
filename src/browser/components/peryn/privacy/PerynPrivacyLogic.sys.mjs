@@ -135,7 +135,7 @@ export function overviewLines(summary) {
   const days = summary.days == 1 ? "today" : `in the last ${summary.days} days`;
   lines.push(
     summary.blockedCount
-      ? `${formatCount(summary.blockedCount)} trackers blocked ${days}.`
+      ? `${formatCount(summary.blockedCount)} trackers and ads blocked ${days}.`
       : `Nothing blocked ${days} yet.`
   );
   const total = listed.reduce((a, c) => a + c.seen, 0);

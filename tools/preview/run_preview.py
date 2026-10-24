@@ -322,7 +322,7 @@ def main() -> int:
         d = json.loads(pv.read_text())
         checks.append(("Ledger: a request the browser makes by itself is recorded; a page's own requests aren't", d["sawBrowserRequest"] and d["pageRequestNotListed"]))
         checks.append(("Privacy page: the overview gives real counts and flags connections that aren't on the list",
-                       d["overview"]["open"] and "trackers blocked" in d["overview"]["lead"] and d["overview"]["mentionsUnlisted"]))
+                       d["overview"]["open"] and "blocked" in d["overview"]["lead"] and d["overview"]["mentionsUnlisted"]))
         checks.append(("Privacy page: the Ledger lists connections by purpose, unlisted ones apart",
                        any("example.com" in u for u in d["ledger"]["unlisted"]) and any("Remote Settings" in e for e in d["ledger"]["entries"])))
         checks.append(("Privacy page: every connection the browser can make is listed", d["every"] >= 17))

@@ -211,7 +211,7 @@ test("privacy page: plain counts and times", () => {
     connections: [{ seen: 3 }, { seen: 0 }, { seen: 2 }],
     unknown: [{ host: "x" }],
   });
-  assert.equal(lines[0], "1,200 trackers blocked in the last 7 days.");
+  assert.equal(lines[0], "1,200 trackers and ads blocked in the last 7 days.");
   assert.equal(lines[1], "The browser connected on its own 5 times in the last 7 days, for 2 listed purposes.");
   assert.match(lines[2], /isn't on the list/);
   assert.equal(Privacy.overviewLines({ days: 1, blockedCount: 0, connections: [], unknown: [] })[0], "Nothing blocked today yet.");

@@ -50,10 +50,12 @@ class ShieldSyncTests(unittest.TestCase):
         self.assertEqual(prefs["privacy.trackingprotection.content.protection.engines.pbmode"], "shield")
 
     def test_list_hosts_are_in_the_registry(self):
-        # Every list downloads from the two base URLs (`both(path)` in the catalog).
-        bases = re.findall(r'^const UASSETS(?:_CDN)? = "https://([^"/]+)/', CATALOG.read_text(encoding="utf-8"), re.M)
+        # Every list downloads from the two base URLs (`both(...)`, or the CDN base alone).
+        text = CATALOG.read_text(encoding="utf-8")
+        bases = re.findall(r'^const UASSETS(?:_CDN)? = "https://([^"/]+)/', text, re.M)
         self.assertEqual(len(bases), 2)
-        self.assertNotIn("urls: [", CATALOG.read_text(encoding="utf-8"), "lists must use both(...) so hosts stay known")
+        for urls in re.findall(r"urls: (.+),$", text, re.M):
+            self.assertRegex(urls, r'^(both\(|\[UASSETS(_CDN)? \+ )', "lists must use the base URLs so hosts stay known")
         hosts = set(bases)
         with open(ROOT / "privacy/requests.toml", "rb") as fh:
             entries = tomllib.load(fh)["request"]
