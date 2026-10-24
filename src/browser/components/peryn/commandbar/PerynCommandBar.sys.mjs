@@ -817,6 +817,12 @@ export class PerynCommandBar {
       splitSeparate() {
         this.parts.split?.separate();
       },
+      glanceExpand() {
+        this.parts.glance?.expand();
+      },
+      glanceSplit() {
+        this.parts.glance?.split();
+      },
       editShortcuts() {
         this._cameFromBar = false;
         this.open("shortcuts");

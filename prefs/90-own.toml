@@ -64,6 +64,12 @@ why = "Firefox Sync carries your Spaces to your other devices (only if you sign 
 own = true
 
 [[pref]]
+name = "peryn.glance.enabled"
+value = true
+why = "Glance: Alt+click (Option+click) a link to preview it in a card over the page, then close it, keep it as a tab or put it side by side. Set false and Alt+click does what it does in Firefox."
+own = true
+
+[[pref]]
 name = "peryn.commandbar.enabled"
 value = true
 why = "The command bar: one box for open tabs (in every Space), bookmarks, history, actions and search. Set false to turn it off everywhere."

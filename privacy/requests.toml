@@ -35,8 +35,8 @@ switch = "about:addons > gear menu > untick Update Add-ons Automatically"
 [[request]]
 id = "media-plugins"
 name = "Video-call and streaming plugins"
-purpose = "Downloads the OpenH264 codec (video calls) and Widevine (DRM streaming, e.g. Netflix) and keeps them updated."
-hosts = ["aus5.mozilla.org", "ciscobinary.openh264.org", "*.gvt1.com"]
+purpose = "Downloads the OpenH264 codec (video calls) and Widevine (DRM streaming, e.g. Netflix) and keeps them updated. Widevine comes through Google's component updater (update.googleapis.com, which redirects to a www.google.com or gvt1.com download), and the plugin list's Mozilla signature is checked against content-signature-2.cdn.mozilla.net."
+hosts = ["aus5.mozilla.org", "ciscobinary.openh264.org", "*.gvt1.com", "update.googleapis.com", "www.google.com", "content-signature-2.cdn.mozilla.net"]
 state = "on"
 trigger = "background"
 switch = "about:config: media.gmp-provider.enabled = false (breaks some video calls and DRM sites)"
@@ -71,11 +71,11 @@ switch = "about:config: peryn.shield.updates.enabled = false (the last downloade
 [[request]]
 id = "push"
 name = "Web push notifications"
-purpose = "Keeps a connection open only for sites you've allowed to send notifications."
+purpose = "Firefox keeps one connection open to Mozilla's push server from startup, whether or not any site has notification permission. It carries notifications from sites you've allowed and Mozilla's 'lists changed' signal for Remote Settings, so security lists update within minutes instead of once a day. The server sees a random per-profile ID, no browsing data."
 hosts = ["push.services.mozilla.com"]
 state = "on"
-trigger = "user"
-switch = "Settings > Privacy & Security > Permissions > Notifications"
+trigger = "background"
+switch = "about:config: dom.push.connection.enabled = false (site notifications stop; Remote Settings falls back to its daily check)"
 
 [[request]]
 id = "sync"

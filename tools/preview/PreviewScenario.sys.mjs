@@ -300,6 +300,9 @@ async function runScenario(win) {
   // ---- Split view with up to four panes (C6) ----
   await splitScenario({ win, layout, open, sleep, shot, report });
 
+  // ---- Glance (C6) ----
+  await glanceScenario({ win, layout, open, sleep, shot, report });
+
   await IOUtils.writeUTF8(PathUtils.join(OUT, "finished"), "ok");
   await sleep(500);
   Services.startup.quit(Ci.nsIAppStartup.eForceQuit);
@@ -569,5 +572,120 @@ async function splitScenario({ win, layout, open, sleep, shot, report }) {
   for (const tab of tabs.slice(0, 3)) {
     gBrowser.removeTab(tab);
   }
+  await sleep(500);
+}
+
+/** Glance: a real Alt+click in a page, the card over the page, Esc, Expand, Split, backdrop. */
+async function glanceScenario({ win, layout, open, sleep, shot, report }) {
+  const { gBrowser } = win;
+  const doc = win.document;
+  const glance = layout.glance;
+  const panelOf = tab => doc.getElementById(tab.linkedPanel);
+  const parent = open("links.html");
+  gBrowser.selectedTab = parent;
+  await sleep(2000);
+
+  // Alt+click on the lead link, sent to the window like a real click.
+  const area = doc.getElementById("tabbrowser-tabpanels").getBoundingClientRect();
+  const x = area.left + area.width / 2;
+  const y = area.top + 220;
+  const utils = win.windowUtils;
+  const alt = Ci.nsIDOMWindowUtils.MODIFIER_ALT;
+  utils.sendMouseEvent("mousedown", x, y, 0, 1, alt);
+  utils.sendMouseEvent("mouseup", x, y, 0, 1, alt);
+  let viaClick = false;
+  for (let i = 0; i < 30 && !glance.current; i++) {
+    await sleep(100);
+  }
+  viaClick = !!glance.current;
+  if (!viaClick) {
+    log("[scenario] Alt+click did not reach the page; opening the preview directly");
+    glance.open(SITE + "recipes.html");
+  }
+  await sleep(1500);
+  const card = glance.current;
+  const f = v => Math.round(v * 100) / 100;
+  const rel = r => ({ x: f((r.left - area.left) / area.width), y: f((r.top - area.top) / area.height), w: f(r.width / area.width), h: f(r.height / area.height) });
+  const hit = (px, py) => {
+    const el = doc.elementFromPoint(px, py);
+    return el?.localName == "browser" ? (gBrowser.getTabForBrowser(el) == card ? "card" : el == parent.linkedBrowser ? "page" : "other-browser") : el?.className || el?.localName || "";
+  };
+  const opened = {
+    viaClick,
+    open: !!card,
+    url: card?.linkedBrowser.currentURI.spec ?? "",
+    parentSelected: gBrowser.selectedTab == parent,
+    pageVisible: win.getComputedStyle(panelOf(parent)).visibility,
+    pageLive: parent.linkedBrowser.docShellIsActive,
+    card: card ? rel(panelOf(card).getBoundingClientRect()) : null,
+    page: rel(panelOf(parent).getBoundingClientRect()),
+    hiddenInSidebar: card ? win.getComputedStyle(card).display == "none" : false,
+    atCentre: hit(area.left + area.width / 2, area.top + area.height / 2),
+    atEdge: hit(area.left + 12, area.top + area.height / 2),
+    controls: [...doc.querySelectorAll(".peryn-glance-button")].filter(b => b.getBoundingClientRect().width > 0).length,
+  };
+  await shot("19-glance");
+
+  // Esc in the previewed page closes it.
+  gBrowser.selectedBrowser.focus();
+  await sleep(300);
+  const tip = Cc["@mozilla.org/text-input-processor;1"].createInstance(Ci.nsITextInputProcessor);
+  tip.beginInputTransactionForTests(win);
+  const esc = new win.KeyboardEvent("", { key: "Escape", code: "Escape", keyCode: 27 });
+  tip.keydown(esc);
+  tip.keyup(esc);
+  for (let i = 0; i < 30 && glance.current; i++) {
+    await sleep(100);
+  }
+  const escaped = { closed: !glance.current, backOnPage: gBrowser.selectedTab == parent, removed: !card?.isConnected };
+  if (glance.current) {
+    glance.close();
+  }
+  await sleep(500);
+
+  // Expand keeps it as a tab, next to the page.
+  glance.open(SITE + "weather.html");
+  await sleep(1500);
+  const kept = glance.current;
+  doc.querySelector(".peryn-glance-expand").click();
+  await sleep(800);
+  const expanded = {
+    selected: gBrowser.selectedTab == kept,
+    ordinary: !kept.hasAttribute("peryn-glance"),
+    nextToPage: kept._tPos == parent._tPos + 1,
+    inSidebar: win.getComputedStyle(kept).display != "none",
+    cardGone: !doc.documentElement.hasAttribute("peryn-glance-open"),
+  };
+  gBrowser.removeTab(kept);
+  gBrowser.selectedTab = parent;
+  await sleep(800);
+
+  // Split puts them side by side.
+  glance.open(SITE + "news.html");
+  await sleep(1500);
+  doc.querySelector(".peryn-glance-split").click();
+  await sleep(1500);
+  const split = { active: !!gBrowser.activeSplitView, tabs: gBrowser.activeSplitView?.tabs.length ?? 0, hasPage: !!gBrowser.activeSplitView?.tabs.includes(parent) };
+  await shot("20-glance-split");
+  const splitTabs = [...(gBrowser.activeSplitView?.tabs ?? [])];
+  layout.split.separate();
+  await sleep(800);
+  for (const tab of splitTabs) {
+    if (tab != parent) {
+      gBrowser.removeTab(tab);
+    }
+  }
+  gBrowser.selectedTab = parent;
+  await sleep(800);
+
+  // A click beside the card closes it.
+  glance.open(SITE + "code.html");
+  await sleep(1500);
+  doc.querySelector(".peryn-glance-backdrop").dispatchEvent(new win.MouseEvent("mousedown", { bubbles: true }));
+  await sleep(800);
+  const backdrop = { closed: !glance.current, backOnPage: gBrowser.selectedTab == parent };
+
+  await report("glance", { opened, escaped, expanded, split, backdrop });
+  gBrowser.removeTab(parent);
   await sleep(500);
 }

@@ -74,7 +74,10 @@ def install(firefox: Path, out: Path) -> None:
 
 def make_profile() -> Path:
     profile = Path(tempfile.mkdtemp(prefix="peryn-preview-profile-"))
-    lines = [f"user_pref({json.dumps(k)}, {js_value(v)});" for k, v in USER_JS.items()]
+    # Glance's window actor loads in the page's (sandboxed) content process from our source
+    # folder, as it would from omni.ja in a real build.
+    user_js = {**USER_JS, "security.sandbox.content.read_path_whitelist": str(ROOT / "src/browser/components/peryn") + "/"}
+    lines = [f"user_pref({json.dumps(k)}, {js_value(v)});" for k, v in user_js.items()]
     (profile / "user.js").write_text("\n".join(lines) + "\n", newline="\n")
     return profile
 
@@ -278,6 +281,23 @@ def main() -> int:
         checks.append(("Split view: closing one of four panes keeps the other three split",
                        d["afterClose"]["active"] and d["afterClose"]["tabs"] == 3 and d["afterClose"]["perynSplit"] == "main"))
         checks.append(("Split view: Separate ends it", not d["separated"]["active"] and d["separated"]["perynSplit"] == ""))
+    gl = out / "glance.json"
+    if gl.exists():
+        d = json.loads(gl.read_text())
+        o = d["opened"]
+        checks.append(("Glance: Alt+click on a link in the page opens a preview", o["viaClick"] and o["open"] and "recipes.html" in o["url"]))
+        card = o["card"] or {}
+        checks.append(("Glance: the preview is a card over the page, which stays on screen",
+                       o["pageVisible"] == "visible" and o["pageLive"] and card.get("w", 1) < 0.95 and card.get("x", 0) > 0.02
+                       and o["page"]["w"] > 0.97 and o["atCentre"] == "card" and "peryn-glance-backdrop" in o["atEdge"]))
+        checks.append(("Glance: hidden from the sidebar, with close, expand and split buttons", o["hiddenInSidebar"] and o["controls"] == 3))
+        e = d["escaped"]
+        checks.append(("Glance: Esc in the previewed page closes it and returns to the page", e["closed"] and e["backOnPage"] and e["removed"]))
+        x = d["expanded"]
+        checks.append(("Glance: Expand keeps it as an ordinary tab next to the page", all(x.values())))
+        sp = d["split"]
+        checks.append(("Glance: Split shows the page and the preview side by side", sp["active"] and sp["tabs"] == 2 and sp["hasPage"]))
+        checks.append(("Glance: a click beside the card closes it", d["backdrop"]["closed"] and d["backdrop"]["backOnPage"]))
     off = out / "commandbar-off.json"
     if off.exists():
         d = json.loads(off.read_text())

@@ -46,6 +46,13 @@ class LayoutWiringTests(unittest.TestCase):
         self.assertEqual(listed, present)
         self.assertIn('"split"', (ROOT / "src/browser/components/peryn/moz.build").read_text(encoding="utf-8"))
 
+    def test_every_glance_file_is_packaged(self):
+        glance = ROOT / "src/browser/components/peryn/glance"
+        listed = set(re.findall(r'"([\w.-]+\.(?:sys\.mjs|css))"', (glance / "moz.build").read_text(encoding="utf-8")))
+        present = {p.name for p in glance.iterdir() if p.suffix in (".css", ".mjs")}
+        self.assertEqual(listed, present)
+        self.assertIn('"glance"', (ROOT / "src/browser/components/peryn/moz.build").read_text(encoding="utf-8"))
+
     def test_window_hooks_are_registered(self):
         manifest = MANIFEST.read_text(encoding="utf-8")
         module = (LAYOUT / "PerynLayout.sys.mjs").read_text(encoding="utf-8")
@@ -67,14 +74,14 @@ class LayoutWiringTests(unittest.TestCase):
     def test_modules_import_each_other_relatively(self):
         # The preview harness loads them from resource://, so absolute moz-src imports of our
         # own layout modules would break it.
-        for path in [*LAYOUT.glob("*.sys.mjs"), *(LAYOUT.parent / "spaces").glob("*.sys.mjs"), *(LAYOUT.parent / "commandbar").glob("*.sys.mjs"), *(LAYOUT.parent / "split").glob("*.sys.mjs")]:
+        for path in [*LAYOUT.glob("*.sys.mjs"), *(LAYOUT.parent / "spaces").glob("*.sys.mjs"), *(LAYOUT.parent / "commandbar").glob("*.sys.mjs"), *(LAYOUT.parent / "split").glob("*.sys.mjs"), *(LAYOUT.parent / "glance").glob("*.sys.mjs")]:
             text = path.read_text(encoding="utf-8")
-            self.assertNotRegex(text, r'moz-src:///browser/components/peryn/(layout|spaces|commandbar|split)/', path.name)
+            self.assertNotRegex(text, r'moz-src:///browser/components/peryn/(layout|spaces|commandbar|split|glance)/', path.name)
 
     def test_layout_prefs_are_declared(self):
         logic = "".join(
             (LAYOUT.parent / f).read_text(encoding="utf-8")
-            for f in ["layout/PerynLayoutLogic.sys.mjs", "spaces/PerynSpacesLogic.sys.mjs", "commandbar/PerynCommandLogic.sys.mjs"]
+            for f in ["layout/PerynLayoutLogic.sys.mjs", "spaces/PerynSpacesLogic.sys.mjs", "commandbar/PerynCommandLogic.sys.mjs", "glance/PerynGlance.sys.mjs"]
         )
         names = re.findall(r'"((?:services\.sync\.prefs\.sync\.)?peryn\.[\w.]+)"', logic)
         self.assertIn("peryn.shortcuts", names)

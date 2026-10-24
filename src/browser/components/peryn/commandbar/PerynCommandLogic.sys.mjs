@@ -164,6 +164,8 @@ export const ACTIONS = Object.freeze([
   { id: "split-add", title: "Add Tab to Split View", keywords: "split three four panes grid", run: "splitAdd" },
   { id: "split-layout", title: "Change Split View Layout", keywords: "split grid stacked columns arrange rows", run: "splitLayout" },
   { id: "split-separate", title: "Separate Split View", keywords: "unsplit close split", run: "splitSeparate" },
+  { id: "glance-expand", title: "Keep Preview as a Tab", keywords: "glance peek link expand", run: "glanceExpand" },
+  { id: "glance-split", title: "Open Preview Side by Side", keywords: "glance peek link split", run: "glanceSplit" },
   { id: "compact", title: "Toggle Compact Mode", keywords: "hide sidebar toolbar focus", run: "toggleCompact", key: "peryn-key-compact" },
   { id: "sidebar", title: "Collapse or Expand Sidebar", keywords: "rail tabs", run: "toggleSidebar" },
   { id: "new-space", title: "New Space", keywords: "create add workspace", run: "newSpace" },
