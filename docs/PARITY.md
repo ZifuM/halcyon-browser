@@ -61,7 +61,7 @@ How things are checked:
 
 | Arc / Zen | Peryn | Checked by |
 | --- | --- | --- |
-| Modifier-click a link to preview it over the page | Alt/Option+click | **In progress**: the card works in Preview; the in-page Alt+click is being fixed |
+| Modifier-click a link to preview it over the page | Alt/Option+click | Preview (a real Alt+click in the page) |
 | Close with Esc or a click outside | Yes | Preview |
 | Expand to a tab, or open side by side | Yes | Preview |
 
@@ -84,12 +84,11 @@ Peryn's own additions, not part of the parity check:
 
 ## What still blocks Gate B
 
-1. Glance's in-page Alt+click (being fixed).
-2. Hands-on checks on the C6 installer:
+1. Hands-on checks on the C6 installer:
    - a real tab drag onto the page
    - element hiding now that its actor runs in pages
    - a two-account Sync round trip
-3. Performance targets on an installed build:
+2. Performance targets on an installed build:
    - start-up no slower than Firefox
    - memory within 10% with Shield on
    - page loads no slower than Firefox
