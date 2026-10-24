@@ -200,6 +200,8 @@ def main() -> int:
     if sk.exists():
         d = json.loads(sk.read_text())
         checks.append(("Spaces: Ctrl+Alt+Right goes to the next Space", d["afterNext"] == "Weekend"))
+        checks.append(("Spaces: closing a Space's last tab stays in that Space",
+                       d["afterCloseLast"]["stayed"] and d["afterCloseLast"]["selectedInSpace"]))
         checks.append(("Spaces: Ctrl+Alt+1 jumps to the first; Work's tabs hide", d["afterJump1"] == "Personal" and d["workTabsHiddenInPersonal"]))
     sy = out / "sync.json"
     if sy.exists():

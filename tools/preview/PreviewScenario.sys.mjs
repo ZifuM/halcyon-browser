@@ -261,6 +261,14 @@ async function runScenario(win) {
   await sleep(900);
   const afterNext = Store.get(spaces.active)?.name;
   await shot("10-space-weekend");
+  // Closing a Space's last tab keeps you in that Space (a fresh tab), not in another Space.
+  const weekendId = spaces.active;
+  gBrowser.removeTab(gBrowser.selectedTab);
+  await sleep(800);
+  const afterCloseLast = {
+    stayed: spaces.active == weekendId,
+    selectedInSpace: gBrowser.selectedTab.getAttribute("halcyon-space") == weekendId,
+  };
   doc.getElementById("halcyon-key-space-1").doCommand();
   await sleep(900);
   // Another machine's changes arriving through Firefox Sync: its prefs engine writes the synced
@@ -279,6 +287,7 @@ async function runScenario(win) {
   await shot("11-after-sync");
 
   await report("spaces-keys", {
+    afterCloseLast,
     afterNext,
     afterJump1: Store.get(spaces.active)?.name,
     workTabsHiddenInPersonal: workTabs.every(t => t.hidden),
