@@ -29,6 +29,24 @@ export const STRINGS = Object.freeze({
 
 let actorRegistered = false;
 
+/** Every window's controller, so the actor can find the one showing a given page. */
+const controllers = new Set();
+
+/**
+ * The controller for the window that shows `browser`. Looked up through each window's own
+ * tabbrowser rather than a property on the window, which other modules may not see.
+ */
+export function glanceForBrowser(browser) {
+  for (const controller of controllers) {
+    try {
+      if (controller.gBrowser.getTabForBrowser(browser)) {
+        return controller;
+      }
+    } catch {}
+  }
+  return null;
+}
+
 /** Register the actor once per process, relative to this module (moz-src, or the preview). */
 export function registerGlanceActor() {
   if (actorRegistered) {
@@ -76,7 +94,7 @@ export class PerynGlance {
 
   init() {
     registerGlanceActor();
-    this.win.PerynGlance = this;
+    controllers.add(this);
     this.gBrowser.tabContainer.addEventListener("TabSelect", this.handleEvent);
     this.gBrowser.tabContainer.addEventListener("TabClose", this.handleEvent);
     // Esc while the browser's own UI has focus (the card's buttons, the sidebar). Esc in the
@@ -88,9 +106,7 @@ export class PerynGlance {
     this.win.removeEventListener("keydown", this.handleEvent);
     this.gBrowser.tabContainer.removeEventListener("TabSelect", this.handleEvent);
     this.gBrowser.tabContainer.removeEventListener("TabClose", this.handleEvent);
-    if (this.win.PerynGlance == this) {
-      delete this.win.PerynGlance;
-    }
+    controllers.delete(this);
   }
 
   get enabled() {

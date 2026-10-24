@@ -622,22 +622,6 @@ async function glanceScenario({ win, layout, open, sleep, shot, report }) {
     openCalls.push(call);
     return call.tab ?? null;
   };
-  const sameController = win.PerynGlance === glance;
-  // And what the browser-side actor receives.
-  const parentGot = [];
-  const { PerynGlanceParent } = ChromeUtils.importESModule("resource://peryn-preview/glance/PerynGlanceParent.sys.mjs");
-  const realReceive = PerynGlanceParent.prototype.receiveMessage;
-  PerynGlanceParent.prototype.receiveMessage = function (message) {
-    let note = message.name;
-    try {
-      const browser = this.browsingContext.top.embedderElement;
-      note += ` browser=${!!browser} controller=${!!browser?.ownerGlobal?.PerynGlance}`;
-    } catch (e) {
-      note += ` error=${e}`;
-    }
-    parentGot.push(note);
-    return realReceive.call(this, message);
-  };
   // Alt+click on the lead link, sent to the window like a real click. First a plain click on
   // the same link in a scratch tab tells us whether synthesized clicks reach pages at all, and
   // which way (straight through, or through async pan/zoom) works here.
@@ -682,16 +666,6 @@ async function glanceScenario({ win, layout, open, sleep, shot, report }) {
   }
   viaClick = !!glance.current;
   glance.open = realOpen;
-  PerynGlanceParent.prototype.receiveMessage = realReceive;
-  let childSaw = null;
-  try {
-    const actor = parent.linkedBrowser.browsingContext.currentWindowGlobal.getActor("PerynGlance");
-    childSaw = (await Promise.race([actor.sendQuery("Glance:Ping"), sleep(3000).then(() => ({ timeout: true }))]))?.last ?? "nothing";
-  } catch (e) {
-    childSaw = `error: ${e}`;
-  }
-  await sleep(300);
-  const afterOpen = openCalls.map(c => ({ ...c, currentNow: !!glance.current, selectedLabel: gBrowser.selectedTab.label }));
   const pageSaw = parent.linkedBrowser.contentTitle;
   const pageUrlAfter = parent.linkedBrowser.currentURI.spec;
   if (!viaClick) {
@@ -711,9 +685,6 @@ async function glanceScenario({ win, layout, open, sleep, shot, report }) {
     clickPath,
     probe,
     pageSaw,
-    sameController,
-    childSaw,
-    parentGot,
     openCalls: afterOpen,
     pageUrlAfter,
     viaClick,

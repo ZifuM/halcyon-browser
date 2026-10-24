@@ -4,11 +4,12 @@
 
 /** Glance, in the browser: hands a page's request to that window's Glance controller. */
 
+import { glanceForBrowser } from "./PerynGlance.sys.mjs";
+
 export class PerynGlanceParent extends JSWindowActorParent {
   receiveMessage(message) {
     const browser = this.browsingContext.top.embedderElement;
-    const win = browser?.ownerGlobal;
-    const glance = win?.PerynGlance;
+    const glance = browser ? glanceForBrowser(browser) : null;
     if (!glance) {
       return;
     }

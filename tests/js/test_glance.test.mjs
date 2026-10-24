@@ -237,27 +237,29 @@ test("Esc is passed on, once per press", () => {
   assert.deepEqual(c.sent.map(m => m.name), ["Glance:Escape"]);
 });
 
-test("the parent hands requests to the window the page is in", () => {
-  const log = [];
-  const browser = { ownerGlobal: { PerynGlance: { open: (...a) => log.push(["open", ...a]), closeFor: b => log.push(["closeFor", b]) } } };
+test("the parent hands requests to the window showing the page", () => {
+  const { glance, tabs, gBrowser, calls } = setUp(["a", "b"]);
   const p = new PerynGlanceParent();
-  p.browsingContext = { top: { embedderElement: browser } };
+  p.browsingContext = { top: { embedderElement: tabs[0].linkedBrowser } };
   p.manager = { documentPrincipal: { origin: "https://news.example" } };
-  p.receiveMessage({ name: "Glance:Open", data: { url: "https://a.test/", referrer: "https://news.example/" } });
-  p.receiveMessage({ name: "Glance:Escape" });
-  assert.equal(log[0][1], "https://a.test/");
-  assert.equal(log[0][2].fromBrowser, browser);
-  assert.equal(log[0][2].triggeringPrincipal.origin, "https://news.example");
-  assert.deepEqual(log[1], ["closeFor", browser]);
   // A compromised page can't make it open anything but a web page.
   for (const url of ["javascript:alert(1)", "file:///etc/passwd", "about:config", 42, undefined]) {
     p.receiveMessage({ name: "Glance:Open", data: { url } });
   }
-  assert.equal(log.length, 2);
-  // A window without Peryn's layout: nothing happens.
-  p.browsingContext = { top: { embedderElement: { ownerGlobal: {} } } };
+  assert.equal(calls.addTab.length, 0);
+  p.receiveMessage({ name: "Glance:Open", data: { url: "https://a.test/", referrer: "https://news.example/" } });
+  const preview = glance.current;
+  assert.ok(preview, "found through the window's tabbrowser, not a window property");
+  assert.equal(calls.addTab[0].opts.triggeringPrincipal.origin, "https://news.example");
+  // Esc from the preview's page closes it.
+  p.browsingContext = { top: { embedderElement: preview.linkedBrowser } };
+  p.receiveMessage({ name: "Glance:Escape" });
+  assert.equal(gBrowser.selectedTab, tabs[0]);
+  // A page in a window without Peryn's layout: nothing happens.
+  p.browsingContext = { top: { embedderElement: { unknown: true } } };
   p.receiveMessage({ name: "Glance:Open", data: { url: "https://a.test/" } });
-  assert.equal(log.length, 2);
+  assert.equal(calls.addTab.length, 1);
+  glance.uninit();
 });
 
 // ---- the controller --------------------------------------------------------------------------
@@ -271,7 +273,7 @@ function setUp(labels) {
 
 test("init registers the actor once and exposes the controller to it", () => {
   const { win, glance } = setUp();
-  assert.equal(win.PerynGlance, glance);
+  assert.equal(Glance.glanceForBrowser(glance.gBrowser.tabs[0].linkedBrowser), glance);
   const actor = ChromeUtils._actors.get("PerynGlance");
   assert.ok(actor.child.esModuleURI.endsWith("/glance/PerynGlanceChild.sys.mjs"));
   assert.ok(actor.parent.esModuleURI.endsWith("/glance/PerynGlanceParent.sys.mjs"));
@@ -280,7 +282,7 @@ test("init registers the actor once and exposes the controller to it", () => {
   assert.deepEqual(actor.matches, ["http://*/*", "https://*/*"]);
   setUp(); // a second window doesn't register again (the mock throws if it does)
   glance.uninit();
-  assert.equal(win.PerynGlance, undefined);
+  assert.equal(Glance.glanceForBrowser(glance.gBrowser.tabs[0].linkedBrowser), null);
 });
 
 test("open: the preview is selected as a card, the page underneath stays live", () => {
