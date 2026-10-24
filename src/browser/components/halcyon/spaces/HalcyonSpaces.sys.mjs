@@ -501,11 +501,31 @@ export class HalcyonSpaces {
         this.active = this._restoreActive();
         this.apply();
         break;
-      case "TabSelect":
+      case "TabSelect": {
+        // Firefox moves the selection off a closing tab before announcing the close. If that
+        // was the Space's last tab, stay in the Space with a fresh tab instead of landing on an
+        // Essential or in another Space.
+        const previous = event.detail?.previousTab;
+        if (
+          previous?.closing &&
+          !previous.pinned &&
+          previous.getAttribute(SPACE_ATTR) == this.active &&
+          (tab.pinned || this.spaceOf(tab) != this.active) &&
+          !this.tabsIn(this.active).length &&
+          !this._isQuitting()
+        ) {
+          this.win.setTimeout(() => {
+            if (!this.tabsIn(this.active).length) {
+              this.openNewTab();
+            }
+          }, 0);
+          break;
+        }
         if (!tab.pinned && this.spaceOf(tab) != this.active) {
           this.switchTo(this.spaceOf(tab));
         }
         break;
+      }
       case "TabClose":
         this._onClose(tab);
         break;
@@ -608,18 +628,6 @@ export class HalcyonSpaces {
         } else {
           Store.removePin(id);
         }
-      }
-    }
-    // Closing the last tab of a Space: open a new one there rather than letting Firefox pick
-    // an Essential or a tab from another Space (which would switch Spaces under the user).
-    if (tab.selected && !tab.pinned && !this._isQuitting()) {
-      const others = this.gBrowser.visibleTabs.filter(t => t != tab && !t.closing && !t.pinned);
-      const anyOther = this.gBrowser.tabs.some(t => t != tab && !t.closing);
-      if (!others.length && anyOther) {
-        const userContextId = Store.userContextIdFor(this.activeSpace);
-        const fresh = this.gBrowser.addTrustedTab(this.win.BROWSER_NEW_TAB_URL, { userContextId, skipAnimation: true });
-        // Firefox picks the next selected tab after this event: make it the fresh one.
-        this.gBrowser.setSuccessor?.(tab, fresh);
       }
     }
   }

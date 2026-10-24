@@ -245,10 +245,11 @@ function makeWindow(urls = ["https://a/"]) {
       return tabs.find(t => t.selected);
     },
     set selectedTab(tab) {
+      const previousTab = tabs.find(t => t.selected);
       for (const t of tabs) t.selected = t == tab;
       tab.lastAccessed = clock++;
       tab.hidden = false;
-      fire("TabSelect", tab);
+      fire("TabSelect", tab, { previousTab });
     },
     get visibleTabs() {
       return tabs.filter(t => !t.hidden);
@@ -300,7 +301,11 @@ function makeWindow(urls = ["https://a/"]) {
     document: doc,
     BROWSER_NEW_TAB_URL: "about:newtab",
     closed: false,
-    setTimeout: () => 0,
+    setTimeout: fn => (win._timers.push(fn), 0),
+    _timers: [],
+    runTimers() {
+      while (this._timers.length) this._timers.shift()();
+    },
     clearTimeout: () => {},
     addEventListener() {},
     removeEventListener() {},
@@ -459,4 +464,22 @@ test("a launcher's title follows the page once it loads (and its URL, if pinned 
     Store.get("s-personal").pins.map(p => [p.title, p.url]),
     [["Docs", "https://docs.example/"]]
   );
+});
+
+test("closing a Space's last tab keeps you in that Space with a fresh tab", () => {
+  const work = Store.create({ name: "Work" });
+  const { win, gBrowser, spaces } = makeWindow(["https://a/"]);
+  const mail = gBrowser.addTrustedTab("https://mail/");
+  gBrowser.pinTab(mail);
+  spaces.switchTo(work.id);
+  const only = gBrowser.selectedTab;
+  win.runTimers();
+  // Firefox: mark closing, move the selection (to the Essential), then announce the close.
+  only.closing = true;
+  gBrowser.selectedTab = mail;
+  gBrowser.tabs.splice(gBrowser.tabs.indexOf(only), 1);
+  win.runTimers();
+  assert.equal(spaces.active, work.id);
+  assert.equal(gBrowser.selectedTab.getAttribute(SPACE_ATTR), work.id);
+  assert.equal(gBrowser.selectedTab.url, "about:newtab");
 });
