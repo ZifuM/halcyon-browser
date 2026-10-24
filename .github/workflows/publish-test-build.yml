@@ -1,0 +1,34 @@
+# Publish the Windows installer from an earlier `build` run as the `test-build` pre-release,
+# without building again (e.g. when only the publishing step failed).
+name: publish-test-build
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: "Id of the build run whose installer to publish"
+        required: true
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: windows-*
+          path: out
+          merge-multiple: true
+          run-id: ${{ inputs.run_id }}
+          github-token: ${{ github.token }}
+      - name: Replace the test-build pre-release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ inputs.run_id }}
+        run: |
+          sha=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$RUN_ID" --jq .head_sha)
+          tools/ci/publish_test_build.sh "$sha"
