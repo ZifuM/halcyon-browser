@@ -597,27 +597,43 @@ async function glanceScenario({ win, layout, open, sleep, shot, report }) {
     actorReady = `error: ${e}`;
   }
   let clickPath = "";
-  // Alt+click on the lead link, sent to the window like a real click.
+  // Alt+click on the lead link, sent to the window like a real click. First a plain click on
+  // the same link in a scratch tab tells us whether synthesized clicks reach pages at all, and
+  // which way (straight through, or through async pan/zoom) works here.
   const area = doc.getElementById("tabbrowser-tabpanels").getBoundingClientRect();
   const x = area.left + area.width / 2;
   const y = area.top + 220;
-  const utils = win.windowUtils;
   const alt = Ci.nsIDOMWindowUtils.MODIFIER_ALT ?? 1;
-  try {
-    for (const type of ["mousedown", "mouseup"]) {
-      if (typeof win.synthesizeMouseEvent == "function") {
-        // Firefox 158 moved this from windowUtils onto chrome windows.
-        clickPath = "window";
-        win.synthesizeMouseEvent(type, x, y, { button: 0, modifiers: alt });
-      } else if (typeof utils.synthesizeMouseEvent == "function") {
-        clickPath = "windowUtils";
-        utils.synthesizeMouseEvent(type, x, y, { button: 0, clickCount: 1, modifiers: alt });
-      } else {
-        utils.sendMouseEvent(type, x, y, 0, 1, alt);
-      }
+  const clickAt = (modifiers, isAsyncEnabled) => {
+    for (const type of ["mousemove", "mousedown", "mouseup"]) {
+      win.synthesizeMouseEvent(type, x, y, { button: 0, modifiers }, { isAsyncEnabled });
     }
-  } catch (e) {
-    log(`[scenario] synthesizing the Alt+click failed: ${e}`);
+  };
+  const probe = { sync: false, async: false };
+  if (typeof win.synthesizeMouseEvent == "function") {
+    clickPath = "window";
+    for (const mode of ["sync", "async"]) {
+      const scratch = open("links.html");
+      gBrowser.selectedTab = scratch;
+      await sleep(1800);
+      try {
+        clickAt(0, mode == "async");
+      } catch (e) {
+        log(`[scenario] ${mode} click failed: ${e}`);
+      }
+      for (let i = 0; i < 20 && !scratch.linkedBrowser.currentURI.spec.endsWith("recipes.html"); i++) {
+        await sleep(100);
+      }
+      probe[mode] = scratch.linkedBrowser.currentURI.spec.endsWith("recipes.html");
+      gBrowser.removeTab(scratch);
+    }
+    gBrowser.selectedTab = parent;
+    await sleep(800);
+    try {
+      clickAt(alt, !probe.sync && probe.async);
+    } catch (e) {
+      log(`[scenario] synthesizing the Alt+click failed: ${e}`);
+    }
   }
   let viaClick = false;
   for (let i = 0; i < 30 && !glance.current; i++) {
@@ -639,6 +655,7 @@ async function glanceScenario({ win, layout, open, sleep, shot, report }) {
   const opened = {
     actorReady,
     clickPath,
+    probe,
     viaClick,
     open: !!card,
     url: card?.linkedBrowser.currentURI.spec ?? "",
@@ -657,6 +674,14 @@ async function glanceScenario({ win, layout, open, sleep, shot, report }) {
   // Esc in the previewed page closes it.
   gBrowser.selectedBrowser.focus();
   await sleep(300);
+  const focusBeforeEsc = Services.focus.focusedElement == card?.linkedBrowser ? "card" : Services.focus.focusedElement?.localName ?? "none";
+  let cardActor = "no actor";
+  try {
+    const actor = card.linkedBrowser.browsingContext.currentWindowGlobal.getActor("PerynGlance");
+    cardActor = await Promise.race([actor.sendQuery("Glance:Ping").then(r => (r?.ready ? "ready" : "bad")), sleep(3000).then(() => "timeout")]);
+  } catch (e) {
+    cardActor = `error: ${e}`;
+  }
   const tip = Cc["@mozilla.org/text-input-processor;1"].createInstance(Ci.nsITextInputProcessor);
   tip.beginInputTransactionForTests(win);
   const esc = new win.KeyboardEvent("", { key: "Escape", code: "Escape", keyCode: 27 });
@@ -665,7 +690,7 @@ async function glanceScenario({ win, layout, open, sleep, shot, report }) {
   for (let i = 0; i < 30 && glance.current; i++) {
     await sleep(100);
   }
-  const escaped = { closed: !glance.current, backOnPage: gBrowser.selectedTab == parent, removed: !card?.isConnected };
+  const escaped = { focusBeforeEsc, cardActor, closed: !glance.current, backOnPage: gBrowser.selectedTab == parent, removed: !card?.isConnected };
   if (glance.current) {
     glance.close();
   }
