@@ -265,8 +265,14 @@
 
   .hx-sliders {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: var(--hx-space-3);
+
+    input[type="range"] {
+      width: 100%;
+      min-width: 0;
+      margin-inline: 0;
+    }
   }
 
   .hx-title {

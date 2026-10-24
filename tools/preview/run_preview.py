@@ -201,6 +201,12 @@ def main() -> int:
         d = json.loads(sk.read_text())
         checks.append(("Spaces: Ctrl+Alt+Right goes to the next Space", d["afterNext"] == "Weekend"))
         checks.append(("Spaces: Ctrl+Alt+1 jumps to the first; Work's tabs hide", d["afterJump1"] == "Personal" and d["workTabsHiddenInPersonal"]))
+    sy = out / "sync.json"
+    if sy.exists():
+        d = json.loads(sy.read_text())
+        checks.append(("Sync: Firefox Sync's prefs engine carries halcyon.spaces", d["syncedByFirefoxSync"]))
+        checks.append(("Sync: a Space from another machine appears", d["dots"] == 4))
+        checks.append(("Sync: an Essential from another machine opens here (unloaded)", d["laptopEssential"]))
     tab_menu = out / "tab-menu.json"
     if tab_menu.exists():
         data = json.loads(tab_menu.read_text())

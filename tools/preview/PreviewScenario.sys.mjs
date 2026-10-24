@@ -263,6 +263,21 @@ async function runScenario(win) {
   await shot("10-space-weekend");
   doc.getElementById("halcyon-key-space-1").doCommand();
   await sleep(900);
+  // Another machine's changes arriving through Firefox Sync: its prefs engine writes the synced
+  // pref, exactly like this. A new Space and a new Essential should appear here.
+  const syncBranch = Services.prefs.getBranch("services.sync.prefs.sync.");
+  const remote = structuredClone(Store.data);
+  remote.spaces.push({ id: "s-laptop", name: "Laptop", icon: "💻", color: { hue: 200, hue2: 240, chroma: 0.05 }, pins: [] });
+  remote.essentials.push({ id: "e-laptop", url: `${SITE}weather.html`, title: "Weather from the laptop" });
+  Services.prefs.setStringPref("halcyon.spaces", JSON.stringify(remote));
+  await sleep(1500);
+  await report("sync", {
+    syncedByFirefoxSync: syncBranch.getChildList("").includes("halcyon.spaces") && syncBranch.getBoolPref("halcyon.spaces"),
+    dots: doc.querySelectorAll(".halcyon-space-dot").length,
+    laptopEssential: gBrowser.tabs.some(t => t.pinned && t.label.includes("Weather from the laptop")),
+  });
+  await shot("11-after-sync");
+
   await report("spaces-keys", {
     afterNext,
     afterJump1: Store.get(spaces.active)?.name,
