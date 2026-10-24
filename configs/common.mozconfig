@@ -5,11 +5,6 @@ ac_add_options --with-app-basename={{NAME}}
 ac_add_options --with-branding={{BRANDING_DIR}}
 ac_add_options --with-distribution-id={{DISTRIBUTION_ID}}
 ac_add_options --enable-update-channel=release
-# Report ourselves as Firefox (".. Gecko/20100101 Firefox/158.0"), exactly like the release we're
-# built on. Otherwise Gecko puts our own name in place of the Firefox token, and sites that sniff
-# for it (Google, YouTube) serve old-browser pages. It's also better for privacy: one more browser
-# with a rare user agent is easier to fingerprint.
-ac_add_options MOZ_APP_UA_NAME=Firefox
 
 # Ownership promise: nothing phones home that the user didn't choose.
 # - Telemetry upload is compiled out: MOZ_TELEMETRY_REPORTING defaults off unless MOZILLA_OFFICIAL

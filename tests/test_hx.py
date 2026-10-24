@@ -377,5 +377,7 @@ class UserAgentTests(unittest.TestCase):
     def test_reports_itself_as_firefox(self):
         # Without this, Gecko replaces the "Firefox/<version>" token with our own name and sites
         # like Google and YouTube treat the browser as outdated.
-        text = (ROOT / "configs/common.mozconfig").read_text(encoding="utf-8")
-        self.assertRegex(text, r"(?m)^ac_add_options MOZ_APP_UA_NAME=Firefox$")
+        # It can only be set from a confvars.sh-style file; our branding's configure.sh is one.
+        text = (ROOT / "branding/overlay/configure.sh").read_text(encoding="utf-8")
+        self.assertRegex(text, r"(?m)^MOZ_APP_UA_NAME=Firefox$")
+        self.assertNotIn("MOZ_APP_UA_NAME", (ROOT / "configs/common.mozconfig").read_text(encoding="utf-8"))
