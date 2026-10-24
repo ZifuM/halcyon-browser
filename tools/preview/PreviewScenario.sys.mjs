@@ -470,6 +470,22 @@ async function commandBarScenario({ win, layout, open, sleep, shot, report }) {
   await sleep(300);
   await report("shortcuts", { editorRows, first, asked, taken, givenBack });
 
+  // Duplicate tabs: the same page is open in Personal and in Work.
+  const pages = () => gBrowser.tabs.filter(t => !t.closing).map(t => t.linkedBrowser.currentURI.spec.replace(/#.*/, ""));
+  const repeats = () => pages().filter((u, i, all) => all.indexOf(u) != i && !/^about:/.test(u)).length;
+  const repeatsBefore = repeats();
+  newTabKey.doCommand();
+  await sleep(800);
+  await type("@duplicates ");
+  const duplicateRows = rows();
+  await shot("16-duplicates");
+  press("Escape");
+  press("Escape");
+  await sleep(300);
+  bar.runAction("close-duplicates");
+  await sleep(800);
+  await report("duplicates", { repeatsBefore, duplicateRows, repeatsAfter: repeats() });
+
   // Off switch: Firefox's keys go back to what they did.
   Services.prefs.setBoolPref("halcyon.commandbar.enabled", false);
   await sleep(300);

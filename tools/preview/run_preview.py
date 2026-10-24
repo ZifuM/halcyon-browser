@@ -249,6 +249,13 @@ def main() -> int:
         checks.append(("Shortcuts: taking Firefox's Ctrl+R asks first, then disables Reload's key",
                        "Reload" in (d["asked"] or "") and d["taken"]["reloadDisabled"]))
         checks.append(("Shortcuts: removing it gives Ctrl+R back", not d["givenBack"]["reloadDisabled"] and not d["givenBack"]["ours"]))
+    du = out / "duplicates.json"
+    if du.exists():
+        d = json.loads(du.read_text())
+        checks.append(("Command bar: @duplicates lists repeated tabs under Close Duplicate Tabs",
+                       d["repeatsBefore"] > 0 and d["duplicateRows"][:1] and d["duplicateRows"][0]["title"] == "Close Duplicate Tabs"
+                       and all(r["kind"] == "0" for r in d["duplicateRows"][1:])))
+        checks.append(("Command bar: Close Duplicate Tabs leaves each page open once", d["repeatsAfter"] == 0))
     off = out / "commandbar-off.json"
     if off.exists():
         d = json.loads(off.read_text())
