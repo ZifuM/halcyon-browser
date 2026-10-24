@@ -611,11 +611,11 @@ export class HalcyonSpaces {
       }
     }
     // Closing the last tab of a Space: open a new one there rather than letting Firefox pick
-    // a tab from another Space (which would switch Spaces under the user).
-    if (tab.selected && !this._isQuitting()) {
-      const others = this.gBrowser.visibleTabs.filter(t => t != tab && !t.closing);
-      const hidden = this.gBrowser.tabs.some(t => t.hidden && !t.closing);
-      if (!others.length && hidden) {
+    // an Essential or a tab from another Space (which would switch Spaces under the user).
+    if (tab.selected && !tab.pinned && !this._isQuitting()) {
+      const others = this.gBrowser.visibleTabs.filter(t => t != tab && !t.closing && !t.pinned);
+      const anyOther = this.gBrowser.tabs.some(t => t != tab && !t.closing);
+      if (!others.length && anyOther) {
         const userContextId = Store.userContextIdFor(this.activeSpace);
         this.gBrowser.addTrustedTab(this.win.BROWSER_NEW_TAB_URL, { userContextId, skipAnimation: true });
       }
