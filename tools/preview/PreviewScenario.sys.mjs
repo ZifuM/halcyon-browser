@@ -606,22 +606,6 @@ async function glanceScenario({ win, layout, open, sleep, shot, report }) {
     actorReady = `error: ${e}`;
   }
   let clickPath = "";
-  // Record what reaches the browser side from the page.
-  const openCalls = [];
-  const realOpen = glance.open.bind(glance);
-  glance.open = (url, options = {}) => {
-    const call = { url, fromSelected: options.fromBrowser == gBrowser.selectedBrowser, hasPrincipal: !!options.triggeringPrincipal };
-    try {
-      const tab = realOpen(url, options);
-      Object.defineProperty(call, "tab", { value: tab, enumerable: false });
-      call.result = tab ? "opened" : "null";
-      call.stillPreview = !!tab?.hasAttribute("peryn-glance");
-    } catch (e) {
-      call.result = `threw: ${e}`;
-    }
-    openCalls.push(call);
-    return call.tab ?? null;
-  };
   // Alt+click on the lead link, sent to the window like a real click. First a plain click on
   // the same link in a scratch tab tells us whether synthesized clicks reach pages at all, and
   // which way (straight through, or through async pan/zoom) works here.
@@ -665,7 +649,6 @@ async function glanceScenario({ win, layout, open, sleep, shot, report }) {
     await sleep(100);
   }
   viaClick = !!glance.current;
-  glance.open = realOpen;
   const pageSaw = parent.linkedBrowser.contentTitle;
   const pageUrlAfter = parent.linkedBrowser.currentURI.spec;
   if (!viaClick) {
@@ -685,7 +668,6 @@ async function glanceScenario({ win, layout, open, sleep, shot, report }) {
     clickPath,
     probe,
     pageSaw,
-    openCalls: afterOpen,
     pageUrlAfter,
     viaClick,
     open: !!card,
