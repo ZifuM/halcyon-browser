@@ -177,3 +177,42 @@ test("per window: a page's blocking is read once per burst", async () => {
   const day = PerynLedger.state.days[Logic.dayOf(Date.now())];
   assert.deepEqual(day.blocked["news.example"], { tracker: 4 });
 });
+
+// ---- the privacy page's words --------------------------------------------------------------
+
+const Privacy = await import("moz-src:///browser/components/peryn/privacy/PerynPrivacyLogic.sys.mjs");
+
+test("privacy page: presets say what they change and may break; no score anywhere", () => {
+  for (const id of ["strict", "standard", "custom"]) {
+    const p = Privacy.PRESETS[id];
+    assert.equal(p.category, id);
+    assert.ok(p.changes.length && p.breaks.length, id);
+  }
+  assert.equal(Privacy.presetFor("nonsense").category, "custom");
+  assert.equal(Privacy.PRESETS.standard.title, "Balanced");
+  const src = fs.readFileSync(path.join(ROOT, "src/browser/components/peryn/privacy/PerynPrivacy.sys.mjs"), "utf8");
+  assert.doesNotMatch(src + JSON.stringify(Privacy), /score/i, "real counts, not a privacy score");
+});
+
+test("privacy page: permissions people look for come first; clear-data choices are Firefox's", () => {
+  assert.deepEqual(Privacy.orderPermissions(["popup", "cookie", "geo", "camera"]), ["camera", "geo", "popup", "cookie"]);
+  assert.deepEqual(Privacy.CLEAR_ITEMS.map(i => i.id), ["browsingHistoryAndDownloads", "cookiesAndStorage", "cache", "formdata", "siteSettings"]);
+  assert.deepEqual(Privacy.RANGES.map(r => r.timespan), [1, 2, 3, 4, 0], "Sanitizer.TIMESPAN_* values");
+});
+
+test("privacy page: plain counts and times", () => {
+  assert.equal(Privacy.formatCount(12345), "12,345");
+  assert.equal(Privacy.ago(NOW - 120 * 1000, NOW), "2 minutes ago");
+  assert.equal(Privacy.ago(NOW - DAY, NOW), "yesterday");
+  assert.equal(Privacy.ago(0, NOW), "never");
+  const lines = Privacy.overviewLines({
+    days: 7,
+    blockedCount: 1200,
+    connections: [{ seen: 3 }, { seen: 0 }, { seen: 2 }],
+    unknown: [{ host: "x" }],
+  });
+  assert.equal(lines[0], "1,200 trackers blocked in the last 7 days.");
+  assert.equal(lines[1], "The browser connected on its own 5 times in the last 7 days, for 2 listed purposes.");
+  assert.match(lines[2], /isn't on the list/);
+  assert.equal(Privacy.overviewLines({ days: 1, blockedCount: 0, connections: [], unknown: [] })[0], "Nothing blocked today yet.");
+});

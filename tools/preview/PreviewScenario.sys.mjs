@@ -306,6 +306,9 @@ async function runScenario(win) {
   // ---- First-run welcome and Arc import (C6) ----
   await onboardingScenario({ win, layout, sleep, shot, report });
 
+  // ---- Privacy Ledger and privacy page (C7) ----
+  await privacyScenario({ win, layout, open, sleep, shot, report });
+
   await IOUtils.writeUTF8(PathUtils.join(OUT, "finished"), "ok");
   await sleep(500);
   Services.startup.quit(Ci.nsIAppStartup.eForceQuit);
@@ -858,4 +861,100 @@ async function onboardingScenario({ win, layout, sleep, shot, report }) {
     protection: { balanced, pressed, strict },
     closed: { open: ob.isOpen, done: Services.prefs.getBoolPref("peryn.onboarding.done", false) },
   });
+}
+
+/** The Ledger through its real wiring (a browser-made request), and the privacy page. */
+async function privacyScenario({ win, layout, open, sleep, shot, report }) {
+  const { gBrowser } = win;
+  const doc = win.document;
+  const { PerynLedger } = ChromeUtils.importESModule("resource://peryn-preview/privacy/PerynLedger.sys.mjs");
+  await PerynLedger.init();
+
+  // A request the browser makes by itself (chrome, not a page): the Ledger must see it. And a
+  // page's own request must not show up.
+  const before = PerynLedger.hostsSeen();
+  await win.fetch("https://example.com/", { cache: "no-store" }).catch(() => {});
+  const pageTab = open("links.html");
+  gBrowser.selectedTab = pageTab;
+  await sleep(2500);
+  const after = PerynLedger.hostsSeen();
+  // Known connections and blocks, to fill the page the way a day of browsing would.
+  const now = Date.now();
+  PerynLedger.recordConnection({ host: "firefox.settings.services.mozilla.com", time: now - 60000 });
+  PerynLedger.recordConnection({ host: "ublockorigin.github.io", time: now - 3600000 });
+  PerynLedger.recordConnection({ host: "api.github.com", time: now - 7200000 });
+  const T = 0x00001000;
+  PerynLedger.recordPageLog({ site: "news.example", log: { "https://ads.example": [[T, true, 14]], "https://fp.example": [[0x40, true, 2]] }, seen: new Map() });
+  PerynLedger.recordPageLog({ site: "shop.example", log: { "https://ads.example": [[T, true, 5]] }, seen: new Map() });
+
+  const privacy = layout.privacy;
+  privacy.open("overview");
+  await sleep(1000);
+  const root = doc.getElementById("peryn-privacy");
+  const text = () => root.querySelector(".peryn-pv-body").textContent;
+  const overview = { open: privacy.isOpen, lead: root.querySelector(".peryn-pv-lead")?.textContent ?? "", mentionsUnlisted: /isn't on the list|aren't on the list/.test(text()) };
+  await shot("23-privacy-overview");
+
+  privacy.show("ledger");
+  await sleep(600);
+  const ledger = {
+    unlisted: [...root.querySelectorAll(".peryn-pv-warn li")].map(li => li.textContent),
+    entries: [...root.querySelectorAll(".peryn-pv-entries strong")].map(s => s.textContent),
+  };
+  await shot("24-privacy-ledger");
+
+  privacy.show("every");
+  await sleep(300);
+  const every = root.querySelectorAll(".peryn-pv-entries > li").length;
+
+  privacy.show("protection");
+  await sleep(300);
+  const presetsShown = [...root.querySelectorAll(".peryn-pv-preset-title")].map(t => t.textContent);
+  root.querySelectorAll(".peryn-pv-preset")[1]?.click();
+  await sleep(300);
+  const afterBalanced = Services.prefs.getStringPref("browser.contentblocking.category", "");
+  root.querySelectorAll(".peryn-pv-preset")[0]?.click();
+  await sleep(300);
+  const afterStrict = Services.prefs.getStringPref("browser.contentblocking.category", "");
+
+  privacy.show("site");
+  await sleep(500);
+  const site = {
+    host: root.querySelector(".peryn-pv-head h2")?.textContent ?? "",
+    permissions: [...root.querySelectorAll(".peryn-pv-perms select")].map(s => s.dataset.permission),
+  };
+  // Block the camera for this site from the panel, and check Firefox stored it.
+  const camera = root.querySelector('select[data-permission="camera"]');
+  let cameraBlocked = false;
+  if (camera) {
+    const { SitePermissions } = ChromeUtils.importESModule("resource:///modules/SitePermissions.sys.mjs");
+    camera.value = String(SitePermissions.BLOCK);
+    camera.dispatchEvent(new win.Event("change"));
+    await sleep(300);
+    cameraBlocked = SitePermissions.getForPrincipal(gBrowser.selectedBrowser.contentPrincipal, "camera").state == SitePermissions.BLOCK;
+    SitePermissions.removeFromPrincipal(gBrowser.selectedBrowser.contentPrincipal, "camera");
+  }
+  await shot("25-site-settings");
+
+  privacy.show("clear");
+  await sleep(300);
+  const clearText = await privacy.clearData(["cache"], "hour");
+
+  win.dispatchEvent(new win.KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true }));
+  await sleep(400);
+  await report("privacy", {
+    sawBrowserRequest: !before.includes("example.com") && after.includes("example.com"),
+    pageRequestNotListed: !after.includes("127.0.0.1"),
+    overview,
+    ledger,
+    every,
+    presetsShown,
+    afterBalanced,
+    afterStrict,
+    site,
+    cameraBlocked,
+    clearText,
+    closed: !privacy.isOpen,
+  });
+  gBrowser.removeTab(pageTab);
 }

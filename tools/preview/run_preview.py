@@ -317,6 +317,21 @@ def main() -> int:
         p = d["protection"]
         checks.append(("Welcome: the protection choice sets Firefox's category", p["balanced"] == "standard" and p["pressed"] == "balanced" and p["strict"] == "strict"))
         checks.append(("Welcome: Esc closes it and it won't show again by itself", not d["closed"]["open"] and d["closed"]["done"]))
+    pv = out / "privacy.json"
+    if pv.exists():
+        d = json.loads(pv.read_text())
+        checks.append(("Ledger: a request the browser makes by itself is recorded; a page's own requests aren't", d["sawBrowserRequest"] and d["pageRequestNotListed"]))
+        checks.append(("Privacy page: the overview gives real counts and flags connections that aren't on the list",
+                       d["overview"]["open"] and "trackers blocked" in d["overview"]["lead"] and d["overview"]["mentionsUnlisted"]))
+        checks.append(("Privacy page: the Ledger lists connections by purpose, unlisted ones apart",
+                       any("example.com" in u for u in d["ledger"]["unlisted"]) and any("Remote Settings" in e for e in d["ledger"]["entries"])))
+        checks.append(("Privacy page: every connection the browser can make is listed", d["every"] >= 17))
+        checks.append(("Privacy page: Strict and Balanced say what they change, and switch Firefox's protection",
+                       d["presetsShown"][:2] == ["Strict", "Balanced"] and d["afterBalanced"] == "standard" and d["afterStrict"] == "strict"))
+        checks.append(("This site: permissions panel shows camera, location and notifications, and changes stick",
+                       {"camera", "geo", "desktop-notification"} <= set(d["site"]["permissions"]) and d["site"]["permissions"][0] == "camera" and d["cameraBlocked"]))
+        checks.append(("Clear data: clears the chosen kinds over the chosen range", d["clearText"].startswith("Cleared")))
+        checks.append(("Privacy page: Esc closes it", d["closed"]))
     off = out / "commandbar-off.json"
     if off.exists():
         d = json.loads(off.read_text())

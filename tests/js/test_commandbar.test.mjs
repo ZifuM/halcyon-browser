@@ -467,7 +467,11 @@ test("settings pages and duplicates are actions", async () => {
   globalThis.__placesRows = [];
   await Index.ready({ index: await OmniIndex.fromBytes(wasmBytes) });
   assert.equal(Index.search("cookies")[0].entry.data.action.id, "settings-cookies");
-  assert.equal(Index.search("camera")[0].entry.data.action.id, "settings-permissions");
+  // "camera": this site's settings first (C7), then Firefox's global permission settings.
+  const camera = Index.search("camera").map(r => r.entry.data.action?.id);
+  assert.equal(camera[0], "site-settings");
+  assert.ok(camera.includes("settings-permissions"));
+  assert.equal(Index.search("ledger")[0].entry.data.action.section, "ledger");
   assert.equal(Index.search("passwords")[0].entry.data.action.url, "about:logins");
   assert.equal(Index.search("duplicate")[0].entry.data.action.id, "close-duplicates");
   for (const a of Logic.ACTIONS.filter(a => a.run == "openSettings")) {

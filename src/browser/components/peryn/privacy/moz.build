@@ -6,7 +6,10 @@
 # privacy/requests.toml by `hx requests --write` (checked in; CI checks it's current).
 
 MOZ_SRC_FILES += [
+    "peryn-privacy.css",
     "PerynLedger.sys.mjs",
     "PerynLedgerLogic.sys.mjs",
+    "PerynPrivacy.sys.mjs",
+    "PerynPrivacyLogic.sys.mjs",
     "PerynRequests.sys.mjs",
 ]

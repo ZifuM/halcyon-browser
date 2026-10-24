@@ -1,0 +1,385 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+/* The privacy page (PerynPrivacy.sys.mjs): a sheet over the page area, sections on the left. */
+
+#peryn-privacy {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  font: menu;
+  font-size: var(--hx-font-body);
+  color: var(--hx-text);
+
+  &[hidden] {
+    display: none;
+  }
+
+  [hidden] {
+    display: none !important;
+  }
+}
+
+.peryn-pv-backdrop {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--hx-radius-card);
+  background: light-dark(rgb(20 20 30 / 0.2), rgb(0 0 0 / 0.45));
+  animation: peryn-pv-fade var(--hx-duration) var(--hx-ease-out);
+}
+
+.peryn-pv-sheet {
+  position: relative;
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr);
+  width: min(980px, calc(100% - 48px));
+  margin-block: 20px;
+  border-radius: 16px;
+  background: var(--hx-surface-card);
+  box-shadow:
+    var(--hx-shadow-overlay),
+    0 0 0 1px light-dark(rgb(0 0 0 / 0.08), rgb(255 255 255 / 0.1));
+  overflow: hidden;
+  animation: peryn-pv-in var(--hx-duration-slow) var(--hx-ease-spring);
+}
+
+.peryn-pv-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 20px 12px;
+  background: color-mix(in srgb, var(--hx-surface-card) 92%, var(--hx-text) 8%);
+
+  h1 {
+    margin: 0 8px 12px;
+    font-size: 18px;
+    font-weight: 650;
+  }
+
+  button {
+    appearance: none;
+    padding: 7px 10px;
+    border: none;
+    border-radius: var(--hx-radius-control);
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: start;
+    transition: background-color var(--hx-duration-fast) var(--hx-ease-out);
+
+    &:hover {
+      background-color: var(--hx-hover);
+    }
+
+    &[aria-current="true"] {
+      background-color: var(--hx-selected);
+      font-weight: 600;
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--hx-focus-ring);
+      outline-offset: -2px;
+    }
+  }
+}
+
+.peryn-pv-body {
+  overflow: auto;
+  padding: 24px 32px 32px;
+  line-height: 1.45;
+
+  h2 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 650;
+  }
+
+  h3 {
+    margin: 24px 0 8px;
+    font-size: 14px;
+    font-weight: 650;
+  }
+
+  p {
+    margin: 0 0 10px;
+  }
+
+  code {
+    display: block;
+    margin-top: 4px;
+    font-size: 11px;
+    color: var(--hx-text-muted);
+    overflow-wrap: anywhere;
+  }
+
+  ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+}
+
+.peryn-pv-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.peryn-pv-lead {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.peryn-pv-muted {
+  color: var(--hx-text-muted);
+  font-size: var(--hx-font-small);
+}
+
+.peryn-pv-range {
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: var(--hx-radius-control);
+  background: var(--hx-hover);
+
+  button {
+    appearance: none;
+    padding: 4px 10px;
+    border: none;
+    border-radius: calc(var(--hx-radius-control) - 2px);
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-size: var(--hx-font-small);
+
+    &[aria-pressed="true"] {
+      background: var(--hx-surface-card);
+      box-shadow: var(--hx-shadow-selected);
+      font-weight: 600;
+    }
+  }
+}
+
+.peryn-pv-kinds {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0 16px !important;
+
+  li {
+    padding: 8px 12px;
+    border-radius: var(--hx-radius-tile);
+    background: var(--hx-hover);
+  }
+}
+
+.peryn-pv-entries > li,
+.peryn-pv-sites > li,
+.peryn-pv-perms > li,
+.peryn-pv-checks > li {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--hx-divider);
+}
+
+.peryn-pv-entries > li[data-state="off"] {
+  opacity: 0.75;
+}
+
+.peryn-pv-entry-head,
+.peryn-pv-sites > li,
+.peryn-pv-perms > li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.peryn-pv-sites > li > .peryn-pv-muted {
+  flex: 1;
+  text-align: end;
+}
+
+.peryn-pv-count {
+  color: var(--hx-text-muted);
+  font-size: var(--hx-font-small);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.peryn-pv-switch {
+  margin-top: 4px !important;
+  font-size: var(--hx-font-small);
+}
+
+.peryn-pv-warn {
+  margin: 8px 0 16px;
+  padding: 12px 16px;
+  border-radius: var(--hx-radius-tile);
+  background: light-dark(#fdf0e6, #3a2a1c);
+
+  h3 {
+    margin-top: 0;
+  }
+}
+
+.peryn-pv-presets {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.peryn-pv-preset {
+  appearance: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 16px;
+  border: 1px solid var(--hx-divider);
+  border-radius: var(--hx-radius-tile);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+
+  &[aria-checked="true"] {
+    border-color: var(--hx-focus-ring);
+    background: var(--hx-selected);
+  }
+
+  &:not([disabled]):hover {
+    background-color: var(--hx-hover);
+  }
+
+  ul {
+    padding-inline-start: 18px !important;
+    list-style: disc !important;
+    font-size: var(--hx-font-small);
+  }
+}
+
+.peryn-pv-preset-title {
+  font-size: 15px;
+  font-weight: 650;
+}
+
+.peryn-pv-label {
+  margin-top: 6px;
+  font-size: 11px;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--hx-text-muted);
+}
+
+.peryn-pv-site-protection {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  margin-bottom: 8px;
+  border-radius: var(--hx-radius-tile);
+  background: var(--hx-hover);
+
+  &[data-on="false"] {
+    background: light-dark(#fdf0e6, #3a2a1c);
+  }
+}
+
+.peryn-pv-checks > li {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+
+  label {
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+.peryn-pv-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.peryn-pv-body button:not(.peryn-pv-link, .peryn-pv-preset, .peryn-pv-range button),
+.peryn-pv-site-protection button {
+  appearance: none;
+  padding: 6px 14px;
+  border: 1px solid var(--hx-divider);
+  border-radius: var(--hx-radius-control);
+  background: var(--hx-surface-card);
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+
+  &:hover {
+    background-color: var(--hx-hover);
+  }
+}
+
+.peryn-pv-body .peryn-pv-danger {
+  border-color: transparent;
+  background: light-dark(#c4314b, #e0566e);
+  color: white;
+}
+
+.peryn-pv-link {
+  appearance: none;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--hx-focus-ring, LinkText);
+  font: inherit;
+  text-decoration: underline;
+}
+
+.peryn-pv-close {
+  position: absolute;
+  top: 14px;
+  inset-inline-end: 14px;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 50%;
+  background: url("chrome://global/skin/icons/close.svg") center / 14px no-repeat transparent;
+  -moz-context-properties: fill;
+  fill: currentColor;
+  color: var(--hx-text-muted);
+
+  &:hover {
+    background-color: var(--hx-hover);
+  }
+}
+
+@keyframes peryn-pv-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.985);
+  }
+}
+
+@keyframes peryn-pv-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (max-width: 760px) {
+  .peryn-pv-sheet {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .peryn-pv-nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+}

@@ -823,6 +823,13 @@ export class PerynCommandBar {
       glanceSplit() {
         this.parts.glance?.split();
       },
+      showPrivacy(action) {
+        if (this.parts.privacy) {
+          this.parts.privacy.open(action.section);
+        } else {
+          this.win.openPreferences("privacy-trackingprotection");
+        }
+      },
       showWelcome() {
         this.parts.onboarding?.show();
       },

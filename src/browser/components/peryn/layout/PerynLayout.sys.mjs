@@ -25,6 +25,7 @@ import { PerynSplit } from "../split/PerynSplit.sys.mjs";
 import { PerynGlance } from "../glance/PerynGlance.sys.mjs";
 import { PerynOnboarding } from "../onboarding/PerynOnboarding.sys.mjs";
 import { PerynLedger, PerynLedgerTabs } from "../privacy/PerynLedger.sys.mjs";
+import { PerynPrivacy } from "../privacy/PerynPrivacy.sys.mjs";
 
 const lazy = {};
 
@@ -196,6 +197,7 @@ export const PerynLayout = {
       parts.spaces = new PerynSpaces(win, { sections });
     }
     parts.ledgerTabs = new PerynLedgerTabs(win);
+    parts.privacy = new PerynPrivacy(win, parts);
     parts.split = new PerynSplit(win);
     parts.glance = new PerynGlance(win, parts);
     // After Spaces, so the command bar can open new tabs in the Space's container.
