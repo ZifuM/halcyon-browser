@@ -328,7 +328,19 @@ export class HalcyonCommandBar {
     } else {
       const unchangedAddress = this.mode == "address" && text == this._currentURL();
       const query = unchangedAddress ? "" : parsed.query;
-      const hits = HalcyonCommandIndex.search(query, { kinds: parsed.kinds, limit: Logic.MAX_ROWS });
+      let hits;
+      if (this.filter?.duplicates) {
+        // Every open tab, keep the repeats; offer to close them all first.
+        hits = HalcyonCommandIndex.search(query, { kinds: parsed.kinds, limit: Logic.MAX_RESULTS })
+          .filter(h => h.entry.data?.duplicate)
+          .slice(0, Logic.MAX_ROWS - 1);
+        const close = HalcyonCommandIndex.entries.get(HalcyonCommandIndex.byKey.get("a:close-duplicates"));
+        if (hits.length && close) {
+          hits.unshift({ entry: close, score: Infinity });
+        }
+      } else {
+        hits = HalcyonCommandIndex.search(query, { kinds: parsed.kinds, limit: Logic.MAX_ROWS });
+      }
       this.rows = Logic.arrangeRows({
         query,
         hits,
@@ -691,7 +703,7 @@ export class HalcyonCommandBar {
         }
         return;
       }
-      this.handlers[action.run]?.call(this);
+      this.handlers[action.run]?.call(this, action);
     } catch (e) {
       console.error(`Halcyon command bar: action ${id} failed`, e);
     }
@@ -745,8 +757,27 @@ export class HalcyonCommandBar {
       previousSpace() {
         spaces?.next(-1);
       },
-      settings() {
-        win.openPreferences();
+      openSettings(action) {
+        win.openPreferences(action.pane);
+      },
+      openPage(action) {
+        this._openURL(action.url, true);
+      },
+      closeDuplicates() {
+        const tabs = gBrowser.tabs.filter(t => !t.closing);
+        const described = tabs.map(tab => ({
+          tab,
+          url: tab.linkedBrowser?.currentURI?.spec,
+          essential: tab.pinned,
+          pinned: tab.hasAttribute("halcyon-pinned"),
+          selected: tab.selected,
+          lastAccessed: tab.lastAccessed,
+        }));
+        const close = Logic.findDuplicates(described).flatMap(g => g.close.map(d => d.tab));
+        if (close.length) {
+          gBrowser.removeTabs(close);
+        }
+        return close.length;
       },
       editShortcuts() {
         this._cameFromBar = false;

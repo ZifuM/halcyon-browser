@@ -51,6 +51,10 @@ const { HalcyonSpacesStore: Spaces } = await import(
   "moz-src:///browser/components/halcyon/spaces/HalcyonSpacesStore.sys.mjs"
 );
 const { KIND } = Logic;
+// Loose matching ("ghub" for GitHub) kicks in when exact matches are few, so tests that expect
+// nothing found look at one kind of item.
+const PLACES = (1 << KIND.bookmark) | (1 << KIND.history);
+const TABS = 1 << KIND.tab;
 Spaces.create({ name: "Work", icon: "💼" });
 
 const wasmBytes = await readFile(
@@ -354,18 +358,18 @@ for (const [name, makeIndex] of [
     await Index.ready({ index: await makeIndex() });
     const send = (...events) => placesListeners[0].fn(events);
     send({ type: "page-visited", url: "https://new.example/", lastKnownTitle: "Brand New", visitCount: 1 });
-    assert.equal(Index.search("brand")[0].entry.url, "https://new.example/");
+    assert.equal(Index.search("brand", { kinds: PLACES })[0].entry.url, "https://new.example/");
     send({ type: "page-title-changed", url: "https://new.example/", title: "Renamed Page" });
-    assert.deepEqual(Index.search("brand"), []);
-    assert.equal(Index.search("renamed").length, 1);
+    assert.deepEqual(Index.search("brand", { kinds: PLACES }), []);
+    assert.equal(Index.search("renamed", { kinds: PLACES }).length, 1);
     send({ type: "page-visited", url: "https://rust-lang.org/", visitCount: 9, hidden: true });
     send({ type: "bookmark-added", itemType: 1, url: "https://rust-lang.org/", title: "Rust Home" });
-    assert.deepEqual(Index.search("rust").map(h => [h.entry.kind, h.entry.title]), [[KIND.bookmark, "Rust Home"]]);
+    assert.deepEqual(Index.search("rust", { kinds: PLACES }).map(h => [h.entry.kind, h.entry.title]), [[KIND.bookmark, "Rust Home"]]);
     send({ type: "page-removed", url: "https://new.example/", isRemovedFromStore: true });
-    assert.deepEqual(Index.search("renamed"), []);
+    assert.deepEqual(Index.search("renamed", { kinds: PLACES }), []);
     send({ type: "history-cleared" });
-    assert.deepEqual(Index.search("daily"), []);
-    assert.equal(Index.search("rust").length, 1, "bookmarks survive clearing history");
+    assert.deepEqual(Index.search("daily", { kinds: PLACES }), []);
+    assert.equal(Index.search("rust", { kinds: PLACES }).length, 1, "bookmarks survive clearing history");
     send({ type: "bogus" }, { type: "page-visited" });
   });
 
@@ -380,13 +384,13 @@ for (const [name, makeIndex] of [
     const priv = { isPrivate: true, gBrowser: { tabs: [secret] } };
     tracker.windows = [normal, priv];
     Index.refreshTabs(normal, tab => (tab == mail ? "Work" : ""));
-    assert.deepEqual(Index.search("inbox").map(h => h.entry.data.space), ["Work"]);
-    assert.deepEqual(Index.search("current"), [], "the tab you're on isn't offered");
-    assert.deepEqual(Index.search("secret"), [], "private tabs stay out of normal windows");
+    assert.deepEqual(Index.search("inbox", { kinds: TABS }).map(h => h.entry.data.space), ["Work"]);
+    assert.deepEqual(Index.search("current", { kinds: TABS }), [], "the tab you're on isn't offered");
+    assert.deepEqual(Index.search("secret", { kinds: TABS }), [], "private tabs stay out of normal windows");
     Index.refreshTabs(priv);
-    assert.deepEqual(Index.search("inbox"), []);
+    assert.deepEqual(Index.search("inbox", { kinds: TABS }), []);
     Index.forgetTabs();
-    assert.deepEqual(Index.search("secret"), []);
+    assert.deepEqual(Index.search("secret", { kinds: TABS }), []);
   });
 }
 
@@ -416,18 +420,66 @@ test("index: a reload updates entries in place and drops what's gone", async t =
   Index._reset();
   globalThis.__placesRows = rows;
   await Index.ready({ index: await OmniIndex.fromBytes(wasmBytes) });
-  const before = Index.search("daily")[0].entry.id;
+  const before = Index.search("daily", { kinds: PLACES })[0].entry.id;
   await Index.replacePlaces([
     { ...rows[1], frecency: 9000 },
     { url: "https://later.example/", title: "Added Later", frecency: 10, visited: 0, bookmarked: false },
     { ...rows[0], bookmarked: false },
   ]);
-  assert.equal(Index.search("daily")[0].entry.id, before, "same entry, new score");
-  assert.equal(Index.search("added later").length, 1);
-  assert.deepEqual(Index.search("rust"), [], "gone from Places, gone from the index");
-  assert.equal(Index.search("github")[0].entry.kind, KIND.history, "no longer bookmarked");
+  assert.equal(Index.search("daily", { kinds: PLACES })[0].entry.id, before, "same entry, new score");
+  assert.equal(Index.search("added later", { kinds: PLACES }).length, 1);
+  assert.deepEqual(Index.search("rust", { kinds: PLACES }), [], "gone from Places, gone from the index");
+  assert.equal(Index.search("github", { kinds: PLACES })[0].entry.kind, KIND.history, "no longer bookmarked");
   // Big loads take breaks but finish.
   const many = Array.from({ length: 9000 }, (_, i) => ({ url: `https://m${i}.example/`, title: `Many ${i}`, frecency: i, visited: 0, bookmarked: false }));
   await Index.replacePlaces(many);
   assert.equal(Index.search("many 8999")[0].entry.title, "Many 8999");
+});
+
+test("duplicate tabs: which to keep, which to close", () => {
+  assert.equal(Logic.duplicateKey("https://a.example/page#section"), "https://a.example/page");
+  assert.equal(Logic.duplicateKey("about:newtab"), "");
+  const t = (url, extra = {}) => ({ url, lastAccessed: 0, ...extra });
+  const old = t("https://a.example/", { lastAccessed: 1 });
+  const recent = t("https://a.example/#top", { lastAccessed: 5 });
+  const third = t("https://a.example/", { lastAccessed: 3 });
+  const unique = t("https://b.example/");
+  const blank1 = t("about:newtab");
+  const blank2 = t("about:newtab");
+  let groups = Logic.findDuplicates([old, recent, third, unique, blank1, blank2]);
+  assert.equal(groups.length, 1, "new tabs and single pages aren't duplicates");
+  assert.equal(groups[0].keep, recent, "the most recently used stays");
+  assert.deepEqual(groups[0].close, [old, third]);
+  const selected = t("https://c.example/", { selected: true });
+  const newer = t("https://c.example/", { lastAccessed: 99 });
+  assert.equal(Logic.findDuplicates([newer, selected])[0].keep, selected, "the tab you're on stays");
+  const essential = t("https://d.example/", { essential: true });
+  const pinned = t("https://d.example/", { pinned: true, lastAccessed: 50 });
+  const loose = t("https://d.example/", { lastAccessed: 60 });
+  groups = Logic.findDuplicates([essential, pinned, loose]);
+  assert.equal(groups[0].keep, essential);
+  assert.deepEqual(groups[0].close, [loose], "pinned tabs are never closed");
+  assert.equal(Logic.parseInput("@duplicates").filter.duplicates, true);
+});
+
+test("settings pages and duplicates are actions", async () => {
+  Index._reset();
+  globalThis.__placesRows = [];
+  await Index.ready({ index: await OmniIndex.fromBytes(wasmBytes) });
+  assert.equal(Index.search("cookies")[0].entry.data.action.id, "settings-cookies");
+  assert.equal(Index.search("camera")[0].entry.data.action.id, "settings-permissions");
+  assert.equal(Index.search("passwords")[0].entry.data.action.url, "about:logins");
+  assert.equal(Index.search("duplicate")[0].entry.data.action.id, "close-duplicates");
+  for (const a of Logic.ACTIONS.filter(a => a.run == "openSettings")) {
+    assert.ok(a.pane, a.id);
+  }
+  // Tabs know whether another tab shows the same page (the one you're on counts).
+  const current = fakeTab("Docs", "https://docs.example/", { selected: true });
+  const copy = fakeTab("Docs again", "https://docs.example/#intro");
+  const other = fakeTab("Other", "https://other.example/");
+  tracker.windows = [{ gBrowser: { tabs: [current, copy, other] } }];
+  Index.refreshTabs(tracker.windows[0]);
+  assert.equal(Index.search("again")[0].entry.data.duplicate, true);
+  assert.equal(Index.search("other")[0].entry.data.duplicate, false);
+  Index.forgetTabs();
 });

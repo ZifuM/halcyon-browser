@@ -331,6 +331,16 @@ class CommandIndex {
     const privateOnly = isPrivate(fromWindow);
     const windows = lazy.BrowserWindowTracker.orderedWindows.filter(w => isPrivate(w) == privateOnly && w.gBrowser);
     const now = Date.now();
+    // How many open tabs show each page (the one you're on included), for @duplicates.
+    const counts = new Map();
+    for (const win of windows) {
+      for (const tab of win.gBrowser.tabs) {
+        const key = Logic.duplicateKey(tab.linkedBrowser?.currentURI?.spec);
+        if (key && !tab.closing) {
+          counts.set(key, (counts.get(key) ?? 0) + 1);
+        }
+      }
+    }
     let n = 0;
     for (const win of windows) {
       for (const tab of win.gBrowser.tabs) {
@@ -345,6 +355,7 @@ class CommandIndex {
           tab,
           window: win,
           space: spaceName(tab),
+          duplicate: (counts.get(Logic.duplicateKey(url)) ?? 0) > 1,
         });
       }
     }

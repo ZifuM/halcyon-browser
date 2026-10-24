@@ -23,6 +23,7 @@ export const PREFS = Object.freeze({
 });
 
 export const MAX_ROWS = 9;
+export { MAX_RESULTS } from "./OmniIndex.sys.mjs";
 export const DEFAULT_HISTORY_LIMIT = 100000;
 
 // ---- input -------------------------------------------------------------------------------
@@ -34,6 +35,8 @@ export const FILTERS = Object.freeze([
   { token: "@history", label: "History", kinds: 1 << KIND.history },
   { token: "@actions", label: "Actions", kinds: (1 << KIND.action) | (1 << KIND.space) },
   { token: "@spaces", label: "Spaces", kinds: 1 << KIND.space },
+  // Open tabs that show the same page as another tab.
+  { token: "@duplicates", label: "Duplicates", kinds: 1 << KIND.tab, duplicates: true },
 ]);
 
 /**
@@ -168,12 +171,69 @@ export const ACTIONS = Object.freeze([
   { id: "bookmarks", title: "Show All Bookmarks", keywords: "library manage", command: "Browser:ShowAllBookmarks", key: "manBookmarkKb" },
   { id: "addons", title: "Add-ons and Themes", keywords: "extensions plugins", command: "Tools:Addons", key: "key_openAddons" },
   { id: "clear-history", title: "Clear Recent History", keywords: "delete forget privacy cookies cache", command: "Tools:Sanitize", key: "key_sanitize" },
-  { id: "settings", title: "Settings", keywords: "preferences options", run: "settings" },
+  { id: "settings", title: "Settings", keywords: "preferences options", run: "openSettings", pane: "paneGeneral" },
+  { id: "settings-privacy", title: "Privacy & Security Settings", keywords: "preferences tracking protection shield fingerprinting https", run: "openSettings", pane: "privacy-trackingprotection" },
+  { id: "settings-cookies", title: "Cookies and Site Data", keywords: "settings storage clear data cache", run: "openSettings", pane: "privacy-sitedata" },
+  { id: "settings-permissions", title: "Site Permissions", keywords: "settings camera microphone location notifications pop-ups autoplay", run: "openSettings", pane: "privacy-permissions" },
+  { id: "settings-search", title: "Search Settings", keywords: "default search engine shortcuts suggestions", run: "openSettings", pane: "search" },
+  { id: "settings-home", title: "Home and New Tab Settings", keywords: "homepage startup new tab", run: "openSettings", pane: "paneHome" },
+  { id: "settings-sync", title: "Sync Settings", keywords: "account firefox sync devices", run: "openSettings", pane: "sync" },
+  { id: "settings-containers", title: "Container Settings", keywords: "containers identities", run: "openSettings", pane: "paneContainers" },
+  { id: "passwords", title: "Passwords", keywords: "logins saved passwords credentials", run: "openPage", url: "about:logins" },
+  { id: "close-duplicates", title: "Close Duplicate Tabs", keywords: "duplicates merge same page tidy clean up", run: "closeDuplicates" },
   { id: "shortcuts", title: "Keyboard Shortcuts", keywords: "keys hotkeys bindings customise customize", run: "editShortcuts" },
 ]);
 
 export function actionById(id) {
   return ACTIONS.find(a => a.id == id);
+}
+
+// ---- duplicate tabs ----------------------------------------------------------------------
+
+/** The address two tabs must share to count as duplicates: the URL without its #fragment. */
+export function duplicateKey(url) {
+  const u = String(url ?? "");
+  if (!u || /^about:(blank|newtab|home)$/.test(u)) {
+    return "";
+  }
+  return u.replace(/#.*$/, "");
+}
+
+/**
+ * Which tabs to close so each page stays open once. Kept per page: an Essential, else a pinned
+ * tab, else the selected tab, else the most recently used one.
+ *
+ * @param {{url: string, essential?: boolean, pinned?: boolean, selected?: boolean, lastAccessed?: number}[]} tabs
+ * @returns {{keep: object, close: object[]}[]} one entry per page that's open more than once
+ */
+export function findDuplicates(tabs) {
+  const groups = new Map();
+  for (const tab of tabs) {
+    const key = duplicateKey(tab.url);
+    if (key) {
+      groups.set(key, [...(groups.get(key) ?? []), tab]);
+    }
+  }
+  const rank = t => [t.essential ? 1 : 0, t.pinned ? 1 : 0, t.selected ? 1 : 0, t.lastAccessed ?? 0];
+  const better = (a, b) => {
+    const [ra, rb] = [rank(a), rank(b)];
+    for (let i = 0; i < ra.length; i++) {
+      if (ra[i] != rb[i]) {
+        return ra[i] > rb[i];
+      }
+    }
+    return false;
+  };
+  const out = [];
+  for (const group of groups.values()) {
+    if (group.length < 2) {
+      continue;
+    }
+    const keep = group.reduce((best, t) => (better(t, best) ? t : best));
+    // Essentials and pinned tabs are never closed, even when they repeat.
+    out.push({ keep, close: group.filter(t => t != keep && !t.essential && !t.pinned) });
+  }
+  return out.filter(g => g.close.length);
 }
 
 // ---- result ordering ---------------------------------------------------------------------

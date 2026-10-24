@@ -20,8 +20,11 @@ and anything else becomes a web search or an address.
 What you get, in order of how likely you meant it:
 
 * **Open tabs** in any Space or window ("Switch to Tab"). Picking one takes you to its Space.
-* **Actions**: New Space, Copy Link, Reader View, Clear Recent History, Zoom In and about thirty
-  more, with their shortcuts shown. Words you might use work too: "bigger" finds Zoom In.
+* **Actions**: New Space, Copy Link, Reader View, Clear Recent History, Close Duplicate Tabs, Zoom
+  In and about forty more, with their shortcuts shown. Words you might use work too: "bigger"
+  finds Zoom In.
+* **Settings pages**: "cookies", "camera", "passwords", "search engine" and the like go straight to
+  the right page of Settings.
 * **Spaces**, by name.
 * **Bookmarks** and **history**, ranked by how often and how recently you visit them.
 * **Search** with your default search engine (the private-window engine in private windows),
@@ -40,6 +43,14 @@ Start with a filter to search one kind of thing. It turns into a chip; Backspace
 | `@history` | history |
 | `@actions` or `>` | actions and Spaces |
 | `@spaces` | Spaces |
+| `@duplicates` | tabs that show the same page as another tab, with "Close Duplicate Tabs" on top |
+
+### Duplicate tabs
+
+**Close Duplicate Tabs** closes every tab that shows the same page as another tab in the window,
+across all Spaces (the part of the address after `#` doesn't count). For each page it keeps an
+Essential, else a pinned tab, else the tab you're on, else the one you used most recently.
+Essentials and pinned tabs are never closed. Type `@duplicates` to see them first.
 
 ### Keyboard shortcuts
 
@@ -150,6 +161,6 @@ shell (PowerShell) with Rust installed from rustup.rs.
 | Item | Plan |
 | --- | --- |
 | Search suggestions from the engine | Off on purpose (they send every keystroke); may come as an opt-in |
-| Settings pages as results ("cookies" → the right settings section) | With the settings redesign |
+| Every individual setting as a result (not just its page) | With the settings redesign |
 | Localised strings | With the browser's own localisation files |
 | "+ New Tab" button opening the bar | Under consideration; Ctrl/Cmd+T already does |

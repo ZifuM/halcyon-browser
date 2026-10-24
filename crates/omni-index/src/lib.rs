@@ -286,8 +286,13 @@ fn subsequence_score(text: &[u8], word: &[u8]) -> Option<f32> {
             ti += 1;
         }
     }
-    let span = (last - first.unwrap_or(0) + 1) as f32;
-    let tightness = word.len() as f32 / span; // 1.0 = contiguous
+    let span = last - first.unwrap_or(0) + 1;
+    // Letters scattered across a whole title ("rust" in "pRivacy & secUrity SeTtings") aren't
+    // what anyone meant.
+    if span > word.len() * 3 {
+        return None;
+    }
+    let tightness = word.len() as f32 / span as f32; // 1.0 = contiguous
     Some(0.15 + 0.2 * tightness)
 }
 
@@ -913,6 +918,7 @@ mod tests {
         let (mut idx, ids) = index();
         assert_eq!(top(&mut idx, "ghub")[..2].to_vec(), vec![ids[2], ids[0]]);
         assert!(top(&mut idx, "gh").is_empty(), "two letters: no loose matching");
+        assert!(top(&mut idx, "mork").is_empty(), "too scattered (m..o..r..k across 'Mozilla Developer Network')");
     }
 
     #[test]
