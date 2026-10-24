@@ -1,0 +1,26 @@
+[package]
+name = "omni-index"
+version = "0.1.0"
+edition = "2021"
+license = "MPL-2.0"
+publish = false
+description = "Halcyon's command-bar index: fuzzy search over tabs, history, bookmarks and actions. No dependencies; compiled to WebAssembly for the browser."
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[[bin]]
+name = "omni-bench"
+path = "src/bench.rs"
+
+[dependencies]
+
+[workspace]
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
+debug = false
+strip = true
