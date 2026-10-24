@@ -596,8 +596,11 @@ async function glanceScenario({ win, layout, open, sleep, shot, report }) {
   const alt = Ci.nsIDOMWindowUtils.MODIFIER_ALT ?? 1;
   try {
     for (const type of ["mousedown", "mouseup"]) {
-      if (typeof utils.synthesizeMouseEvent == "function") {
-        utils.synthesizeMouseEvent(type, x, y, { button: 0, clickCount: 1, modifiers: alt }, { isDOMEventSynthesized: false });
+      if (typeof win.synthesizeMouseEvent == "function") {
+        // Firefox 158 moved this from windowUtils onto chrome windows.
+        win.synthesizeMouseEvent(type, x, y, { button: 0, modifiers: alt });
+      } else if (typeof utils.synthesizeMouseEvent == "function") {
+        utils.synthesizeMouseEvent(type, x, y, { button: 0, clickCount: 1, modifiers: alt });
       } else {
         utils.sendMouseEvent(type, x, y, 0, 1, alt);
       }
@@ -659,9 +662,12 @@ async function glanceScenario({ win, layout, open, sleep, shot, report }) {
   glance.open(SITE + "weather.html");
   await sleep(1500);
   const kept = glance.current;
+  const positions = { before: [kept._tPos, parent._tPos] };
   doc.querySelector(".peryn-glance-expand").click();
   await sleep(800);
+  positions.after = [kept._tPos, parent._tPos];
   const expanded = {
+    positions,
     selected: gBrowser.selectedTab == kept,
     ordinary: !kept.hasAttribute("peryn-glance"),
     nextToPage: kept._tPos == parent._tPos + 1,
