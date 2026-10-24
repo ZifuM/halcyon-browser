@@ -76,4 +76,4 @@ cookies or referrer, and ETags mean unchanged lists aren't downloaded again. See
 | Procedural filters (`:has-text()`, `:upward()`, `:remove()` ...) | A few hundred site-specific rules are skipped. | The engine already returns them; needs a small in-page runtime. |
 | First run | For the few seconds before the first list download finishes, nothing is blocked. | Ship a snapshot of the lists in the installer. |
 | Shield panel | Lists and switches are only in about:config. | Part of the C3/C4 UI work (blocked counts, per-site switch, list picker). |
-| End-to-end check | The actor, IDL and C++ glue are covered by unit tests and a type check, not yet by a running browser. | Runs when builds resume after C3. |
+| End-to-end check | The actor, IDL and C++ glue are covered by unit tests and a type check, not yet checked on a running page. Installers up to the C5 test build didn't hide elements at all: Firefox 158 only creates an actor in web content processes when it's marked `safeForUntrustedWebProcess`, and ours wasn't (fixed in C6; a test now checks every web-page actor for it). Request blocking was unaffected. | Check on the first C6 installer. |

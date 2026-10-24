@@ -19,6 +19,8 @@ it back. It sends nothing anywhere.
    Enhanced Tracking Protection category, so Settings shows the same choice.
 5. **Default browser**: asked here once, and never again (Firefox's own reminder is off).
 
+![The import step after bringing a Space over from Arc](images/welcome-import.png)
+
 ## Importing from Arc later
 
 Command bar > **Import from Arc**. On a fresh profile, Arc's Spaces replace the empty

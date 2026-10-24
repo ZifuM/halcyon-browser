@@ -22,6 +22,10 @@ adds a third and fourth pane and other arrangements on top of it.
   arrow keys. Panes stay between 20% and 80%.
 - **Close a pane**: close its tab; the others stay split. *Separate Split View* ends it.
 
+![Four pages in a grid](images/split-grid.png)
+
+Panes glide to their new places when one is added or closed, or the layout changes.
+
 The layout and divider positions are saved with the split, so they come back after a restart.
 
 How it works: Firefox groups the tabs in a split view and shows their panels; Peryn marks each
@@ -41,9 +45,14 @@ you're on. The page underneath stays on screen and keeps running.
 - Switching to any other tab keeps the preview as an ordinary tab, so nothing is lost.
 - Alt+clicking a link inside a preview replaces it, over the same page.
 
+![A preview card over the page it came from](images/glance.png)
+
 A preview is an ordinary tab under the hood (same container, same protections), hidden from the
 sidebar while it's a preview. To turn Glance off, set `peryn.glance.enabled` to `false` in
 about:config; Alt+click then does what it does in Firefox.
 
 Code: `src/browser/components/peryn/glance/`. The page side is a small window actor that only
-listens for Alt+click on http(s) links and for Esc.
+listens for Alt+click on http(s) links and for Esc. It runs in ordinary web content processes,
+which Firefox allows only for actors marked `safeForUntrustedWebProcess`; the browser side
+therefore trusts nothing from it beyond a plain http(s) URL, opened with the page's own
+permissions as a preview of the tab on screen.

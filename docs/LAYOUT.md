@@ -34,6 +34,7 @@ split view and session restore, and it costs **no patches to Firefox's files**.
 | Pinned and Today sections | `PerynSections.sys.mjs` |
 | Compact mode behaviour | `PerynCompact.sys.mjs` |
 | Pure rules shared by the above (unit-tested) | `PerynLayoutLogic.sys.mjs` |
+| Shared motion for layout changes (FLIP) | `PerynMotion.sys.mjs` |
 
 The module hooks into Firefox's per-window startup categories from `peryn.manifest`:
 stylesheets load at `browser-window-before-initial-xul-layout`, so a window never paints stock
@@ -47,7 +48,10 @@ Firefox first; the rest attaches at `browser-window-domcontentloaded`.
   Today. After a session restore the Pinned block is regrouped once.
 * **Motion.** Only `transform` and `opacity` animate (150–250 ms), so the compositor does the work
   and the page never re-lays-out while chrome slides. A test fails if anything else is animated.
-  The OS reduced-motion setting turns the motion off.
+  The OS reduced-motion setting turns the motion off. Layout changes (split panes moving, a
+  Glance card growing into a tab) use FLIP through `PerynMotion.sys.mjs`: note where things
+  are, make the change, then animate each box from its old place to its new one, with the
+  durations and easing read from the tokens, so reduced motion turns these off too.
 * **Themes.** Lightweight themes keep their colours; only the layout applies to them.
 * **Off switch.** `peryn.layout.enabled = false` gives stock Firefox chrome in new windows.
 
