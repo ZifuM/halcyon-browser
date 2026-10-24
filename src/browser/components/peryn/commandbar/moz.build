@@ -6,11 +6,11 @@
 # tools/omni/build_wasm.py before the build (it is not checked in).
 
 MOZ_SRC_FILES += [
+    "omni_index.wasm",
+    "OmniIndex.sys.mjs",
     "peryn-commandbar.css",
     "PerynCommandBar.sys.mjs",
     "PerynCommandIndex.sys.mjs",
     "PerynCommandLogic.sys.mjs",
     "PerynShortcuts.sys.mjs",
-    "omni_index.wasm",
-    "OmniIndex.sys.mjs",
 ]

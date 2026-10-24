@@ -60,6 +60,15 @@ class LayoutWiringTests(unittest.TestCase):
         self.assertEqual(listed, present)
         self.assertIn('"onboarding"', (ROOT / "src/browser/components/peryn/moz.build").read_text(encoding="utf-8"))
 
+    def test_mozbuild_lists_are_sorted(self):
+        # mozbuild rejects file lists that aren't in case-insensitive order (UnsortedError), and
+        # only a full build would notice.
+        for path in (ROOT / "src").rglob("moz.build"):
+            text = path.read_text(encoding="utf-8")
+            for var, body in re.findall(r"(\w+(?:\.\w+)*)\s*\+=\s*\[(.*?)\]", text, re.S):
+                items = re.findall(r'"([^"]+)"', body)
+                self.assertEqual(items, sorted(items, key=str.lower), f"{path.relative_to(ROOT)}: {var}")
+
     def test_web_page_actors_are_allowed_in_web_processes(self):
         # Firefox (dom.jsipc.check_safeForUntrustedWebProcess, on by default) won't create an
         # actor's child in a web content process unless it's marked safe there, so an actor for
