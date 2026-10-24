@@ -1,0 +1,22 @@
+{
+  "afterToggle": {
+    "compact": true,
+    "reveal": ""
+  },
+  "afterEdge": {
+    "compact": true,
+    "reveal": "sidebar"
+  },
+  "afterFocus": {
+    "compact": true,
+    "reveal": "sidebar toolbar"
+  },
+  "afterLeave": {
+    "compact": true,
+    "reveal": ""
+  },
+  "afterOff": {
+    "compact": false,
+    "reveal": ""
+  }
+}

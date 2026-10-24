@@ -1,0 +1,60 @@
+{
+  "repeatsBefore": 3,
+  "duplicateRows": [
+    {
+      "type": "entry",
+      "kind": "3",
+      "title": "Close Duplicate Tabs",
+      "kbd": ""
+    },
+    {
+      "type": "entry",
+      "kind": "0",
+      "title": "Weather from the laptop",
+      "kbd": ""
+    },
+    {
+      "type": "entry",
+      "kind": "0",
+      "title": "Roadmap 2027",
+      "kbd": ""
+    },
+    {
+      "type": "entry",
+      "kind": "0",
+      "title": "Q4 planning — Docs",
+      "kbd": ""
+    },
+    {
+      "type": "entry",
+      "kind": "0",
+      "title": "halcyon-browser: Pull requests",
+      "kbd": ""
+    },
+    {
+      "type": "entry",
+      "kind": "0",
+      "title": "Q4 planning — Docs",
+      "kbd": ""
+    },
+    {
+      "type": "entry",
+      "kind": "0",
+      "title": "Roadmap 2027",
+      "kbd": ""
+    },
+    {
+      "type": "entry",
+      "kind": "0",
+      "title": "Weather — Sydney",
+      "kbd": ""
+    },
+    {
+      "type": "entry",
+      "kind": "0",
+      "title": "halcyon-browser: Pull requests",
+      "kbd": ""
+    }
+  ],
+  "repeatsAfter": 0
+}

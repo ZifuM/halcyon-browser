@@ -1,0 +1,24 @@
+{
+  "editorRows": [
+    {
+      "type": "shortcut",
+      "kind": "",
+      "title": "Copy Link",
+      "kbd": "None"
+    }
+  ],
+  "first": {
+    "pref": "{\"copy-link\":\"accel+shift+U\"}",
+    "key": "U",
+    "modifiers": "accel,shift"
+  },
+  "asked": "Replaces “Reload Page”. Press it again to confirm.",
+  "taken": {
+    "reloadDisabled": true,
+    "pref": "{\"copy-link\":\"accel+R\"}"
+  },
+  "givenBack": {
+    "reloadDisabled": false,
+    "ours": false
+  }
+}

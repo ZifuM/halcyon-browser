@@ -1,0 +1,2 @@
+[3844] Sandbox: CanCreateUserNamespace() unshare(CLONE_NEWPID): EPERM
+Missing chrome or resource URL: resource://gre/modules/ContextualIdentityService.sys.mjs

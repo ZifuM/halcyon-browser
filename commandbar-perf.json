@@ -1,0 +1,8 @@
+{
+  "native": true,
+  "items": 100000,
+  "buildMs": 149,
+  "medianMs": 0.14,
+  "p95Ms": 3.16,
+  "worstMs": 5.45
+}

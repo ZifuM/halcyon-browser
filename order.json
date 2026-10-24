@@ -1,0 +1,69 @@
+{
+  "tabs": [
+    {
+      "title": "Inbox (3) — Mail",
+      "essential": true,
+      "pinned": false
+    },
+    {
+      "title": "Calendar — This week",
+      "essential": true,
+      "pinned": false
+    },
+    {
+      "title": "Now playing — Music",
+      "essential": true,
+      "pinned": false
+    },
+    {
+      "title": "Notes",
+      "essential": true,
+      "pinned": false
+    },
+    {
+      "title": "Team chat",
+      "essential": true,
+      "pinned": false
+    },
+    {
+      "title": "Photos",
+      "essential": true,
+      "pinned": false
+    },
+    {
+      "title": "Q4 planning — Docs",
+      "essential": false,
+      "pinned": true
+    },
+    {
+      "title": "Sidebar v3 — Design",
+      "essential": false,
+      "pinned": true
+    },
+    {
+      "title": "Roadmap 2027",
+      "essential": false,
+      "pinned": true
+    },
+    {
+      "title": "The Daily Signal — Morning edition",
+      "essential": false,
+      "pinned": false
+    },
+    {
+      "title": "Weeknight ramen in 25 minutes",
+      "essential": false,
+      "pinned": false
+    },
+    {
+      "title": "Weather — Sydney",
+      "essential": false,
+      "pinned": false
+    },
+    {
+      "title": "halcyon-browser: Pull requests",
+      "essential": false,
+      "pinned": false
+    }
+  ]
+}

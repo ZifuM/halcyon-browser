@@ -1,0 +1,20 @@
+{
+  "names": [
+    "Personal",
+    "Work",
+    "Weekend"
+  ],
+  "active": true,
+  "header": "Work",
+  "dots": 3,
+  "visibleTodayTabs": [
+    "Q4 planning — Docs",
+    "Roadmap 2027",
+    "halcyon-browser: Pull requests",
+    "New Tab"
+  ],
+  "pinsInWork": [
+    "Q4 planning — Docs"
+  ],
+  "hueOnWindow": "155"
+}

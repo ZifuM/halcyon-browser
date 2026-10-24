@@ -1,0 +1,143 @@
+{
+  "two": {
+    "perynSplit": "",
+    "panes": 0,
+    "active": true,
+    "tabs": 2,
+    "rects": [
+      {
+        "x": 0,
+        "y": 0,
+        "w": 0.49,
+        "h": 0.99
+      },
+      {
+        "x": 0.5,
+        "y": 0,
+        "w": 0.49,
+        "h": 0.99
+      }
+    ]
+  },
+  "three": {
+    "perynSplit": "main",
+    "panes": 3,
+    "active": true,
+    "tabs": 3,
+    "rects": [
+      {
+        "x": 0,
+        "y": 0,
+        "w": 0.49,
+        "h": 0.99
+      },
+      {
+        "x": 0.5,
+        "y": 0,
+        "w": 0.49,
+        "h": 0.49
+      },
+      {
+        "x": 0.5,
+        "y": 0.5,
+        "w": 0.49,
+        "h": 0.49
+      }
+    ]
+  },
+  "four": {
+    "perynSplit": "grid",
+    "panes": 4,
+    "active": true,
+    "tabs": 4,
+    "rects": [
+      {
+        "x": 0,
+        "y": 0,
+        "w": 0.49,
+        "h": 0.49
+      },
+      {
+        "x": 0.5,
+        "y": 0,
+        "w": 0.49,
+        "h": 0.49
+      },
+      {
+        "x": 0,
+        "y": 0.5,
+        "w": 0.49,
+        "h": 0.49
+      },
+      {
+        "x": 0.5,
+        "y": 0.5,
+        "w": 0.49,
+        "h": 0.49
+      }
+    ]
+  },
+  "cycled": [
+    "columns",
+    "rows",
+    "grid"
+  ],
+  "resized": {
+    "hasDivider": true,
+    "before": 0.49,
+    "after": 0.54
+  },
+  "afterClose": {
+    "perynSplit": "main",
+    "panes": 3,
+    "active": true,
+    "tabs": 3,
+    "rects": [
+      {
+        "x": 0,
+        "y": 0,
+        "w": 0.54,
+        "h": 0.99
+      },
+      {
+        "x": 0.55,
+        "y": 0,
+        "w": 0.44,
+        "h": 0.49
+      },
+      {
+        "x": 0.55,
+        "y": 0.5,
+        "w": 0.44,
+        "h": 0.49
+      }
+    ]
+  },
+  "separated": {
+    "perynSplit": "",
+    "panes": 0,
+    "active": false,
+    "tabs": 0
+  },
+  "dropped": {
+    "canDrop": true,
+    "perynSplit": "rows",
+    "panes": 2,
+    "active": true,
+    "tabs": 2,
+    "rects": [
+      {
+        "x": 0,
+        "y": 0,
+        "w": 0.99,
+        "h": 0.49
+      },
+      {
+        "x": 0,
+        "y": 0.5,
+        "w": 0.99,
+        "h": 0.49
+      }
+    ]
+  }
+}

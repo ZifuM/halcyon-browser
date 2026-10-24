@@ -1,0 +1,75 @@
+# Peryn UI preview
+
+Scenario: **ok**
+
+- PASS: Essentials, then Pinned, then Today
+- PASS: + New Tab opens at the top of Today
+- PASS: Copy-link button sits right after the address
+- PASS: Top bar: sidebar, back, forward, reload, address, copy link (in order)
+- PASS: No AI or sign-in buttons in the top bar
+- PASS: Compact: shortcut hides the chrome
+- PASS: Compact: window edge reveals the sidebar
+- PASS: Compact: address-bar focus reveals the top bar
+- PASS: Compact: both hide again when left
+- PASS: Compact: shortcut turns it off
+- PASS: Spaces: Work is active, its name above Pinned, three dots
+- PASS: Spaces: only Work's tabs are visible (plus the new tab an empty Space opens with)
+- PASS: Spaces: Work's pinned tab is a synced launcher, titled from the page
+- PASS: Spaces: the window takes Work's colour
+- PASS: Spaces: Ctrl+Alt+Right goes to the next Space
+- PASS: Spaces: closing a Space's last tab stays in that Space
+- PASS: Spaces: Ctrl+Alt+1 jumps to the first; Work's tabs hide
+- PASS: Sync: Firefox Sync's prefs engine carries peryn.spaces
+- PASS: Sync: a Space from another machine appears
+- PASS: Sync: an Essential from another machine opens here (unloaded)
+- PASS: Tab menu opened
+- PASS: Tab menu has no AI chatbot item
+- PASS: Tab menu offers Pin to Sidebar and Add to Essentials
+- PASS: Command bar: Ctrl+T opens it, focused (Firefox's key pointed at it)
+- PASS: Command bar: "rust" finds the Rust page from history
+- PASS: Command bar: @tabs becomes a filter chip and lists only tabs
+- PASS: Command bar: "> zoom" lists the zoom actions
+- PASS: Command bar: Backspace on an empty bar removes the filter chip
+- PASS: Command bar: bookmarks are found
+- PASS: Command bar: Enter opens the top result in a new tab and closes the bar
+- PASS: Command bar: Ctrl+L opens it on this page's address
+- PASS: Command bar: Escape closes it
+- PASS: Command bar index in Firefox's WebAssembly: 100000 entries, p95 3.16 ms per keystroke (budget 16)
+- PASS: Shortcuts: recording Ctrl+Shift+U adds a key for Copy Link
+- PASS: Shortcuts: taking Firefox's Ctrl+R asks first, then disables Reload's key
+- PASS: Shortcuts: removing it gives Ctrl+R back
+- PASS: Command bar: @duplicates lists repeated tabs under Close Duplicate Tabs
+- PASS: Command bar: Close Duplicate Tabs leaves each page open once
+- PASS: Split view: two panes stay Firefox's own side-by-side view
+- PASS: Split view: a third pane gives one large pane and two stacked
+- PASS: Split view: four panes form a 2x2 grid
+- PASS: Split view: layouts cycle (columns, stacked, grid)
+- PASS: Split view: the divider moves with the keyboard
+- PASS: Split view: closing one of four panes keeps the other three split
+- PASS: Split view: Separate ends it
+- PASS: Split view: a tab dropped on the page's bottom edge stacks below it
+- PASS: Glance: Alt+click on a link in the page opens a preview
+- PASS: Glance: the preview is a card over the page, which stays on screen
+- PASS: Glance: hidden from the sidebar, with close, expand and split buttons
+- PASS: Glance: Esc in the previewed page closes it and returns to the page
+- PASS: Glance: Expand keeps it as an ordinary tab next to the page
+- PASS: Glance: Split shows the page and the preview side by side
+- PASS: Glance: a click beside the card closes it
+- PASS: Welcome: opens on its first step with the logo
+- PASS: Welcome: Arc's Spaces, pinned tabs and Favorites come over
+- PASS: Welcome: Zen's Spaces, pinned tabs and Essentials come over from its compressed session file
+- PASS: Welcome: the protection choice sets Firefox's category
+- PASS: Welcome: Esc closes it and it won't show again by itself
+- PASS: Ledger: a request the browser makes by itself is recorded; a page's own requests aren't
+- PASS: Privacy page: the overview gives real counts and flags connections that aren't on the list
+- PASS: Privacy page: the Ledger lists connections by purpose, unlisted ones apart
+- PASS: Privacy page: every connection the browser can make is listed
+- PASS: Privacy page: Strict and Balanced say what they change, and switch Firefox's protection
+- PASS: This site: permissions panel shows camera, location and notifications, and changes stick
+- PASS: Clear data: clears the chosen kinds over the chosen range
+- PASS: Privacy page: Esc closes it
+- PASS: Spaces with identity: a Space's own protection level and search engine apply while you're in it, and your defaults come back
+- PASS: Command bar off: Firefox's Ctrl+T and Ctrl+L work as before
+
+Screenshots: 01-expanded-light, 02-expanded-dark, 03-rail, 04-compact, 05-compact-sidebar, 06-compact-both, 07-tab-menu, 08-space-work, 09-space-editor, 10-space-weekend, 11-after-sync, 12-commandbar-rust, 13-commandbar-actions, 14-shortcut-editor, 15-shortcut-taken, 16-duplicates, 17-split-three, 18-split-grid, 19-glance, 20-glance-split, 21-welcome, 22-import-arc, 23-privacy-overview, 24-privacy-ledger, 25-site-settings
+

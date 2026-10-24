@@ -1,0 +1,62 @@
+{
+  "identity": {
+    "otherEngine": "bing",
+    "homeEngine": "google",
+    "inWork": {
+      "protection": "standard",
+      "search": "bing"
+    },
+    "backHome": {
+      "protection": "strict",
+      "search": "google"
+    }
+  },
+  "sawBrowserRequest": true,
+  "pageRequestNotListed": true,
+  "overview": {
+    "open": true,
+    "lead": "21 trackers and ads blocked in the last 7 days.",
+    "mentionsUnlisted": true
+  },
+  "ledger": {
+    "unlisted": [
+      "example.com — 1×, 4 seconds ago"
+    ],
+    "entries": [
+      "Phishing and malware protection (Safe Browsing)",
+      "Security and configuration lists (Remote Settings)",
+      "Video-call and streaming plugins",
+      "Add-on updates",
+      "Web push notifications",
+      "Shield filter list updates",
+      "App update check"
+    ]
+  },
+  "every": 17,
+  "presetsShown": [
+    "Strict",
+    "Balanced"
+  ],
+  "afterBalanced": "standard",
+  "afterStrict": "strict",
+  "site": {
+    "host": "127.0.0.1",
+    "permissions": [
+      "camera",
+      "microphone",
+      "screen",
+      "geo",
+      "desktop-notification",
+      "autoplay-media",
+      "popup",
+      "persistent-storage",
+      "xr",
+      "midi",
+      "midi-sysex",
+      "speaker"
+    ]
+  },
+  "cameraBlocked": true,
+  "clearText": "Cleared: cached images and files (last hour).",
+  "closed": true
+}

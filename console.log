@@ -1,0 +1,2 @@
+[scenario] first window ready
+[error] Cannot attach ID to a tab in a closed window. (chrome://browser/content/parent/ext-browser.js:396)

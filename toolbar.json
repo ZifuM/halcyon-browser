@@ -1,0 +1,64 @@
+{
+  "placements": [
+    "sidebar-button",
+    "back-button",
+    "forward-button",
+    "stop-reload-button",
+    "vertical-spacer",
+    "urlbar-container",
+    "peryn-copy-link-button",
+    "downloads-button",
+    "unified-extensions-button",
+    "reset-pbm-toolbar-button"
+  ],
+  "rendered": [
+    {
+      "id": "sidebar-button",
+      "hidden": false,
+      "width": 40
+    },
+    {
+      "id": "back-button",
+      "hidden": false,
+      "width": 36
+    },
+    {
+      "id": "forward-button",
+      "hidden": false,
+      "width": 36
+    },
+    {
+      "id": "stop-reload-button",
+      "hidden": false,
+      "width": 36
+    },
+    {
+      "id": "vertical-spacer",
+      "hidden": false,
+      "width": 0
+    },
+    {
+      "id": "urlbar-container",
+      "hidden": false,
+      "width": 680
+    },
+    {
+      "id": "peryn-copy-link-button",
+      "hidden": false,
+      "width": 36
+    },
+    {
+      "id": "downloads-button",
+      "hidden": true,
+      "width": 0
+    },
+    {
+      "id": "unified-extensions-button",
+      "hidden": false,
+      "width": 36
+    }
+  ],
+  "copyLinkWidget": true,
+  "copyLinkAfterUrlbar": true,
+  "toolbarSetupDone": true
+}

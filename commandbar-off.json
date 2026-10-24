@@ -1,0 +1,7 @@
+{
+  "off": {
+    "newTabCommand": "cmd_newNavigatorTabNoEvent",
+    "addressCommand": "Browser:OpenLocation"
+  },
+  "backOn": true
+}

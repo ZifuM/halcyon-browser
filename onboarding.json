@@ -1,0 +1,37 @@
+{
+  "shown": {
+    "open": true,
+    "welcome": true,
+    "logo": true
+  },
+  "imported": {
+    "importStep": true,
+    "text": "Imported 1 Space and 2 pinned tabs from Arc.",
+    "spacesAdded": 1,
+    "studioPins": [
+      "Design",
+      "Roadmap"
+    ],
+    "studioIcon": "🎨",
+    "essential": true,
+    "ok": true,
+    "zen": {
+      "ok": true,
+      "text": "Imported 1 Space and 1 pinned tab from Zen.",
+      "pins": [
+        "News"
+      ],
+      "icon": "📚",
+      "essential": true
+    }
+  },
+  "protection": {
+    "balanced": "standard",
+    "pressed": "balanced",
+    "strict": "strict"
+  },
+  "closed": {
+    "open": false,
+    "done": true
+  }
+}

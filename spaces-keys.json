@@ -1,0 +1,10 @@
+{
+  "afterCloseLast": {
+    "stayed": true,
+    "selectedInSpace": true
+  },
+  "afterNext": "Weekend",
+  "afterJump1": "Personal",
+  "workTabsHiddenInPersonal": true,
+  "selected": "The Daily Signal — Morning edition"
+}

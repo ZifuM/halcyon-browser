@@ -1,0 +1,180 @@
+{
+  "opened": {
+    "open": true,
+    "mode": "newtab",
+    "focused": true,
+    "keyRetargeted": true
+  },
+  "rustRows": [
+    {
+      "type": "search",
+      "kind": "",
+      "title": "rust",
+      "kbd": ""
+    },
+    {
+      "type": "entry",
+      "kind": "2",
+      "title": "Learn Rust - Rust Programming Language",
+      "kbd": ""
+    },
+    {
+      "type": "entry",
+      "kind": "2",
+      "title": "rust guitar travel 0",
+      "kbd": ""
+    },
+    {
+      "type": "entry",
+      "kind": "2",
+      "title": "rust guitar travel 16",
+      "kbd": ""
+    },
+    {
+      "type": "entry",
+      "kind": "2",
+      "title": "rust guitar travel 32",
+      "kbd": ""
+    },
+    {
+      "type": "entry",
+      "kind": "2",
+      "title": "rust guitar travel 48",
+      "kbd": ""
+    },
+    {
+      "type": "entry",
+      "kind": "2",
+      "title": "rust guitar travel 64",
+      "kbd": ""
+    },
+    {
+      "type": "entry",
+      "kind": "2",
+      "title": "rust guitar travel 80",
+      "kbd": ""
+    },
+    {
+      "type": "entry",
+      "kind": "2",
+      "title": "rust guitar travel 96",
+      "kbd": ""
+    }
+  ],
+  "tabsFilter": {
+    "chip": "Tabs",
+    "rows": [
+      "0",
+      "0",
+      "0",
+      "0",
+      "0",
+      "0",
+      "0",
+      "0",
+      "0"
+    ]
+  },
+  "zoomRows": [
+    {
+      "type": "entry",
+      "kind": "3",
+      "title": "Zoom In",
+      "kbd": "Ctrl++"
+    },
+    {
+      "type": "entry",
+      "kind": "3",
+      "title": "Zoom Out",
+      "kbd": "Ctrl+-"
+    },
+    {
+      "type": "entry",
+      "kind": "3",
+      "title": "Reset Zoom",
+      "kbd": "Ctrl+0"
+    }
+  ],
+  "chipCleared": true,
+  "bookmarkRows": [
+    {
+      "type": "entry",
+      "kind": "1",
+      "title": "Peryn on GitHub",
+      "kbd": ""
+    },
+    {
+      "type": "search",
+      "kind": "",
+      "title": "peryn on",
+      "kbd": ""
+    }
+  ],
+  "afterEnter": {
+    "closed": true,
+    "newTab": true,
+    "url": "https://rust-lang.org/learn/"
+  },
+  "address": {
+    "open": true,
+    "mode": "address",
+    "value": "https://rust-lang.org/learn/"
+  },
+  "newsRows": [
+    {
+      "type": "search",
+      "kind": "",
+      "title": "news",
+      "kbd": ""
+    },
+    {
+      "type": "entry",
+      "kind": "2",
+      "title": "Hacker News",
+      "kbd": ""
+    },
+    {
+      "type": "entry",
+      "kind": "0",
+      "title": "The Daily Signal — Morning edition",
+      "kbd": ""
+    },
+    {
+      "type": "entry",
+      "kind": "2",
+      "title": "news weather rust 10",
+      "kbd": ""
+    },
+    {
+      "type": "entry",
+      "kind": "2",
+      "title": "news weather rust 26",
+      "kbd": ""
+    },
+    {
+      "type": "entry",
+      "kind": "2",
+      "title": "news weather rust 42",
+      "kbd": ""
+    },
+    {
+      "type": "entry",
+      "kind": "2",
+      "title": "news weather rust 58",
+      "kbd": ""
+    },
+    {
+      "type": "entry",
+      "kind": "2",
+      "title": "news weather rust 74",
+      "kbd": ""
+    },
+    {
+      "type": "entry",
+      "kind": "2",
+      "title": "news weather rust 90",
+      "kbd": ""
+    }
+  ],
+  "escapeCloses": true
+}

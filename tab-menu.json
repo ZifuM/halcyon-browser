@@ -1,0 +1,81 @@
+{
+  "open": true,
+  "items": [
+    {
+      "id": "context_openANewTab",
+      "label": "New Tab Below"
+    },
+    {
+      "id": "context_moveTabToNewGroup",
+      "label": "Add Tab to New Group"
+    },
+    {
+      "id": "context_moveTabToSplitView",
+      "label": "Add Split View"
+    },
+    {
+      "id": "context_reloadTab",
+      "label": "Reload Tab"
+    },
+    {
+      "id": "context_toggleMuteTab",
+      "label": "Mute Tab"
+    },
+    {
+      "id": "peryn-context-pin-to-sidebar",
+      "label": "Pin to Sidebar"
+    },
+    {
+      "id": "peryn-context-essentials",
+      "label": "Add to Essentials"
+    },
+    {
+      "id": "context_unloadTab",
+      "label": "Unload Tab"
+    },
+    {
+      "id": "context_duplicateTab",
+      "label": "Duplicate Tab"
+    },
+    {
+      "id": "context_bookmarkTab",
+      "label": "Bookmark Tab…"
+    },
+    {
+      "id": "context_moveTabOptions",
+      "label": "Move Tab"
+    },
+    {
+      "id": "",
+      "label": "Share"
+    },
+    {
+      "id": "context_reopenInContainer",
+      "label": "Open in New Container Tab"
+    },
+    {
+      "id": "context_selectAllTabs",
+      "label": "Select All Tabs"
+    },
+    {
+      "id": "context_sendTabToDevice",
+      "label": "Send to Mobile"
+    },
+    {
+      "id": "context_closeTab",
+      "label": "Close Tab"
+    },
+    {
+      "id": "context_closeDuplicateTabs",
+      "label": "Close Duplicate Tabs"
+    },
+    {
+      "id": "context_closeTabOptions",
+      "label": "Close Multiple Tabs"
+    },
+    {
+      "id": "context_undoCloseTab",
+      "label": "Reopen Closed Tabs"
+    }
+  ]
+}
