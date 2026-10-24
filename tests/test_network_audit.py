@@ -36,6 +36,18 @@ FAKE_BROWSER = textwrap.dedent('''
             echoed = s.recv(4096)
             open(os.environ["FAKE_ECHO_FILE"], "wb").write(echoed)
         s.close()
+    # Like Peryn, keep a Ledger of the browser's own connections ($FAKE_LEDGER: "auto" = every
+    # host above, "none" = no Ledger, else a comma-separated list).
+    import json
+    ledger = os.environ.get("FAKE_LEDGER", "auto")
+    if ledger != "none":
+        if ledger == "auto":
+            hosts = [i.split(" ", 1)[1].replace("http://", "").split("/")[0].split(":")[0]
+                     for i in filter(None, os.environ.get("FAKE_CONNECTS", "").split(";"))]
+        else:
+            hosts = [h for h in ledger.split(",") if h]
+        day = {"connections": {h: {"count": 1} for h in hosts}, "blocked": {}, "blockedTotal": {}}
+        open(os.path.join(profile, "peryn-ledger.json"), "w").write(json.dumps({"version": 1, "days": {"2026-10-24": day}}))
 ''')
 
 REGISTRY = textwrap.dedent('''
@@ -91,8 +103,9 @@ class AuditTests(unittest.TestCase):
             wrapper.chmod(0o755)
         return str(wrapper)
 
-    def run_audit(self, connects: str, *extra: str) -> tuple[int, list[dict]]:
+    def run_audit(self, connects: str, *extra: str, ledger: str = "auto") -> tuple[int, list[dict]]:
         os.environ["FAKE_CONNECTS"] = connects
+        os.environ["FAKE_LEDGER"] = ledger
         out = self.tmp / "findings.json"
         code = na.main(["--browser", self.launcher(), "--registry", str(self.registry),
                         "--seconds", "20", "--no-forward", "--json", str(out), *extra])
@@ -141,11 +154,29 @@ class AuditTests(unittest.TestCase):
 
         threading.Thread(target=echo, daemon=True).start()
         os.environ["FAKE_CONNECTS"] = f"CONNECT 127.0.0.1:{port}"
+        os.environ["FAKE_LEDGER"] = ""
         os.environ["FAKE_ECHO_FILE"] = str(self.tmp / "echo.txt")
         code = na.main(["--browser", self.launcher(), "--registry", str(self.registry), "--seconds", "20"])
         srv.close()
         self.assertEqual(code, 0, "localhost is never a violation")
         self.assertEqual((self.tmp / "echo.txt").read_bytes(), b"ping")
+
+    def test_the_ledger_must_show_every_host_the_audit_saw(self):
+        md = self.tmp / "summary.md"
+        code, _ = self.run_audit("CONNECT lists.example.org:443;CONNECT a.cdn.example.org:443",
+                                 "--markdown", str(md), ledger="lists.example.org")
+        self.assertEqual(code, 1, "the Ledger missed a.cdn.example.org")
+        self.assertIn("a.cdn.example.org was seen by the audit but is missing from the Ledger", md.read_text())
+
+    def test_no_ledger_fails(self):
+        code, _ = self.run_audit("CONNECT lists.example.org:443", ledger="none")
+        self.assertEqual(code, 1)
+
+    def test_matching_ledger_is_reported(self):
+        md = self.tmp / "summary.md"
+        code, _ = self.run_audit("CONNECT lists.example.org:443", "--markdown", str(md))
+        self.assertEqual(code, 0)
+        self.assertIn("every host the audit saw is in the Ledger", md.read_text())
 
     def test_wildcards_do_not_match_the_bare_domain(self):
         registry = reg.load(self.registry)

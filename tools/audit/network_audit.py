@@ -174,6 +174,46 @@ def run_browser(browser: str, profile: Path, seconds: float, grace: float = 15.0
     return proc.returncode or 0
 
 
+# ---- the Privacy Ledger must match ----------------------------------------------------
+# The browser's own record of its connections (peryn-ledger.json in the profile, written at
+# shutdown) has to show every host the proxy saw: if the Ledger misses one, it can't be trusted.
+
+LOCAL = {"127.0.0.1", "localhost", "::1"}
+
+
+def read_ledger_hosts(profile: Path) -> set[str] | None:
+    path = profile / "peryn-ledger.json"
+    if not path.is_file():
+        return None
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    hosts: set[str] = set()
+    for day in (data.get("days") or {}).values():
+        hosts |= set((day.get("connections") or {}).keys())
+    return hosts
+
+
+def compare_ledger(hits: dict[str, int], ledger: set[str] | None) -> list[str]:
+    if ledger is None:
+        return ["the browser wrote no Ledger (peryn-ledger.json) to compare with"]
+    missed = sorted(h for h in hits if h not in LOCAL and h.lower() not in ledger)
+    return [f"{h} was seen by the audit but is missing from the Ledger" for h in missed]
+
+
+def report_ledger(problems: list[str], ledger: set[str] | None) -> str:
+    lines = ["", "## Privacy Ledger", ""]
+    if ledger is None:
+        lines.append("**No Ledger written.**")
+    elif problems:
+        lines.append(f"**{len(problems)} host(s) missing from the Ledger:**")
+        lines += [f"- {p}" for p in problems]
+    else:
+        lines.append(f"**Matches:** every host the audit saw is in the Ledger ({len(ledger)} hosts recorded).")
+    return "\n".join(lines) + "\n"
+
+
 # ---- verdict --------------------------------------------------------------------
 
 @dataclass
@@ -241,11 +281,14 @@ def main(argv: list[str] | None = None) -> int:
             print(f"Recording proxy on 127.0.0.1:{port}; running browser for {args.seconds:.0f} s...")
             run_browser(args.browser, profile, args.seconds)
             time.sleep(1)
+            ledger_hosts = read_ledger_hosts(profile)
     finally:
         server.shutdown()
 
     findings = judge(dict(recorder.hits), registry)
     md = report_markdown(findings, args.seconds)
+    ledger_problems = compare_ledger(dict(recorder.hits), ledger_hosts)
+    md += report_ledger(ledger_problems, ledger_hosts)
     print(md)
     if args.markdown:
         with open(args.markdown, "a", encoding="utf-8") as fh:
@@ -255,7 +298,9 @@ def main(argv: list[str] | None = None) -> int:
     violations = [f for f in findings if f.verdict != "ok"]
     for f in violations:
         print(f"::error title=Network audit: {f.host}::{f.host} {MESSAGES[f.verdict]}")
-    return 1 if violations else 0
+    for problem in ledger_problems:
+        print(f"::error title=Privacy Ledger::{problem}")
+    return 1 if violations or ledger_problems else 0
 
 
 if __name__ == "__main__":
