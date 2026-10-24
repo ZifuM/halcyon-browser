@@ -658,6 +658,13 @@ async function glanceScenario({ win, layout, open, sleep, shot, report }) {
   }
   viaClick = !!glance.current;
   glance.open = realOpen;
+  let childSaw = null;
+  try {
+    const actor = parent.linkedBrowser.browsingContext.currentWindowGlobal.getActor("PerynGlance");
+    childSaw = (await Promise.race([actor.sendQuery("Glance:Ping"), sleep(3000).then(() => ({ timeout: true }))]))?.last ?? "nothing";
+  } catch (e) {
+    childSaw = `error: ${e}`;
+  }
   await sleep(300);
   const afterOpen = openCalls.map(c => ({ ...c, currentNow: !!glance.current, selectedLabel: gBrowser.selectedTab.label }));
   const pageSaw = parent.linkedBrowser.contentTitle;
@@ -680,6 +687,7 @@ async function glanceScenario({ win, layout, open, sleep, shot, report }) {
     probe,
     pageSaw,
     sameController,
+    childSaw,
     openCalls: afterOpen,
     pageUrlAfter,
     viaClick,

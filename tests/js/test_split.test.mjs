@@ -132,3 +132,15 @@ test("motion: elements glide from old to new boxes; new ones fade in; off means 
   new Motion.Motion(fakeWin("0ms")).flip([still], () => (changed = true));
   assert.ok(changed && still.animations.length == 0, "reduced motion: change only");
 });
+
+test("drag to split: nearest edge wins, and decides order and layout", () => {
+  assert.equal(Logic.dropZone(50, 400, 1000, 800), "left");
+  assert.equal(Logic.dropZone(950, 400, 1000, 800), "right");
+  assert.equal(Logic.dropZone(500, 30, 1000, 800), "top");
+  assert.equal(Logic.dropZone(500, 790, 1000, 800), "bottom");
+  assert.equal(Logic.dropZone(300, 100, 1000, 800), "top", "closer to the top than the left");
+  assert.deepEqual(Logic.splitForZone("left"), { first: "dropped", layout: "columns" });
+  assert.deepEqual(Logic.splitForZone("bottom"), { first: "page", layout: "rows" });
+  assert.deepEqual(Logic.zoneBox("right"), { x: 0.5, y: 0, w: 0.5, h: 1 });
+  assert.equal(Logic.TAB_DROP_TYPE, "application/x-moz-tabbrowser-tab");
+});

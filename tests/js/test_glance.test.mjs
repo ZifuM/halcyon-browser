@@ -224,7 +224,7 @@ test("the nearest link wins, image-map areas count", () => {
 });
 
 test("the page answers a readiness ping", () => {
-  assert.deepEqual(child().receiveMessage({ name: "Glance:Ping" }), { ready: true });
+  assert.equal(child().receiveMessage({ name: "Glance:Ping" }).ready, true);
   assert.equal(child().receiveMessage({ name: "Other" }), null);
 });
 

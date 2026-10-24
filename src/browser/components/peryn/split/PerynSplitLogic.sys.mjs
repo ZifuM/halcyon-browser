@@ -140,3 +140,39 @@ export function joinable(current, candidates) {
   }
   return candidates.filter(t => !t.pinned && !t.splitview && !t.closing && !current.includes(t)).slice(0, room);
 }
+
+// ---- drag a tab onto the page ---------------------------------------------------------------
+
+/** Firefox's drag data type for tabs (tabbrowser's drag-and-drop.js). */
+export const TAB_DROP_TYPE = "application/x-moz-tabbrowser-tab";
+
+/**
+ * Which edge of the content area a drop at (x, y) is nearest: the area is cut along its
+ * diagonals, so each edge owns a triangle.
+ *
+ * @returns {"left"|"right"|"top"|"bottom"}
+ */
+export function dropZone(x, y, width, height) {
+  const fx = width > 0 ? x / width : 0.5;
+  const fy = height > 0 ? y / height : 0.5;
+  const toEdge = { left: fx, right: 1 - fx, top: fy, bottom: 1 - fy };
+  return Object.entries(toEdge).reduce((best, entry) => (entry[1] < best[1] ? entry : best))[0];
+}
+
+/** Where the dropped tab goes relative to the page, and the split's layout. */
+export function splitForZone(zone) {
+  return {
+    first: zone == "left" || zone == "top" ? "dropped" : "page",
+    layout: zone == "top" || zone == "bottom" ? "rows" : "columns",
+  };
+}
+
+/** The half of the area a zone fills (fractions), for the drop highlight. */
+export function zoneBox(zone) {
+  return {
+    left: { x: 0, y: 0, w: 0.5, h: 1 },
+    right: { x: 0.5, y: 0, w: 0.5, h: 1 },
+    top: { x: 0, y: 0, w: 1, h: 0.5 },
+    bottom: { x: 0, y: 0.5, w: 1, h: 0.5 },
+  }[zone];
+}

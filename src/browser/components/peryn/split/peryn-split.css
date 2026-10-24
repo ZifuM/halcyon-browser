@@ -75,3 +75,44 @@
     outline: none;
   }
 }
+
+/* Drag a tab onto the page: the half it would take lights up. */
+#peryn-split-drop {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+
+  &[hidden] {
+    display: none;
+  }
+}
+
+.peryn-split-drop-zone {
+  position: absolute;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: var(--hx-space-2);
+  max-width: calc(100% - 2 * var(--hx-space-2));
+  max-height: calc(100% - 2 * var(--hx-space-2));
+  border: 2px dashed var(--hx-focus-ring, AccentColor);
+  border-radius: var(--hx-radius-card);
+  background-color: color-mix(in srgb, var(--hx-focus-ring, AccentColor) 14%, transparent);
+  color: var(--hx-text);
+  font: menu;
+  font-weight: 600;
+  pointer-events: none;
+  animation: peryn-split-drop-in var(--hx-duration-fast) var(--hx-ease-out);
+
+  &[hidden] {
+    display: none;
+  }
+}
+
+@keyframes peryn-split-drop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+}

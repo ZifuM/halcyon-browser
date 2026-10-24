@@ -37,12 +37,14 @@ export class PerynGlanceChild extends JSWindowActorChild {
   receiveMessage(message) {
     // Lets the browser check that previews can be opened from this page.
     if (message.name == "Glance:Ping") {
-      return { ready: true };
+      return { ready: true, last: this._last ?? null };
     }
     return null;
   }
 
   handleEvent(event) {
+    // TEMPORARY (C6 diagnosis): what the last event looked like, for the preview's ping.
+    this._last = { type: event.type, alt: event.altKey, button: event.button, prevented: event.defaultPrevented, link: event.type == "click" ? linkFromEvent(event) : null };
     if (event.type == "keydown") {
       if (event.key == "Escape" && !event.repeat && !event.defaultPrevented && !event.altKey) {
         this.sendAsyncMessage("Glance:Escape");

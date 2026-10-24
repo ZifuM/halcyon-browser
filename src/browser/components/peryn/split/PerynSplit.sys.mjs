@@ -26,6 +26,7 @@ const MENU_ID = "peryn-context-add-to-split";
 
 export const STRINGS = Object.freeze({
   addToSplit: "Add to Split View",
+  dropHere: "Drop to split",
   divider: "Resize split view",
 });
 
@@ -51,6 +52,9 @@ export class PerynSplit {
       container.addEventListener(type, this.handleEvent);
     }
     this.win.addEventListener("TabSelect", this.handleEvent);
+    // Drag a tab from the sidebar onto the page to split.
+    container.addEventListener("dragstart", this.handleEvent);
+    this.win.addEventListener("dragend", this.handleEvent, true);
     this._resizeObserver = new this.win.ResizeObserver(() => this._placeHandles());
     this._resizeObserver.observe(this.tabpanels);
     this._addContextMenu();
@@ -63,6 +67,9 @@ export class PerynSplit {
       container.removeEventListener(type, this.handleEvent);
     }
     this.win.removeEventListener("TabSelect", this.handleEvent);
+    container.removeEventListener("dragstart", this.handleEvent);
+    this.win.removeEventListener("dragend", this.handleEvent, true);
+    this._dropLayerEl?.remove();
     this._resizeObserver?.disconnect();
     this.menu?.removeEventListener("popupshowing", this.handleEvent);
     this._clear();
@@ -72,6 +79,12 @@ export class PerynSplit {
     switch (event.type) {
       case "TabClose":
         this._onTabClose(event.target);
+        break;
+      case "dragstart":
+        this._onDragStart(event);
+        break;
+      case "dragend":
+        this._hideDrop();
         break;
       case "popupshowing":
         if (event.target == this.menu) {
@@ -385,6 +398,128 @@ export class PerynSplit {
         }
       });
     }, 0);
+  }
+
+  // ---- drag a tab onto the page ----------------------------------------------------------
+
+  /** Whether `tab` can be dropped on the page: into the split on screen, or to start one. */
+  canDrop(tab) {
+    if (!tab || tab.localName != "tab" || tab.closing || tab.pinned) {
+      return false;
+    }
+    const split = this.active;
+    if (split) {
+      return Logic.joinable(split.tabs, [tab]).length == 1;
+    }
+    const selected = this.gBrowser.selectedTab;
+    return tab != selected && !selected.pinned && !tab.splitview;
+  }
+
+  /**
+   * Drop `tab` on the page's `zone` edge: it joins the split on screen, or makes a new one
+   * with the page, on that side (top and bottom stack them).
+   */
+  dropTab(tab, zone) {
+    if (!this.canDrop(tab)) {
+      return null;
+    }
+    const split = this.active;
+    if (split) {
+      return this.add([tab]);
+    }
+    const page = this.gBrowser.selectedTab;
+    const { first, layout } = Logic.splitForZone(zone);
+    const tabs = first == "dropped" ? [tab, page] : [page, tab];
+    this._sameSpace(page, [tab]);
+    let made = null;
+    this.motion.flip(
+      this._panelsOf(tabs),
+      () => {
+        made = this.gBrowser.addTabSplitView(tabs, { insertBefore: tabs[0] });
+        if (made) {
+          this._states.set(made, { layout, x: 0.5, y: 0.5 });
+          this._save(made);
+          this.gBrowser.selectedTab = tab;
+          this.apply();
+        }
+      },
+      { enter: this._panelsOf([tab]) }
+    );
+    return made;
+  }
+
+  _onDragStart(event) {
+    const tab = event.target?.closest?.("tab");
+    if (!this.canDrop(tab)) {
+      return;
+    }
+    this._dragged = tab;
+    const layer = this._dropLayer();
+    layer.hidden = false;
+    layer.querySelector(".peryn-split-drop-zone").hidden = true;
+  }
+
+  _hideDrop() {
+    this._dragged = null;
+    if (this._dropLayerEl) {
+      this._dropLayerEl.hidden = true;
+    }
+  }
+
+  _zoneFor(event) {
+    const r = this._dropLayerEl.getBoundingClientRect();
+    return Logic.dropZone(event.clientX - r.left, event.clientY - r.top, r.width, r.height);
+  }
+
+  _dropLayer() {
+    if (this._dropLayerEl) {
+      return this._dropLayerEl;
+    }
+    const layer = this.doc.createElementNS(HTML_NS, "div");
+    layer.id = "peryn-split-drop";
+    layer.hidden = true;
+    const zone = this.doc.createElementNS(HTML_NS, "div");
+    zone.className = "peryn-split-drop-zone";
+    zone.textContent = STRINGS.dropHere;
+    layer.append(zone);
+    const isTabDrag = event => [...(event.dataTransfer?.types ?? [])].includes(Logic.TAB_DROP_TYPE);
+    const over = event => {
+      if (!this._dragged || !isTabDrag(event)) {
+        return;
+      }
+      event.preventDefault();
+      event.dataTransfer.dropEffect = "move";
+      const name = this._zoneFor(event);
+      if (zone.dataset.zone != name || zone.hidden) {
+        const box = this.active ? { x: 0, y: 0, w: 1, h: 1 } : Logic.zoneBox(name);
+        zone.dataset.zone = name;
+        zone.style.insetInlineStart = `${box.x * 100}%`;
+        zone.style.top = `${box.y * 100}%`;
+        zone.style.width = `${box.w * 100}%`;
+        zone.style.height = `${box.h * 100}%`;
+        zone.hidden = false;
+      }
+    };
+    layer.addEventListener("dragenter", over);
+    layer.addEventListener("dragover", over);
+    layer.addEventListener("dragleave", event => {
+      if (!layer.contains(event.relatedTarget)) {
+        zone.hidden = true;
+      }
+    });
+    layer.addEventListener("drop", event => {
+      const tab = this._dragged;
+      if (!tab || !isTabDrag(event)) {
+        return;
+      }
+      event.preventDefault();
+      const name = this._zoneFor(event);
+      this._hideDrop();
+      this.dropTab(tab, name);
+    });
+    this.doc.getElementById("tabbrowser-tabbox")?.append(layer);
+    this._dropLayerEl = layer;
+    return layer;
   }
 
   // ---- tab context menu --------------------------------------------------------------------
