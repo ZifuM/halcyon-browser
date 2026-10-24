@@ -23,6 +23,9 @@ export const ACTOR_OPTIONS = {
   allFrames: true,
   messageManagerGroups: ["browsers"],
   enablePreference: "peryn.shield.cosmetic.enabled",
+  // The child runs in web content processes, which Firefox refuses unless an actor says it's
+  // safe there. It is: the parent only answers read-only lookups in the public filter lists.
+  safeForUntrustedWebProcess: true,
 };
 
 export const ShieldCosmetic = {

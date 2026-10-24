@@ -60,6 +60,15 @@ class LayoutWiringTests(unittest.TestCase):
         self.assertEqual(listed, present)
         self.assertIn('"onboarding"', (ROOT / "src/browser/components/peryn/moz.build").read_text(encoding="utf-8"))
 
+    def test_web_page_actors_are_allowed_in_web_processes(self):
+        # Firefox (dom.jsipc.check_safeForUntrustedWebProcess, on by default) won't create an
+        # actor's child in a web content process unless it's marked safe there, so an actor for
+        # http(s) pages without the flag silently never runs.
+        for path in (ROOT / "src").rglob("*.sys.mjs"):
+            text = path.read_text(encoding="utf-8")
+            if "registerWindowActor" in text and '"http://*/*"' in text:
+                self.assertIn("safeForUntrustedWebProcess: true", text, path.name)
+
     def test_window_hooks_are_registered(self):
         manifest = MANIFEST.read_text(encoding="utf-8")
         module = (LAYOUT / "PerynLayout.sys.mjs").read_text(encoding="utf-8")

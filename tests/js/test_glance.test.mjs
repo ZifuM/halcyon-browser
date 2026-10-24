@@ -245,6 +245,11 @@ test("the parent hands requests to the window the page is in", () => {
   assert.equal(log[0][2].fromBrowser, browser);
   assert.equal(log[0][2].triggeringPrincipal.origin, "https://news.example");
   assert.deepEqual(log[1], ["closeFor", browser]);
+  // A compromised page can't make it open anything but a web page.
+  for (const url of ["javascript:alert(1)", "file:///etc/passwd", "about:config", 42, undefined]) {
+    p.receiveMessage({ name: "Glance:Open", data: { url } });
+  }
+  assert.equal(log.length, 2);
   // A window without Peryn's layout: nothing happens.
   p.browsingContext = { top: { embedderElement: { ownerGlobal: {} } } };
   p.receiveMessage({ name: "Glance:Open", data: { url: "https://a.test/" } });
@@ -267,6 +272,7 @@ test("init registers the actor once and exposes the controller to it", () => {
   assert.ok(actor.child.esModuleURI.endsWith("/glance/PerynGlanceChild.sys.mjs"));
   assert.ok(actor.parent.esModuleURI.endsWith("/glance/PerynGlanceParent.sys.mjs"));
   assert.equal(actor.enablePreference, "peryn.glance.enabled");
+  assert.equal(actor.safeForUntrustedWebProcess, true, "Firefox 158 refuses web-process actors without it");
   assert.deepEqual(actor.matches, ["http://*/*", "https://*/*"]);
   setUp(); // a second window doesn't register again (the mock throws if it does)
   glance.uninit();

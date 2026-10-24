@@ -46,6 +46,10 @@ export function registerGlanceActor() {
       matches: ["http://*/*", "https://*/*"],
       allFrames: true,
       messageManagerGroups: ["browsers"],
+      // The child lives in ordinary web content processes. That's safe: the parent only opens
+      // http(s) URLs as a preview of the tab on screen, with the page's own principal (no more
+      // than the page could do with window.open), and Esc only closes a preview.
+      safeForUntrustedWebProcess: true,
       enablePreference: PREFS.enabled,
     });
   } catch (e) {

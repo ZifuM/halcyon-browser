@@ -13,13 +13,19 @@ export class PerynGlanceParent extends JSWindowActorParent {
       return;
     }
     switch (message.name) {
-      case "Glance:Open":
-        glance.open(message.data.url, {
+      case "Glance:Open": {
+        // Messages come from a web content process: accept only a plain http(s) URL.
+        const url = typeof message.data?.url == "string" ? message.data.url : "";
+        if (!/^https?:\/\//i.test(url) || url.length > 8192) {
+          return;
+        }
+        glance.open(url, {
           fromBrowser: browser,
           triggeringPrincipal: this.manager.documentPrincipal,
-          referrer: message.data.referrer,
+          referrer: typeof message.data.referrer == "string" ? message.data.referrer : "",
         });
         break;
+      }
       case "Glance:Escape":
         glance.closeFor(browser);
         break;
