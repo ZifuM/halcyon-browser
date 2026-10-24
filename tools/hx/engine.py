@@ -12,6 +12,7 @@ Layout of our changes (applied in this order by `import`):
 from __future__ import annotations
 
 import json
+import re
 import shutil
 from dataclasses import dataclass, field
 from pathlib import Path, PurePosixPath
@@ -157,6 +158,7 @@ def import_changes(project: Project, force: bool = False, allow_over_budget: boo
     for patch in patches:
         _check_patch_header(patch, patch_target(project, patch))
     prefs_mod.load_groups(project.prefs_dir)  # raises on invalid pref files
+    _check_src_listings(project.src_dir)
 
     # A previous import that stopped on a conflict leaves generated files uncommitted on purpose
     # (so conflicts can be resolved in place); those are not user edits.
@@ -220,6 +222,31 @@ def import_changes(project: Project, force: bool = False, allow_over_budget: boo
     state["import_incomplete"] = False
     write_state(engine, state)
     return report
+
+
+_LISTED_RE = re.compile(r"MOZ_SRC_FILES\s*\+=\s*\[(.*?)\]", re.S)
+
+# Files our moz.build files list but that are built before import rather than checked in.
+_BUILT_BEFORE_IMPORT = {
+    "omni_index.wasm": "python3 tools/omni/build_wasm.py (needs `rustup target add wasm32-unknown-unknown`)",
+}
+
+
+def _check_src_listings(src_dir: Path) -> None:
+    """Every file a src/ moz.build lists must exist, or the build fails hours later."""
+    missing = []
+    for build in sorted(src_dir.rglob("moz.build")):
+        for block in _LISTED_RE.findall(build.read_text(encoding="utf-8")):
+            for name in re.findall(r'"([^"]+)"', block):
+                target = build.parent / name
+                if not target.exists() and not (build.parent / (name + TMPL)).exists():
+                    missing.append((build.parent.relative_to(src_dir) / name, name))
+    if missing:
+        lines = []
+        for rel, name in missing:
+            how = _BUILT_BEFORE_IMPORT.get(name)
+            lines.append(f"src/{rel.as_posix()}" + (f"  (build it: {how})" if how else ""))
+        raise HxError("Files listed in moz.build are missing:\n  " + "\n  ".join(lines))
 
 
 def _has_markers(path: Path) -> bool:

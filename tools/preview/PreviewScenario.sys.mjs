@@ -294,7 +294,185 @@ async function runScenario(win) {
     selected: gBrowser.selectedTab.label,
   });
 
+  // ---- Command bar (C5) ----
+  await commandBarScenario({ win, layout, open, sleep, shot, report });
+
   await IOUtils.writeUTF8(PathUtils.join(OUT, "finished"), "ok");
   await sleep(500);
   Services.startup.quit(Ci.nsIAppStartup.eForceQuit);
+}
+
+/** The command bar through its real wiring: Firefox's own keys, typing, Enter, the editor. */
+async function commandBarScenario({ win, layout, open, sleep, shot, report }) {
+  const doc = win.document;
+  const { gBrowser } = win;
+  const { PlacesUtils } = ChromeUtils.importESModule("resource://gre/modules/PlacesUtils.sys.mjs");
+  const { HalcyonCommandIndex } = ChromeUtils.importESModule(
+    "resource://halcyon-preview/commandbar/HalcyonCommandIndex.sys.mjs"
+  );
+  const { OmniIndex } = ChromeUtils.importESModule("resource://halcyon-preview/commandbar/OmniIndex.sys.mjs");
+  const bar = layout.commandBar;
+
+  // A history to search: a few pages you'd recognise, then thousands of others.
+  const now = Date.now();
+  const words = "rust github sydney weather recipe pasta news docs mozilla garden travel hotel music guitar review map".split(" ");
+  const pages = [
+    { url: "https://www.rust-lang.org/learn", title: "Learn Rust - Rust Programming Language" },
+    { url: "https://developer.mozilla.org/en-US/docs/Web/CSS", title: "CSS: Cascading Style Sheets | MDN" },
+    { url: "https://news.ycombinator.com/", title: "Hacker News" },
+  ];
+  for (let i = 0; i < 3000; i++) {
+    const title = [0, 1, 2].map(k => words[(i * 7 + k * 13) % words.length]).join(" ") + ` ${i}`;
+    pages.push({ url: `https://site${i % 300}.example/page/${i}`, title });
+  }
+  await PlacesUtils.history.insertMany(
+    pages.map((p, i) => ({
+      ...p,
+      visits: Array.from({ length: i < 3 ? 12 : 1 }, (_, v) => ({ date: new Date(now - (i + v) * 60000) })),
+    }))
+  );
+  await PlacesUtils.bookmarks.insert({
+    parentGuid: PlacesUtils.bookmarks.toolbarGuid,
+    url: "https://github.com/ZifuM/halcyon-browser",
+    title: "Halcyon on GitHub",
+  });
+  await HalcyonCommandIndex.ready();
+  await HalcyonCommandIndex.loadPlaces();
+
+  const input = doc.querySelector("#halcyon-commandbar .hx-cb-input");
+  const rows = () =>
+    [...doc.querySelectorAll("#halcyon-commandbar .hx-cb-row")].map(el => ({
+      type: el.dataset.type,
+      kind: el.dataset.kind,
+      title: el.querySelector(".hx-cb-title")?.textContent,
+      kbd: el.querySelector(".hx-cb-kbd")?.textContent ?? "",
+    }));
+  const type = async text => {
+    input.value = text;
+    input.dispatchEvent(new win.InputEvent("input", { bubbles: true }));
+    await sleep(400);
+  };
+  const press = (key, extra = {}) =>
+    input.dispatchEvent(new win.KeyboardEvent("keydown", { key, bubbles: true, cancelable: true, ...extra }));
+  const isOpen = () => !doc.getElementById("halcyon-commandbar").hidden;
+
+  // Ctrl/Cmd+T: Firefox's own key, now pointed at the bar.
+  const newTabKey = doc.getElementById("key_newNavigatorTab");
+  const tabsBefore = gBrowser.tabs.length;
+  newTabKey.doCommand();
+  await sleep(1200);
+  const opened = { open: isOpen(), mode: bar.mode, focused: doc.activeElement == input, keyRetargeted: !newTabKey.hasAttribute("command") };
+  await type("rust");
+  const rustRows = rows();
+  await shot("12-commandbar-rust");
+  await type("@tabs ");
+  const chip = doc.querySelector("#halcyon-commandbar .hx-cb-chip");
+  const tabsFilter = { chip: !chip.hidden && chip.textContent, rows: rows().map(r => r.kind) };
+  press("Escape"); // clears the filter
+  await type("> zoom");
+  const zoomRows = rows();
+  await shot("13-commandbar-actions");
+  await type("halcyon on");
+  const bookmarkRows = rows();
+  await type("learn rust");
+  press("Enter");
+  await sleep(2500);
+  const afterEnter = {
+    closed: !isOpen(),
+    newTab: gBrowser.tabs.length == tabsBefore + 1,
+    url: gBrowser.currentURI.spec,
+  };
+
+  // Ctrl/Cmd+L: the bar on this page's address.
+  doc.getElementById("focusURLBar").doCommand();
+  await sleep(800);
+  const address = { open: isOpen(), mode: bar.mode, value: input.value };
+  await type("news");
+  const newsRows = rows();
+  press("Escape");
+  await sleep(300);
+  const escapeCloses = !isOpen();
+
+  // Measured in this Firefox's own WebAssembly engine: 100,000 entries, typing letter by letter.
+  const big = await OmniIndex.load();
+  let seed = 7;
+  const rand = n => {
+    seed ^= seed << 13;
+    seed ^= seed >>> 17;
+    seed ^= seed << 5;
+    return (seed >>> 0) % n;
+  };
+  const vocab = [];
+  for (let i = 0; i < 3000; i++) {
+    vocab.push(words[i % words.length].slice(0, 2 + (i % 5)) + String.fromCharCode(97 + (i % 26)) + (i > 200 ? i : ""));
+  }
+  const t0 = Cu.now();
+  for (let i = 0; i < 100000; i++) {
+    const title = Array.from({ length: 3 + rand(5) }, () => vocab[Math.min(vocab.length - 1, Math.floor(rand(vocab.length) * Math.random() ** 2))]).join(" ");
+    big.add(2, title, `https://${vocab[rand(400)]}.example/${rand(100000)}`, rand(100), rand(365));
+  }
+  big.prepare();
+  const buildMs = Cu.now() - t0;
+  const times = [];
+  for (const phrase of ["rust g", "github pull", "sydney weather", "ghub", "travel hotel", "news 42", "docs css"]) {
+    for (let end = 1; end <= phrase.length; end++) {
+      const t = Cu.now();
+      big.query(phrase.slice(0, end), { limit: 9 });
+      times.push(Cu.now() - t);
+    }
+  }
+  times.sort((a, b) => a - b);
+  await report("commandbar-perf", {
+    native: big.native,
+    items: big.size,
+    buildMs: Math.round(buildMs),
+    medianMs: +times[times.length >> 1].toFixed(2),
+    p95Ms: +times[Math.floor(times.length * 0.95)].toFixed(2),
+    worstMs: +times.at(-1).toFixed(2),
+  });
+
+  await report("commandbar", { opened, rustRows, tabsFilter, zoomRows, bookmarkRows, afterEnter, address, newsRows, escapeCloses });
+
+  // Keyboard shortcut editor: give Copy Link Ctrl+Shift+U, then take Ctrl+R (asks first),
+  // then give Ctrl+R back.
+  bar.runAction("shortcuts");
+  await sleep(800);
+  await type("copy link");
+  const editorRows = rows();
+  await shot("14-shortcut-editor");
+  const record = async combo => {
+    press("Enter");
+    await sleep(100);
+    press(combo.key, combo);
+    await sleep(300);
+  };
+  await record({ key: "U", code: "KeyU", ctrlKey: true, shiftKey: true });
+  const userKey = doc.getElementById("halcyon-shortcut-copy-link");
+  const first = { pref: Services.prefs.getStringPref("halcyon.shortcuts", ""), key: userKey?.getAttribute("key"), modifiers: userKey?.getAttribute("modifiers") };
+  await record({ key: "r", code: "KeyR", ctrlKey: true });
+  const asked = rows()[0]?.title && doc.querySelector("#halcyon-commandbar .hx-cb-sub")?.textContent;
+  press("r", { code: "KeyR", ctrlKey: true });
+  await sleep(300);
+  const reloadKey = doc.getElementById("key_reload");
+  const taken = { reloadDisabled: reloadKey.getAttribute("disabled") == "true", pref: Services.prefs.getStringPref("halcyon.shortcuts", "") };
+  await shot("15-shortcut-taken");
+  press("Enter");
+  await sleep(100);
+  press("Backspace");
+  await sleep(300);
+  const givenBack = { reloadDisabled: reloadKey.getAttribute("disabled") == "true", ours: !!doc.getElementById("halcyon-shortcut-copy-link") };
+  press("Escape");
+  await sleep(300);
+  await report("shortcuts", { editorRows, first, asked, taken, givenBack });
+
+  // Off switch: Firefox's keys go back to what they did.
+  Services.prefs.setBoolPref("halcyon.commandbar.enabled", false);
+  await sleep(300);
+  const off = {
+    newTabCommand: newTabKey.getAttribute("command"),
+    addressCommand: doc.getElementById("focusURLBar").getAttribute("command"),
+  };
+  Services.prefs.clearUserPref("halcyon.commandbar.enabled");
+  await sleep(300);
+  await report("commandbar-off", { off, backOn: !newTabKey.hasAttribute("command") });
 }

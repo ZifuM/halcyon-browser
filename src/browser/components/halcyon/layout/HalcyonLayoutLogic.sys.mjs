@@ -20,6 +20,7 @@ export const STYLESHEETS = Object.freeze([
   "halcyon-layout.css",
   "halcyon-compact.css",
   "../spaces/halcyon-spaces.css",
+  "../commandbar/halcyon-commandbar.css",
 ]);
 
 /** Session-store key that marks a tab as pinned to the sidebar (not an Essential). */

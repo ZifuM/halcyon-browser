@@ -30,6 +30,15 @@ class LayoutWiringTests(unittest.TestCase):
         present = {p.name for p in spaces.iterdir() if p.suffix in (".css", ".mjs", ".svg")}
         self.assertEqual(listed, present)
 
+    def test_every_commandbar_file_is_packaged(self):
+        bar = ROOT / "src/browser/components/halcyon/commandbar"
+        listed = set(re.findall(r'"([\w.-]+\.(?:sys\.mjs|css|wasm))"', (bar / "moz.build").read_text(encoding="utf-8")))
+        present = {p.name for p in bar.iterdir() if p.suffix in (".css", ".mjs")}
+        # The index is built from crates/omni-index before import, never checked in.
+        self.assertEqual(listed, present | {"omni_index.wasm"})
+        self.assertIn('"commandbar"', (ROOT / "src/browser/components/halcyon/moz.build").read_text(encoding="utf-8"))
+        self.assertIn("omni_index.wasm", (ROOT / ".gitignore").read_text(encoding="utf-8"))
+
     def test_window_hooks_are_registered(self):
         manifest = MANIFEST.read_text(encoding="utf-8")
         module = (LAYOUT / "HalcyonLayout.sys.mjs").read_text(encoding="utf-8")
@@ -51,13 +60,17 @@ class LayoutWiringTests(unittest.TestCase):
     def test_modules_import_each_other_relatively(self):
         # The preview harness loads them from resource://, so absolute moz-src imports of our
         # own layout modules would break it.
-        for path in [*LAYOUT.glob("*.sys.mjs"), *(LAYOUT.parent / "spaces").glob("*.sys.mjs")]:
+        for path in [*LAYOUT.glob("*.sys.mjs"), *(LAYOUT.parent / "spaces").glob("*.sys.mjs"), *(LAYOUT.parent / "commandbar").glob("*.sys.mjs")]:
             text = path.read_text(encoding="utf-8")
-            self.assertNotRegex(text, r'from "moz-src:///browser/components/halcyon/(layout|spaces)/', path.name)
+            self.assertNotRegex(text, r'moz-src:///browser/components/halcyon/(layout|spaces|commandbar)/', path.name)
 
     def test_layout_prefs_are_declared(self):
-        logic = (LAYOUT / "HalcyonLayoutLogic.sys.mjs").read_text(encoding="utf-8") + (LAYOUT.parent / "spaces/HalcyonSpacesLogic.sys.mjs").read_text(encoding="utf-8")
-        names = re.findall(r'"(halcyon\.[\w.]+)"', logic)
+        logic = "".join(
+            (LAYOUT.parent / f).read_text(encoding="utf-8")
+            for f in ["layout/HalcyonLayoutLogic.sys.mjs", "spaces/HalcyonSpacesLogic.sys.mjs", "commandbar/HalcyonCommandLogic.sys.mjs"]
+        )
+        names = re.findall(r'"((?:services\.sync\.prefs\.sync\.)?halcyon\.[\w.]+)"', logic)
+        self.assertIn("halcyon.shortcuts", names)
         declared = set()
         for f in (ROOT / "prefs").glob("*.toml"):
             with open(f, "rb") as fh:

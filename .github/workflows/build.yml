@@ -71,6 +71,11 @@ jobs:
           "MOZBUILD_STATE_PATH=$root/mozbuild" >> $env:GITHUB_ENV
           "HX_MOZCONFIG_EXTRA=$env:HX_MOZCONFIG_EXTRA\nmk_add_options MOZ_OBJDIR=$root/obj" >> $env:GITHUB_ENV
       - uses: actions/checkout@v4
+      - name: Build the command bar index (Rust -> WebAssembly)
+        shell: pwsh
+        run: |
+          rustup target add wasm32-unknown-unknown
+          python tools/omni/build_wasm.py
       - name: Download Firefox source
         run: cd "$GITHUB_WORKSPACE" && python3 tools/ci/annotate.py "Download" -- python3 -m hx download
       - name: Apply our changes
@@ -117,6 +122,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
+      - name: Build the command bar index (Rust -> WebAssembly)
+        run: rustup target add wasm32-unknown-unknown && python3 tools/omni/build_wasm.py
       - run: python3 tools/ci/annotate.py "Download" -- ./hx download
       - run: python3 tools/ci/annotate.py "Import" -- ./hx import
       - run: python3 tools/ci/annotate.py --timeout 19200 "Build" -- ./hx build --profile "$PROFILE"
@@ -138,6 +145,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
+      - name: Build the command bar index (Rust -> WebAssembly)
+        run: rustup target add wasm32-unknown-unknown && python3 tools/omni/build_wasm.py
       - run: python3 tools/ci/annotate.py "Download" -- ./hx download
       - run: python3 tools/ci/annotate.py "Import" -- ./hx import
       - run: python3 tools/ci/annotate.py --timeout 19200 "Build" -- ./hx build --profile "$PROFILE" --os macos
@@ -166,9 +175,12 @@ jobs:
       - name: Unpack
         # dist/ can hold more than one archive (symbols, test info): unpack the largest, the browser.
         run: |
-          archive=$(ls -S dist/*.tar.* | head -1)
+          echo "::notice title=Artifact::$(find dist -type f -printf '%P (%s bytes)  ' | head -c 900)"
+          archive=$(find dist -type f -name '*.tar.*' -printf '%s %p\n' | sort -rn | head -1 | cut -d' ' -f2-)
+          if [ -z "$archive" ]; then echo "::error title=Unpack::no .tar.* in the artifact"; exit 1; fi
           echo "Unpacking $archive"
-          mkdir app && tar -xf "$archive" -C app && ls app
+          mkdir app && tar -xf "$archive" -C app
+          echo "::notice title=Unpacked::$(ls app | tr '\n' ' ')"
       - name: Audit 120 s of idle browsing
         run: |
           app_name=$(sed -n 's/^app_name *= *"\([^"]*\)".*/\1/p' project.toml)

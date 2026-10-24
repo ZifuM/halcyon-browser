@@ -353,3 +353,21 @@ class MozconfigTests(Fixture):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class SrcListingTests(unittest.TestCase):
+    def test_missing_listed_files_are_reported_with_how_to_build(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            src = Path(tmp)
+            write(src / "a/moz.build", 'MOZ_SRC_FILES += [\n    "Here.sys.mjs",\n    "omni_index.wasm",\n    "Info.sys.mjs",\n]\n')
+            write(src / "a/Here.sys.mjs", "")
+            write(src / "a/Info.sys.mjs.tmpl", "")
+            with self.assertRaises(HxError) as caught:
+                engine._check_src_listings(src)
+            message = str(caught.exception)
+            self.assertIn("src/a/omni_index.wasm", message)
+            self.assertIn("build_wasm.py", message)
+            self.assertNotIn("Here.sys.mjs", message)
+            self.assertNotIn("Info.sys.mjs", message)
+            write(src / "a/omni_index.wasm", b"\0asm")
+            engine._check_src_listings(src)  # complete: no error

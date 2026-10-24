@@ -20,6 +20,7 @@ import { PREFS, STYLESHEETS } from "./HalcyonLayoutLogic.sys.mjs";
 import { HalcyonSections } from "./HalcyonSections.sys.mjs";
 import { HalcyonCompact } from "./HalcyonCompact.sys.mjs";
 import { HalcyonSpaces } from "../spaces/HalcyonSpaces.sys.mjs";
+import { HalcyonCommandBar } from "../commandbar/HalcyonCommandBar.sys.mjs";
 
 const lazy = {};
 
@@ -184,6 +185,8 @@ export const HalcyonLayout = {
     if (!lazy.PrivateBrowsingUtils.isWindowPrivate(win)) {
       parts.spaces = new HalcyonSpaces(win, { sections });
     }
+    // After Spaces, so the command bar can open new tabs in the Space's container.
+    parts.commandBar = new HalcyonCommandBar(win, parts);
     for (const part of Object.values(parts)) {
       try {
         part.init();

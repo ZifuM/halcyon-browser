@@ -11,6 +11,7 @@ on:
       - "src/browser/components/halcyon/**"
       - "prefs/**"
       - "tools/preview/**"
+      - "crates/omni-index/**"
       - ".github/workflows/ui-preview.yml"
   workflow_dispatch:
 
@@ -35,6 +36,8 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq xvfb imagemagick libgtk-3-0t64 libasound2t64 libdbus-glib-1-2 fonts-dejavu-core >/dev/null
+      - name: Build the command bar index (Rust -> WebAssembly)
+        run: rustup target add wasm32-unknown-unknown && python3 tools/omni/build_wasm.py
       - name: Download Firefox (the release in project.toml)
         run: |
           version=$(python3 -c 'import sys; sys.path.insert(0, "tools"); from hx import config; print(config.load().firefox_version)')

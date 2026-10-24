@@ -95,7 +95,7 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--firefox", required=True, help="extracted Firefox folder (contains firefox)")
     ap.add_argument("--out", required=True)
-    ap.add_argument("--timeout", type=int, default=240)
+    ap.add_argument("--timeout", type=int, default=480)
     args = ap.parse_args()
 
     firefox = Path(args.firefox).resolve()
@@ -218,6 +218,41 @@ def main() -> int:
         checks.append(("Tab menu has no AI chatbot item", "context_askChat" not in ids))
         checks.append(("Tab menu offers Pin to Sidebar and Add to Essentials",
                        "Pin to Sidebar" in labels and "Add to Essentials" in labels and "Pin Tab" not in labels))
+    cb = out / "commandbar.json"
+    if cb.exists():
+        d = json.loads(cb.read_text())
+        o = d["opened"]
+        checks.append(("Command bar: Ctrl+T opens it, focused (Firefox's key pointed at it)",
+                       o["open"] and o["mode"] == "newtab" and o["focused"] and o["keyRetargeted"]))
+        titles = [r["title"] for r in d["rustRows"]]
+        checks.append(("Command bar: \"rust\" finds the Rust page from history", any("Rust" in (t or "") for t in titles[:3])))
+        checks.append(("Command bar: @tabs becomes a filter chip and lists only tabs",
+                       d["tabsFilter"]["chip"] == "Tabs" and d["tabsFilter"]["rows"] and set(d["tabsFilter"]["rows"]) == {"0"}))
+        checks.append(("Command bar: \"> zoom\" lists the zoom actions", [r["title"] for r in d["zoomRows"]][:1] in (["Zoom In"], ["Zoom Out"], ["Reset Zoom"])))
+        checks.append(("Command bar: bookmarks are found", any(r["title"] == "Halcyon on GitHub" and r["kind"] == "1" for r in d["bookmarkRows"])))
+        checks.append(("Command bar: Enter opens the top result in a new tab and closes the bar",
+                       d["afterEnter"]["closed"] and d["afterEnter"]["newTab"] and d["afterEnter"]["url"].startswith("https://www.rust-lang.org/learn")))
+        checks.append(("Command bar: Ctrl+L opens it on this page's address",
+                       d["address"]["open"] and d["address"]["mode"] == "address" and "rust-lang.org/learn" in d["address"]["value"]))
+        checks.append(("Command bar: Escape closes it", d["escapeCloses"]))
+    perf = out / "commandbar-perf.json"
+    if perf.exists():
+        d = json.loads(perf.read_text())
+        checks.append((f"Command bar index in Firefox's WebAssembly: {d['items']} entries, p95 {d['p95Ms']} ms per keystroke (budget 16)",
+                       d["native"] and d["items"] == 100000 and d["p95Ms"] <= 16))
+    sc = out / "shortcuts.json"
+    if sc.exists():
+        d = json.loads(sc.read_text())
+        checks.append(("Shortcuts: recording Ctrl+Shift+U adds a key for Copy Link",
+                       d["first"]["key"] == "U" and d["first"]["modifiers"] == "accel,shift"))
+        checks.append(("Shortcuts: taking Firefox's Ctrl+R asks first, then disables Reload's key",
+                       "Reload" in (d["asked"] or "") and d["taken"]["reloadDisabled"]))
+        checks.append(("Shortcuts: removing it gives Ctrl+R back", not d["givenBack"]["reloadDisabled"] and not d["givenBack"]["ours"]))
+    off = out / "commandbar-off.json"
+    if off.exists():
+        d = json.loads(off.read_text())
+        checks.append(("Command bar off: Firefox's Ctrl+T and Ctrl+L work as before",
+                       d["off"]["newTabCommand"] == "cmd_newNavigatorTabNoEvent" and d["off"]["addressCommand"] == "Browser:OpenLocation" and d["backOn"]))
     errors = []
     if (out / "console.log").exists():
         errors = [l for l in (out / "console.log").read_text().splitlines()

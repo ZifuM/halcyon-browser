@@ -62,3 +62,39 @@ name = "services.sync.prefs.sync.halcyon.spaces"
 value = true
 why = "Firefox Sync carries your Spaces to your other devices (only if you sign in and keep Settings syncing). End-to-end encrypted."
 own = true
+
+[[pref]]
+name = "halcyon.commandbar.enabled"
+value = true
+why = "The command bar: one box for open tabs (in every Space), bookmarks, history, actions and search. Set false to turn it off everywhere."
+own = true
+
+[[pref]]
+name = "halcyon.commandbar.onNewTab"
+value = true
+why = "Ctrl/Cmd+T opens the command bar (Enter on an empty bar still opens a blank tab). Set false for Firefox's new tab."
+own = true
+
+[[pref]]
+name = "halcyon.commandbar.onAddressKey"
+value = true
+why = "Ctrl/Cmd+L (and Alt+D) open the command bar on the current page's address. Set false to focus the address bar instead; F6 always does."
+own = true
+
+[[pref]]
+name = "halcyon.commandbar.historyLimit"
+value = 100000
+why = "How many history entries (most used first) the command bar searches. Everything stays in memory on this device."
+own = true
+
+[[pref]]
+name = "halcyon.shortcuts"
+value = "{}"
+why = "Custom keyboard shortcuts for command bar actions, set in the Keyboard Shortcuts editor (search the command bar for it)."
+own = true
+
+[[pref]]
+name = "services.sync.prefs.sync.halcyon.shortcuts"
+value = true
+why = "Firefox Sync carries your custom shortcuts to your other devices (only if you sign in and keep Settings syncing). End-to-end encrypted."
+own = true

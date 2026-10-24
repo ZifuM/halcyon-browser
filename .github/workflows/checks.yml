@@ -28,8 +28,10 @@ jobs:
         with:
           python-version: "3.12"
       - run: python tools/ci/annotate.py "Unit tests" -- python -m unittest discover -s tests -v
+      - name: Build the command bar index (Rust -> WebAssembly)
+        run: rustup target add wasm32-unknown-unknown && python tools/omni/build_wasm.py
       - name: Browser component tests (Node, mocked Firefox APIs)
-        run: python tools/ci/annotate.py "JS tests" -- node --import ./tests/js/register.mjs --test tests/js/test_updates.test.mjs tests/js/test_shield.test.mjs tests/js/test_cosmetic.test.mjs tests/js/test_layout.test.mjs tests/js/test_spaces.test.mjs
+        run: python tools/ci/annotate.py "JS tests" -- node --import ./tests/js/register.mjs --test tests/js/test_updates.test.mjs tests/js/test_shield.test.mjs tests/js/test_cosmetic.test.mjs tests/js/test_layout.test.mjs tests/js/test_spaces.test.mjs tests/js/test_omni.test.mjs tests/js/test_commandbar.test.mjs
 
   upstream-compat:
     name: Apply to Firefox and audit
@@ -39,6 +41,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Build the command bar index (Rust -> WebAssembly)
+        run: rustup target add wasm32-unknown-unknown && python3 tools/omni/build_wasm.py
       - name: Fetch the Firefox files we touch (sparse)
         run: python3 tools/ci/annotate.py "Download" -- ./hx download --sparse-ci
       - name: Apply src/, branding, prefs and patches
@@ -56,6 +60,25 @@ jobs:
           if grep -rn "lockPref\|sticky_pref" engine/browser/branding/*/pref/; then
             echo "::error::Default prefs must never be locked (ownership promise #2)"; exit 1
           fi
+
+  omni-index:
+    # The command bar's search core (crates/omni-index): its tests (including a brute-force
+    # comparison while typing), and the keystroke budget over 100,000 history entries.
+    name: Command bar index and speed
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Rust tests
+        working-directory: crates/omni-index
+        run: python3 ../../tools/ci/annotate.py "omni-index tests" -- cargo test --release
+      - name: Keystroke budget (native, 100k entries)
+        working-directory: crates/omni-index
+        run: python3 ../../tools/ci/annotate.py "omni-index budget" -- cargo run --release --bin omni-bench -- --items 100000 --max-build-ms 600 --max-query-ms 8
+      - name: WebAssembly build and size budget
+        run: rustup target add wasm32-unknown-unknown && python3 tools/ci/annotate.py "wasm build" -- python3 tools/omni/build_wasm.py
 
   shield:
     # Shield's filter lists, assembled by the browser's own list module, run through Firefox's

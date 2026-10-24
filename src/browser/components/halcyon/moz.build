@@ -6,7 +6,7 @@
 # patches/browser/components/moz.build.patch. Modules load from
 # moz-src:///browser/components/halcyon/<file>.
 
-DIRS += ["layout", "shield", "spaces"]
+DIRS += ["commandbar", "layout", "shield", "spaces"]
 
 with Files("**"):
     BUG_COMPONENT = ("Firefox", "General")

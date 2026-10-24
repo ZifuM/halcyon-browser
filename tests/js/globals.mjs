@@ -20,6 +20,10 @@ globalThis.Services = {
     PREF_BOOL: 128,
     getPrefType: k => (typeof prefs.get(k) === "boolean" ? 128 : prefs.has(k) ? 32 : 0),
     addObserver: (branch, fn) => observers.push([branch, fn]),
+    removeObserver: (branch, fn) => {
+      const i = observers.findIndex(o => o[0] == branch && o[1] == fn);
+      if (i >= 0) observers.splice(i, 1);
+    },
     _reset: () => prefs.clear(),
   },
 };
@@ -95,6 +99,11 @@ globalThis.ChromeUtils = {
     }
   },
   _preload: (url, mod) => getters.set(url, mod),
+  importESModule(url) {
+    const mod = getters.get(url);
+    if (!mod) throw new Error(`mock module not preloaded: ${url}`);
+    return mod;
+  },
   _actors: new Map(),
   registerWindowActor(name, options) {
     if (this._actors.has(name)) throw new Error(`actor ${name} registered twice`);
