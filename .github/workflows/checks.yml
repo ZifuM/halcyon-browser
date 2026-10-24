@@ -23,8 +23,8 @@ jobs:
         os: [ubuntu-24.04, macos-14, windows-2022]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
       - run: python tools/ci/annotate.py "Unit tests" -- python -m unittest discover -s tests -v
@@ -37,8 +37,8 @@ jobs:
     name: Apply to Firefox and audit
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
       - name: Build the command bar index (Rust -> WebAssembly)
@@ -67,8 +67,8 @@ jobs:
     name: Command bar index and speed
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
       - name: Rust tests
@@ -88,11 +88,11 @@ jobs:
     name: Shield blocking and performance
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: crates/shield-check/target
           key: shield-${{ hashFiles('crates/shield-check/Cargo.toml', 'crates/shield-check/src/**', 'project.toml') }}
@@ -124,7 +124,7 @@ jobs:
             --max-build-ms 2000 --max-request-us 50 --max-serialized-kb 32768 \
             --max-cosmetic-us 1000 | tee shield.txt
           { echo "## Shield"; echo '```'; cat shield.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: shield-report

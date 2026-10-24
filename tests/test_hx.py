@@ -371,3 +371,11 @@ class SrcListingTests(unittest.TestCase):
             self.assertNotIn("Info.sys.mjs", message)
             write(src / "a/omni_index.wasm", b"\0asm")
             engine._check_src_listings(src)  # complete: no error
+
+
+class UserAgentTests(unittest.TestCase):
+    def test_reports_itself_as_firefox(self):
+        # Without this, Gecko replaces the "Firefox/<version>" token with our own name and sites
+        # like Google and YouTube treat the browser as outdated.
+        text = (ROOT / "configs/common.mozconfig").read_text(encoding="utf-8")
+        self.assertRegex(text, r"(?m)^ac_add_options MOZ_APP_UA_NAME=Firefox$")
