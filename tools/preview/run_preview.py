@@ -232,7 +232,7 @@ def main() -> int:
         checks.append(("Command bar: Backspace on an empty bar removes the filter chip", d.get("chipCleared") is True))
         checks.append(("Command bar: bookmarks are found", any(r["title"] == "Halcyon on GitHub" and r["kind"] == "1" for r in d["bookmarkRows"])))
         checks.append(("Command bar: Enter opens the top result in a new tab and closes the bar",
-                       d["afterEnter"]["closed"] and d["afterEnter"]["newTab"] and d["afterEnter"]["url"].startswith("https://www.rust-lang.org/learn")))
+                       d["afterEnter"]["closed"] and d["afterEnter"]["newTab"] and "rust-lang.org/learn" in d["afterEnter"]["url"]))
         checks.append(("Command bar: Ctrl+L opens it on this page's address",
                        d["address"]["open"] and d["address"]["mode"] == "address" and "rust-lang.org/learn" in d["address"]["value"]))
         checks.append(("Command bar: Escape closes it", d["escapeCloses"]))

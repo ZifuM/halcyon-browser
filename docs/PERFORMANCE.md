@@ -33,7 +33,7 @@ Synthetic history with a realistic spread of words and sites, queried letter by 
 | --- | --- | --- |
 | Build the index, 100,000 entries (native) | about 90 ms | 600 ms |
 | Per keystroke, 100,000 entries, p95 (native) | about 2.5 ms | 8 ms |
-| Per keystroke, 100,000 entries, p95 (Firefox's WebAssembly) | measured by the preview | 16 ms (one frame) |
+| Per keystroke, 100,000 entries, p95 (Firefox 158's WebAssembly, CI machine) | about 5.5 ms | 16 ms (one frame) |
 | `omni_index.wasm` size | 93 KB | 256 KB |
 
 ## Coming with the builds (after C3)

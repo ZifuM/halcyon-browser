@@ -27,6 +27,8 @@ What you get, in order of how likely you meant it:
 * **Search** with your default search engine (the private-window engine in private windows),
   or **Open** when what you typed is an address.
 
+![Actions with their shortcuts, after typing "> zoom"](images/commandbar-actions.png)
+
 ### Filters
 
 Start with a filter to search one kind of thing. It turns into a chip; Backspace removes it.
@@ -43,6 +45,8 @@ Start with a filter to search one kind of thing. It turns into a chip; Backspace
 
 Search the bar for **Keyboard Shortcuts**. Every action is listed with its shortcut. Select one,
 press Enter, then press the new shortcut. Backspace removes it; Esc cancels.
+
+![The shortcut editor](images/shortcut-editor.png)
 
 If Firefox already uses that shortcut (Ctrl+R for Reload, say), the editor says so and you press
 it again to confirm. Firefox's shortcut is then switched off while yours exists, and comes back
@@ -99,8 +103,8 @@ they show up immediately. The bar asks for one search per frame however fast you
 
 | Measured | Native (CI budget) | In Firefox's WebAssembly |
 | --- | --- | --- |
-| Build the index, 100,000 history entries | ~90 ms (600 ms) | checked by the UI preview |
-| Per keystroke, 100,000 entries, p95 | ~2.5 ms (8 ms) | budget 16 ms, checked by the UI preview |
+| Build the index, 100,000 history entries | ~90 ms (600 ms) | ~200 ms |
+| Per keystroke, 100,000 entries, p95 | ~2.5 ms (8 ms) | ~5.5 ms (16 ms) |
 
 ### History and bookmarks
 
