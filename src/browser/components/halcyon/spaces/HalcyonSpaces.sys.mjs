@@ -546,7 +546,8 @@ export class HalcyonSpaces {
         break;
       case "TabAttrModified":
         // A launcher's title (and its URL, if it was pinned before loading) follows the page.
-        if (!this._quiet && event.detail?.changed?.includes("label")) {
+        // The title often arrives while the tab is still loading, so check again once it's done.
+        if (!this._quiet && event.detail?.changed?.some(c => c == "label" || c == "busy")) {
           this._refreshLauncher(tab);
         }
         break;
