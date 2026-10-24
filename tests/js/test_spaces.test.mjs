@@ -529,7 +529,7 @@ test("identity: a hand-made change goes to the Space if it has its own choice, e
     I.observe(null, "nsPref:changed", "browser.contentblocking.category");
     assert.equal(prefs.get(Identity.PREFS.defaultProtection), "strict", "no own level: the default follows");
     assert.ok(!("protection" in Store.get(plain.id)));
-    const engine = { QueryInterface: () => ({ id: "kagi" }) };
+    const engine = { id: "kagi" };
     I.observe(engine, "browser-search-engine-modified", "engine-default");
     assert.equal(prefs.get(Identity.PREFS.defaultSearch), "kagi");
   } finally {

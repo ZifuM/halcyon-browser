@@ -15,6 +15,12 @@
 
 import { PerynSpacesStore as Store } from "./PerynSpacesStore.sys.mjs";
 
+const lazy = {};
+ChromeUtils.defineESModuleGetters(lazy, {
+  // Firefox 158 has no Services.search; the search service is a module.
+  SearchService: "moz-src:///toolkit/components/search/SearchService.sys.mjs",
+});
+
 export const PREFS = Object.freeze({
   defaultSearch: "peryn.identity.defaultSearch",
   defaultProtection: "peryn.identity.defaultProtection",
@@ -70,8 +76,8 @@ class Identity {
       return;
     }
     try {
-      await Services.search.init();
-      const engine = await Services.search.getDefault();
+      await lazy.SearchService.init();
+      const engine = await lazy.SearchService.getDefault();
       if (engine?.id) {
         Services.prefs.setStringPref(PREFS.defaultSearch, engine.id);
       }
@@ -93,12 +99,12 @@ class Identity {
         Services.prefs.setStringPref(CATEGORY, want.protection);
       }
       if (want.search) {
-        await Services.search.init();
-        const current = await Services.search.getDefault();
+        await lazy.SearchService.init();
+        const current = await lazy.SearchService.getDefault();
         if (current?.id != want.search) {
-          const engine = Services.search.getEngineById(want.search);
+          const engine = lazy.SearchService.getEngineById(want.search);
           if (engine) {
-            await Services.search.setDefault(engine, Ci.nsISearchService.CHANGE_REASON_USER);
+            await lazy.SearchService.setDefault(engine, lazy.SearchService.CHANGE_REASON.USER);
           }
         }
       }
@@ -112,8 +118,8 @@ class Identity {
   /** The visible search engines, for the Space editor. */
   async engines() {
     try {
-      await Services.search.init();
-      return (await Services.search.getVisibleEngines()).map(e => ({ id: e.id, name: e.name }));
+      await lazy.SearchService.init();
+      return (await lazy.SearchService.getVisibleEngines()).map(e => ({ id: e.id, name: e.name }));
     } catch {
       return [];
     }
@@ -125,7 +131,7 @@ class Identity {
     }
     const space = this.activeSpaceId ? Store.get(this.activeSpaceId) : null;
     if (topic == "browser-search-engine-modified" && data == "engine-default") {
-      const id = subject?.QueryInterface?.(Ci.nsISearchEngine)?.id;
+      const id = subject?.id ?? subject?.wrappedJSObject?.id;
       if (!id) {
         return;
       }

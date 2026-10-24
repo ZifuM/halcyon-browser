@@ -60,6 +60,13 @@ class LayoutWiringTests(unittest.TestCase):
         self.assertEqual(listed, present)
         self.assertIn('"onboarding"', (ROOT / "src/browser/components/peryn/moz.build").read_text(encoding="utf-8"))
 
+    def test_no_services_search(self):
+        # Firefox 158 removed Services.search (the search service is a module now), so code that
+        # uses it fails only in a real browser.
+        for path in (ROOT / "src").rglob("*.sys.mjs"):
+            text = path.read_text(encoding="utf-8")
+            self.assertNotRegex(text, r"Services\.search\.", path.name)
+
     def test_mozbuild_lists_are_sorted(self):
         # mozbuild rejects file lists that aren't in case-insensitive order (UnsortedError), and
         # only a full build would notice.
