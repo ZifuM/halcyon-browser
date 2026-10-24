@@ -332,6 +332,10 @@ def main() -> int:
                        {"camera", "geo", "desktop-notification"} <= set(d["site"]["permissions"]) and d["site"]["permissions"][0] == "camera" and d["cameraBlocked"]))
         checks.append(("Clear data: clears the chosen kinds over the chosen range", d["clearText"].startswith("Cleared")))
         checks.append(("Privacy page: Esc closes it", d["closed"]))
+        idn = d.get("identity") or {}
+        checks.append(("Spaces with identity: a Space's own protection level and search engine apply while you're in it, and your defaults come back",
+                       idn.get("inWork", {}).get("protection") == "standard" and idn.get("inWork", {}).get("search") == idn.get("otherEngine")
+                       and idn.get("backHome", {}).get("protection") == "strict" and idn.get("backHome", {}).get("search") == idn.get("homeEngine")))
     off = out / "commandbar-off.json"
     if off.exists():
         d = json.loads(off.read_text())

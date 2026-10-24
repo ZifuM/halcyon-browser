@@ -21,7 +21,7 @@ pre-release. C6 in progress: split view, Glance, and the first-run welcome with 
 | --- | --- |
 | `hx` toolchain | download Firefox, apply our changes, export edits, rebase, build, package |
 | Upstream base | Firefox **158.0.1** Release |
-| Privacy defaults | 117 prefs, every one verified against the Firefox source (or our own code) |
+| Privacy defaults | 119 prefs, every one verified against the Firefox source (or our own code) |
 | Shield | uBlock Origin's default lists in Firefox's in-tree adblock-rust engine: network blocking and element hiding, ~11 µs per request. See [docs/SHIELD.md](docs/SHIELD.md) |
 | Performance budgets | checked in CI: [docs/PERFORMANCE.md](docs/PERFORMANCE.md) |
 | Layout | Arc-style: Essentials grid, Pinned and Today, centred address, page as a card, rail, compact mode (Ctrl+Alt+C). Built on Firefox's own vertical tabs with no patches. See [docs/LAYOUT.md](docs/LAYOUT.md) |

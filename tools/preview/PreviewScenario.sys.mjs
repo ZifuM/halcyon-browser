@@ -942,7 +942,29 @@ async function privacyScenario({ win, layout, open, sleep, shot, report }) {
 
   win.dispatchEvent(new win.KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true }));
   await sleep(400);
+
+  // Spaces with identity: a Space with its own protection level and search engine.
+  const { PerynSpacesStore: Store } = ChromeUtils.importESModule("resource://peryn-preview/spaces/PerynSpacesStore.sys.mjs");
+  const spaces = layout.spaces;
+  const home = spaces.active;
+  await Services.search.init();
+  const engines = await Services.search.getVisibleEngines();
+  const homeEngine = (await Services.search.getDefault()).id;
+  const other = engines.find(e => e.id != homeEngine);
+  const work = Store.create({ name: "Identity" });
+  Store.update(work.id, { protection: "standard", search: other.id });
+  spaces.switchTo(work.id);
+  await sleep(1500);
+  const inWork = { protection: Services.prefs.getStringPref("browser.contentblocking.category", ""), search: (await Services.search.getDefault()).id };
+  spaces.switchTo(home);
+  await sleep(1500);
+  const backHome = { protection: Services.prefs.getStringPref("browser.contentblocking.category", ""), search: (await Services.search.getDefault()).id };
+  const identity = { otherEngine: other.id, homeEngine, inWork, backHome };
+  Store.delete(work.id);
+  await sleep(500);
+
   await report("privacy", {
+    identity,
     sawBrowserRequest: !before.includes("example.com") && after.includes("example.com"),
     pageRequestNotListed: !after.includes("127.0.0.1"),
     overview,

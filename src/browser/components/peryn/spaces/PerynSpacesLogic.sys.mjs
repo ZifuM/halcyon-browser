@@ -14,7 +14,8 @@
 //   }
 // `container` is null or { name, icon, color }: matched to a local container by name on each
 // machine (container ids differ between machines). `pins` are the Space's pinned tabs as
-// launchers: { id, url, title }.
+// launchers: { id, url, title }. Optional identity (C7): `search` (a search engine's id) and
+// `protection` ("strict" or "standard"); absent means "your default".
 
 export const PREFS = Object.freeze({
   data: "peryn.spaces",
@@ -81,6 +82,20 @@ export function cleanColor(color) {
     chroma: Math.round(clamp(num(c.chroma, DEFAULT_COLOR.chroma), 0, 0.12) * 1000) / 1000,
     grain: c.grain === true,
   };
+}
+
+export const PROTECTION_LEVELS = Object.freeze(["strict", "standard"]);
+
+/** A Space's own search engine and protection level; only set fields are returned. */
+export function cleanIdentity(space) {
+  const out = {};
+  if (typeof space?.search == "string" && space.search.trim() && space.search.length <= 200) {
+    out.search = space.search.trim();
+  }
+  if (PROTECTION_LEVELS.includes(space?.protection)) {
+    out.protection = space.protection;
+  }
+  return out;
 }
 
 export function cleanContainer(container) {
@@ -166,6 +181,7 @@ export function normalizeData(raw) {
       color: cleanColor(s.color),
       container: cleanContainer(s.container),
       pins: cleanLaunchers(s.pins, launcherIds),
+      ...cleanIdentity(s),
     });
   }
   if (!spaces.length) {
@@ -217,7 +233,7 @@ export function updateSpace(data, id, patch) {
       return s;
     }
     found = true;
-    return {
+    const next = {
       ...s,
       ...("name" in patch ? { name: cleanName(patch.name, s.name) } : {}),
       ...("icon" in patch ? { icon: cleanIcon(patch.icon) } : {}),
@@ -225,6 +241,18 @@ export function updateSpace(data, id, patch) {
       ...("container" in patch ? { container: cleanContainer(patch.container) } : {}),
       ...("pins" in patch ? { pins: cleanLaunchers(patch.pins) } : {}),
     };
+    // Identity: a patch value of "" or null goes back to the default.
+    for (const key of ["search", "protection"]) {
+      if (key in patch) {
+        const clean = cleanIdentity({ [key]: patch[key] });
+        if (key in clean) {
+          next[key] = clean[key];
+        } else {
+          delete next[key];
+        }
+      }
+    }
+    return next;
   });
   if (!found) {
     throw new Error(`no Space ${id}`);

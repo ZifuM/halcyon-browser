@@ -8,6 +8,7 @@
 MOZ_SRC_FILES += [
     "peryn-grain.svg",
     "peryn-spaces.css",
+    "PerynSpaceIdentity.sys.mjs",
     "PerynSpaces.sys.mjs",
     "PerynSpacesLogic.sys.mjs",
     "PerynSpacesStore.sys.mjs",

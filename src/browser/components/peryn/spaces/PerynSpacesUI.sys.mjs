@@ -9,6 +9,7 @@
 //   * "Move to Space" in the tab menu.
 // Strings are English until the browser ships its own localisation files.
 
+import { PerynSpaceIdentity } from "./PerynSpaceIdentity.sys.mjs";
 import * as Logic from "./PerynSpacesLogic.sys.mjs";
 import { PerynSpacesStore as Store } from "./PerynSpacesStore.sys.mjs";
 
@@ -32,6 +33,12 @@ export const STRINGS = Object.freeze({
   moveToSpace: "Move to Space",
   switchTo: name => `Switch to ${name}`,
   containerHint: "New tabs in this Space open in this container: separate cookies and logins.",
+  search: "Search engine",
+  protection: "Protection",
+  useDefault: "Your default",
+  strict: "Strict",
+  balanced: "Balanced",
+  identityHint: "Used while you're in this Space.",
 });
 
 export class PerynSpacesUI {
@@ -265,6 +272,19 @@ export class PerynSpacesUI {
       onchange: () => Store.update(this.editingId, { color: { grain: this.grainInput.checked } }),
     });
     this.containerSelect = this.html("select", { onchange: () => this._onContainerChange() });
+    this.searchSelect = this.html("select", {
+      "data-field": "search",
+      onchange: () => Store.update(this.editingId, { search: this.searchSelect.value }),
+    });
+    this.protectionSelect = this.html("select", {
+      "data-field": "protection",
+      onchange: () => Store.update(this.editingId, { protection: this.protectionSelect.value }),
+    });
+    this.protectionSelect.append(
+      this.html("option", { value: "", text: STRINGS.useDefault }),
+      this.html("option", { value: "strict", text: STRINGS.strict }),
+      this.html("option", { value: "standard", text: STRINGS.balanced })
+    );
     this.deleteButton = this.html("button", {
       class: "hx-danger",
       text: STRINGS.deleteSpace,
@@ -282,6 +302,8 @@ export class PerynSpacesUI {
       this.html("div", { class: "hx-sliders" }, [field(STRINGS.intensity, this.chromaInput), field(STRINGS.blend, this.blendInput)]),
       this.html("label", { class: "hx-field hx-check" }, [this.grainInput, this.html("span", { text: STRINGS.grain })]),
       field(STRINGS.container, this.containerSelect, [this.html("p", { class: "hx-hint", text: STRINGS.containerHint })]),
+      this.html("div", { class: "hx-sliders" }, [field(STRINGS.search, this.searchSelect), field(STRINGS.protection, this.protectionSelect)]),
+      this.html("p", { class: "hx-hint", text: STRINGS.identityHint }),
       this.html("div", { class: "hx-actions" }, [
         this.deleteButton,
         this.html("button", { class: "hx-primary", text: STRINGS.done, onclick: () => panel.hidePopup() }),
@@ -346,6 +368,25 @@ export class PerynSpacesUI {
     options.push(this.html("option", { value: "__new__", text: STRINGS.newContainer }));
     this.containerSelect.replaceChildren(...options);
     this.containerSelect.value = current ?? "";
+
+    this.protectionSelect.value = space.protection ?? "";
+    this._fillEngines(space);
+  }
+
+  async _fillEngines(space) {
+    const engines = await PerynSpaceIdentity.engines();
+    if (this.editingId != space.id) {
+      return;
+    }
+    const options = [this.html("option", { value: "", text: STRINGS.useDefault })];
+    for (const e of engines) {
+      options.push(this.html("option", { value: e.id, text: e.name }));
+    }
+    if (space.search && !engines.some(e => e.id == space.search)) {
+      options.push(this.html("option", { value: space.search, text: space.search }));
+    }
+    this.searchSelect.replaceChildren(...options);
+    this.searchSelect.value = space.search ?? "";
   }
 
   _onContainerChange() {

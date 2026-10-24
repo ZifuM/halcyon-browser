@@ -14,6 +14,7 @@
 // any launcher that has no tab on this machine yet (unloaded until clicked), and a launcher
 // removed elsewhere stops its tab being pinned here (the tab stays open).
 
+import { PerynSpaceIdentity } from "./PerynSpaceIdentity.sys.mjs";
 import * as Logic from "./PerynSpacesLogic.sys.mjs";
 import { PerynSpacesStore as Store } from "./PerynSpacesStore.sys.mjs";
 import { PerynSpacesUI } from "./PerynSpacesUI.sys.mjs";
@@ -69,6 +70,8 @@ export class PerynSpaces {
     }
     this.doc.getElementById("vertical-tabs")?.addEventListener("wheel", this.handleEvent, { passive: true });
     this.win.addEventListener("SSWindowRestored", this.handleEvent);
+    // Back in this window: its Space's search engine and protection apply again.
+    this.win.addEventListener("activate", this.handleEvent);
     this._unsubscribe = Store.subscribe(this._onData);
     this._wrapNewTabCommand();
     this._createShortcuts();
@@ -85,6 +88,7 @@ export class PerynSpaces {
     }
     this.doc.getElementById("vertical-tabs")?.removeEventListener("wheel", this.handleEvent);
     this.win.removeEventListener("SSWindowRestored", this.handleEvent);
+    this.win.removeEventListener("activate", this.handleEvent);
     this._unsubscribe?.();
     this._unwrapNewTabCommand();
     this.ui?.uninit();
@@ -196,6 +200,12 @@ export class PerynSpaces {
     }
     this.apply();
     this._animate(direction || Math.sign(to - from));
+    this._applyIdentity();
+  }
+
+  /** The Space's own search engine and protection level, or the defaults (C7). */
+  _applyIdentity() {
+    PerynSpaceIdentity.apply(Store.get(this.active)).catch(e => console.error("Peryn Spaces: identity", e));
   }
 
   next(step) {
@@ -477,6 +487,13 @@ export class PerynSpaces {
     if (change.external) {
       this.reconcileLaunchers();
     }
+    // The active Space's own engine or level changed (the editor, or Sync).
+    const space = Store.get(this.active);
+    const sig = `${space?.search ?? ""}|${space?.protection ?? ""}`;
+    if (sig != this._identitySig && this.win.document.hasFocus?.()) {
+      this._identitySig = sig;
+      this._applyIdentity();
+    }
   }
 
   // ---- events ------------------------------------------------------------------------------
@@ -484,6 +501,9 @@ export class PerynSpaces {
   handleEvent(event) {
     const tab = event.target;
     switch (event.type) {
+      case "activate":
+        this._applyIdentity();
+        return;
       case "TabOpen": {
         const detail = event.detail ?? {};
         if (!("fromExternal" in detail)) {

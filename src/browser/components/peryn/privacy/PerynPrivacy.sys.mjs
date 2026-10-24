@@ -384,7 +384,10 @@ export class PerynPrivacy {
     }
     const host = principal.host;
     const states = new Map(SP.getAllByPrincipal(principal).map(p => [p.id, p.state]));
-    const ids = Logic.orderPermissions(SP.listPermissions().filter(id => SP.getPermissionLabel(id)));
+    // The permissions people look for, plus any other this site has been given an answer for.
+    const ids = Logic.orderPermissions(
+      SP.listPermissions().filter(id => SP.getPermissionLabel(id) && (Logic.PERMISSION_ORDER.includes(id) || states.has(id)))
+    );
     const protectedHere = !lazy.ContentBlockingAllowList.includes(browser);
     const rows = ids.map(id => {
       const current = states.get(id) ?? SP.UNKNOWN;

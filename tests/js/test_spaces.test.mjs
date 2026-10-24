@@ -484,3 +484,56 @@ test("closing a Space's last tab keeps you in that Space with a fresh tab", () =
   assert.equal(gBrowser.selectedTab.getAttribute(SPACE_ATTR), work.id);
   assert.equal(gBrowser.selectedTab.url, "about:newtab");
 });
+
+// ---- Spaces with identity (C7) -----------------------------------------------------------
+
+const Identity = await import("moz-src:///browser/components/peryn/spaces/PerynSpaceIdentity.sys.mjs");
+
+test("identity: a Space's own search engine and protection, else the defaults", () => {
+  const defaults = { search: "ddg", protection: "strict" };
+  assert.deepEqual(Identity.wanted({ search: "kagi" }, defaults), { search: "kagi", protection: "strict" });
+  assert.deepEqual(Identity.wanted({ protection: "standard" }, defaults), { search: "ddg", protection: "standard" });
+  assert.deepEqual(Identity.wanted(null, defaults), defaults);
+  assert.equal(Identity.ownerOfChange({ search: "kagi" }, "search"), "space");
+  assert.equal(Identity.ownerOfChange({}, "search"), "default");
+});
+
+test("identity: stored only when set, validated, and cleared back to the default", () => {
+  let data = Logic.normalizeData({ spaces: [{ id: "s-a", name: "A", search: "kagi", protection: "loose" }] });
+  assert.equal(data.spaces[0].search, "kagi");
+  assert.ok(!("protection" in data.spaces[0]), "unknown levels are dropped");
+  data = Logic.updateSpace(data, "s-a", { protection: "standard" });
+  assert.equal(data.spaces[0].protection, "standard");
+  data = Logic.updateSpace(data, "s-a", { search: "" });
+  assert.ok(!("search" in data.spaces[0]));
+  assert.ok(!("search" in Logic.defaultData().spaces[0]), "a plain Space has no identity fields");
+});
+
+test("identity: a hand-made change goes to the Space if it has its own choice, else to the default", () => {
+  const prefs = new Map();
+  const saved = { ...Services.prefs };
+  Services.prefs.getStringPref = (k, d) => (prefs.has(k) ? prefs.get(k) : d);
+  Services.prefs.setStringPref = (k, v) => prefs.set(k, v);
+  const I = Identity.PerynSpaceIdentity;
+  try {
+    Store._reset?.();
+    const own = Store.create({ name: "Work" });
+    Store.update(own.id, { protection: "strict" });
+    I.activeSpaceId = own.id;
+    prefs.set("browser.contentblocking.category", "standard");
+    I.observe(null, "nsPref:changed", "browser.contentblocking.category");
+    assert.equal(Store.get(own.id).protection, "standard", "the Space's own level follows");
+    const plain = Store.create({ name: "Play" });
+    I.activeSpaceId = plain.id;
+    prefs.set("browser.contentblocking.category", "strict");
+    I.observe(null, "nsPref:changed", "browser.contentblocking.category");
+    assert.equal(prefs.get(Identity.PREFS.defaultProtection), "strict", "no own level: the default follows");
+    assert.ok(!("protection" in Store.get(plain.id)));
+    const engine = { QueryInterface: () => ({ id: "kagi" }) };
+    I.observe(engine, "browser-search-engine-modified", "engine-default");
+    assert.equal(prefs.get(Identity.PREFS.defaultSearch), "kagi");
+  } finally {
+    Object.assign(Services.prefs, saved);
+    I.activeSpaceId = null;
+  }
+});

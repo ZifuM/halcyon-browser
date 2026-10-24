@@ -82,6 +82,18 @@ why = "Whether the Ledger keeps blocked counts per site (cleared with history, n
 own = true
 
 [[pref]]
+name = "peryn.identity.defaultSearch"
+value = ""
+why = "Spaces with identity: the search engine (its id) used in Spaces that don't choose their own. Filled in with Firefox's current default on first run."
+own = true
+
+[[pref]]
+name = "peryn.identity.defaultProtection"
+value = ""
+why = "Spaces with identity: the protection level (strict or standard) used in Spaces that don't choose their own. Filled in with the current level on first run."
+own = true
+
+[[pref]]
 name = "peryn.glance.enabled"
 value = true
 why = "Glance: Alt+click (Option+click) a link to preview it in a card over the page, then close it, keep it as a tab or put it side by side. Set false and Alt+click does what it does in Firefox."
