@@ -13,6 +13,7 @@
  */
 
 import * as Logic from "./PerynSplitLogic.sys.mjs";
+import { Motion } from "../layout/PerynMotion.sys.mjs";
 
 const lazy = {};
 ChromeUtils.defineESModuleGetters(lazy, {
@@ -36,6 +37,7 @@ export class PerynSplit {
     /** split view element -> {layout, x, y} */
     this._states = new WeakMap();
     this._marked = new Set();
+    this.motion = new Motion(win);
     this.handleEvent = this.handleEvent.bind(this);
   }
 
@@ -150,6 +152,10 @@ export class PerynSplit {
     this._marked = marked;
     this._dividers = grid.dividers;
     this._placeHandles();
+  }
+
+  _panelsOf(tabs) {
+    return tabs.map(tab => this.doc.getElementById(tab.linkedPanel)).filter(Boolean);
   }
 
   _clear() {
@@ -269,7 +275,7 @@ export class PerynSplit {
     const state = this.stateOf(split);
     const axis = kind == "x" ? "x" : "y";
     state[axis] = Logic.clampRatio(state[axis] + step);
-    this.apply();
+    this.motion.flip(this._panelsOf(split.tabs), () => this.apply(), { duration: this.motion.duration("--hx-duration-fast") });
     this._save(split);
     this.doc.querySelector(`.peryn-split-divider[data-kind="${kind}"]`)?.focus();
     event.preventDefault();
@@ -295,8 +301,15 @@ export class PerynSplit {
       const joining = Logic.joinable(split.tabs, tabs);
       if (joining.length) {
         this._sameSpace(split.tabs[0], joining);
-        split.addTabs(joining);
-        this.apply();
+        // The panes already open glide to their new places; the new one fades in.
+        this.motion.flip(
+          this._panelsOf([...split.tabs, ...joining]),
+          () => {
+            split.addTabs(joining);
+            this.apply();
+          },
+          { enter: this._panelsOf(joining) }
+        );
       }
       return split;
     }
@@ -335,7 +348,7 @@ export class PerynSplit {
     const state = this.stateOf(split);
     state.layout = Logic.nextLayout(panes, Logic.layoutFor(panes, state.layout));
     this._save(split);
-    this.apply();
+    this.motion.flip(this._panelsOf(split.tabs), () => this.apply());
     return state.layout;
   }
 
@@ -359,15 +372,18 @@ export class PerynSplit {
       if (live.length < 2) {
         return;
       }
-      if (tab.splitview === split || split.isConnected) {
-        split.unsplitTabs?.();
-      }
-      const rebuilt = this.gBrowser.addTabSplitView(live, { insertBefore: live[0] });
-      if (rebuilt) {
-        this._states.set(rebuilt, state);
-        this._save(rebuilt);
-        this.apply();
-      }
+      // The remaining panes glide into the space the closed one leaves.
+      this.motion.flip(this._panelsOf(live), () => {
+        if (tab.splitview === split || split.isConnected) {
+          split.unsplitTabs?.();
+        }
+        const rebuilt = this.gBrowser.addTabSplitView(live, { insertBefore: live[0] });
+        if (rebuilt) {
+          this._states.set(rebuilt, state);
+          this._save(rebuilt);
+          this.apply();
+        }
+      });
     }, 0);
   }
 

@@ -13,5 +13,6 @@ MOZ_SRC_FILES += [
     "PerynCompact.sys.mjs",
     "PerynLayout.sys.mjs",
     "PerynLayoutLogic.sys.mjs",
+    "PerynMotion.sys.mjs",
     "PerynSections.sys.mjs",
 ]

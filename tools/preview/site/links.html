@@ -15,4 +15,8 @@ li a { display: block; padding: 12px 0; border-bottom: 1px solid color-mix(in sr
 <body><main><h1>Reading list</h1>
 <a class="card" id="lead" href="recipes.html"><b>Weeknight ramen in 25 minutes</b>Alt+click any link to glance at it without leaving this page.</a>
 <ul><li><a href="weather.html">Weather — Sydney</a></li><li><a href="news.html">The Daily Signal — Morning edition</a></li><li><a href="code.html">Pull requests</a></li></ul>
-</main></body></html>
+</main>
+<script>
+// For the preview's Glance check: the page notes the last click it saw in its title.
+addEventListener("click", e => { document.title = `Reading list (click alt=${e.altKey} trusted=${e.isTrusted} button=${e.button})`; }, true);
+</script></body></html>

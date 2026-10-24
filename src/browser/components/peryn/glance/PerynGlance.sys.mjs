@@ -13,6 +13,8 @@
  * ever lost.
  */
 
+import { Motion } from "../layout/PerynMotion.sys.mjs";
+
 const HTML_NS = "http://www.w3.org/1999/xhtml";
 const ACTOR = "PerynGlance";
 export const PREFS = Object.freeze({ enabled: "peryn.glance.enabled" });
@@ -68,6 +70,7 @@ export class PerynGlance {
     this.parts = parts;
     /** preview tab -> the tab it was opened from */
     this.parents = new WeakMap();
+    this.motion = new Motion(win);
     this.handleEvent = this.handleEvent.bind(this);
   }
 
@@ -146,9 +149,27 @@ export class PerynGlance {
   /** Close the preview on screen and go back to the page it came from. */
   close() {
     const tab = this.current;
-    if (!tab) {
+    if (!tab || this._closing == tab) {
       return;
     }
+    if (!this.motion.duration("--hx-duration-fast")) {
+      this._closeNow(tab);
+      return;
+    }
+    // The card drops away and the backdrop clears, then the tab goes.
+    this._closing = tab;
+    Promise.all([
+      this.motion.leave([this._panelOf(tab)], [{ opacity: 1, transform: "none" }, { opacity: 0, transform: "translateY(10px) scale(0.98)" }]),
+      this.motion.leave([this._layerEl], [{ opacity: 1 }, { opacity: 0 }]),
+    ]).finally(() => {
+      this._closing = null;
+      if (tab.isConnected && tab.hasAttribute(GLANCE_ATTR)) {
+        this._closeNow(tab);
+      }
+    });
+  }
+
+  _closeNow(tab) {
     const parent = this.parentOf(tab);
     this._forget(tab);
     if (parent?.isConnected) {
@@ -172,7 +193,8 @@ export class PerynGlance {
       return null;
     }
     const parent = this.parentOf(tab);
-    this._forget(tab);
+    // The card grows to fill the content area.
+    this.motion.flip([this._panelOf(tab)], () => this._forget(tab));
     const tabs = this.gBrowser.tabs;
     if (parent?.isConnected && !parent.pinned && !parent.splitview && tabs.indexOf(tab) != tabs.indexOf(parent) + 1) {
       this.gBrowser.moveTabAfter(tab, parent);
@@ -184,15 +206,19 @@ export class PerynGlance {
   split() {
     const tab = this.current;
     const parent = tab && this.parentOf(tab);
-    this.expand();
     if (!tab || !parent?.isConnected || parent.pinned) {
-      return tab;
+      return this.expand();
     }
-    this.gBrowser.selectedTab = parent;
-    const made = this.parts.split
-      ? this.parts.split.add([tab])
-      : this.gBrowser.addTabSplitView([parent, tab], { insertBefore: parent });
-    this.gBrowser.selectedTab = made ? tab : parent;
+    // The page and the card glide into their halves.
+    let made = null;
+    this.motion.flip([this._panelOf(parent), this._panelOf(tab)], () => {
+      this._forget(tab);
+      this.gBrowser.selectedTab = parent;
+      made = this.parts.split
+        ? this.parts.split.add([tab])
+        : this.gBrowser.addTabSplitView([parent, tab], { insertBefore: parent });
+      this.gBrowser.selectedTab = made ? tab : parent;
+    });
     return tab;
   }
 

@@ -640,6 +640,8 @@ async function glanceScenario({ win, layout, open, sleep, shot, report }) {
     await sleep(100);
   }
   viaClick = !!glance.current;
+  const pageSaw = parent.linkedBrowser.contentTitle;
+  const pageUrlAfter = parent.linkedBrowser.currentURI.spec;
   if (!viaClick) {
     log("[scenario] Alt+click did not reach the page; opening the preview directly");
     glance.open(SITE + "recipes.html");
@@ -656,6 +658,8 @@ async function glanceScenario({ win, layout, open, sleep, shot, report }) {
     actorReady,
     clickPath,
     probe,
+    pageSaw,
+    pageUrlAfter,
     viaClick,
     open: !!card,
     url: card?.linkedBrowser.currentURI.spec ?? "",

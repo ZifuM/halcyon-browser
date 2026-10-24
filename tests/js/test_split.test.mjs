@@ -68,3 +68,67 @@ test("joinable: unpinned tabs not already split, four panes at most", () => {
   assert.deepEqual(Logic.joinable([a, b, c, d], [e]), []);
   assert.deepEqual(Logic.joinable([a], [t({ pinned: true }), t({ splitview: {} }), t({ closing: true }), a, b]), [b]);
 });
+
+// ---- motion (shared with Glance) -------------------------------------------------------------
+
+const Motion = await import("moz-src:///browser/components/peryn/layout/PerynMotion.sys.mjs");
+
+test("motion: CSS times from the tokens, capped and defensive", () => {
+  assert.equal(Motion.parseTime("200ms"), 200);
+  assert.equal(Motion.parseTime(" 0.25s "), 250);
+  assert.equal(Motion.parseTime("0ms"), 0);
+  assert.equal(Motion.parseTime("9s"), 600);
+  assert.equal(Motion.parseTime(""), 0);
+  assert.equal(Motion.parseTime("var(--x)"), 0);
+});
+
+test("motion: FLIP keyframes map the new box back onto the old one", () => {
+  const before = { left: 0, top: 0, width: 1000, height: 800 };
+  const after = { left: 500, top: 0, width: 500, height: 400 };
+  const [from, to] = Motion.flipFrames(before, after);
+  assert.equal(from.transform, "translate(-500px, 0px) scale(2, 2)");
+  assert.equal(from.transformOrigin, "0 0");
+  assert.equal(to.transform, "none");
+  assert.equal(Motion.flipFrames(after, { ...after, left: 500.4 }), null, "no visible change");
+  assert.equal(Motion.flipFrames({ left: 0, top: 0, width: 0, height: 0 }, after), null);
+});
+
+function fakeWin(duration) {
+  return {
+    document: { documentElement: {} },
+    getComputedStyle: () => ({ getPropertyValue: name => (name.startsWith("--hx-duration") ? duration : "linear") }),
+    setTimeout: (fn, ms) => setTimeout(fn, ms),
+  };
+}
+function box(rect) {
+  return {
+    rect,
+    isConnected: true,
+    animations: [],
+    getBoundingClientRect() {
+      return this.rect;
+    },
+    animate(frames, options) {
+      this.animations.push({ frames, options });
+      return { finished: Promise.resolve(), cancel() {} };
+    },
+  };
+}
+
+test("motion: elements glide from old to new boxes; new ones fade in; off means no animation", () => {
+  const moved = box({ left: 0, top: 0, width: 1000, height: 800 });
+  const added = box({ left: 0, top: 0, width: 1000, height: 800 });
+  const m = new Motion.Motion(fakeWin("200ms"));
+  m.flip([moved, added], () => {
+    moved.rect = { left: 0, top: 0, width: 500, height: 800 };
+    added.rect = { left: 500, top: 0, width: 500, height: 800 };
+  }, { enter: [added] });
+  assert.match(moved.animations[0].frames[0].transform, /scale\(2, 1\)/);
+  assert.equal(moved.animations[0].options.duration, 200);
+  assert.deepEqual(added.animations[0].frames, Motion.ENTER_FRAMES);
+
+  const still = box({ left: 0, top: 0, width: 10, height: 10 });
+  let changed = false;
+  new Motion.Motion(fakeWin("0ms")).flip([still], () => (changed = true));
+  assert.ok(changed && still.animations.length == 0, "reduced motion: change only");
+});

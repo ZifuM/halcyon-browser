@@ -212,6 +212,29 @@
   }
 }
 
+/* Each step slides in from the side it comes from (forward by default). */
+.peryn-ob-step:not([hidden]) {
+  animation: peryn-ob-step-in var(--hx-duration) var(--hx-ease-out);
+}
+
+#peryn-onboarding[direction="back"] .peryn-ob-step:not([hidden]) {
+  animation-name: peryn-ob-step-back;
+}
+
+@keyframes peryn-ob-step-in {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+}
+
+@keyframes peryn-ob-step-back {
+  from {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+}
+
 @keyframes peryn-ob-in {
   from {
     opacity: 0;
@@ -227,7 +250,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   .peryn-ob-backdrop,
-  .peryn-ob-card {
-    animation: none;
+  .peryn-ob-card,
+  .peryn-ob-step:not([hidden]) {
+    animation: none !important;
   }
 }

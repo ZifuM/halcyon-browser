@@ -160,7 +160,9 @@ export class PerynOnboarding {
   }
 
   go(step) {
-    this.step = Math.max(0, Math.min(STEPS.length - 1, step));
+    const target = Math.max(0, Math.min(STEPS.length - 1, step));
+    this.root.setAttribute("direction", target < this.step ? "back" : "forward");
+    this.step = target;
     const name = STEPS[this.step];
     for (const page of this.root.querySelectorAll(".peryn-ob-step")) {
       page.hidden = page.dataset.step != name;
