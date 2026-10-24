@@ -40,6 +40,7 @@ const TAB_EVENTS = [
   "TabUnpinned",
   "SSTabRestoring",
   "HalcyonPinnedChange",
+  "TabAttrModified",
 ];
 
 export class HalcyonSpaces {
@@ -543,6 +544,12 @@ export class HalcyonSpaces {
           }
         }
         break;
+      case "TabAttrModified":
+        // A launcher's title (and its URL, if it was pinned before loading) follows the page.
+        if (!this._quiet && event.detail?.changed?.includes("label")) {
+          this._refreshLauncher(tab);
+        }
+        break;
       case "wheel": {
         const scale = event.deltaMode == 1 ? 16 : event.deltaMode == 2 ? 400 : 1;
         const dir = this.swipe.add(event.deltaX * scale, event.deltaY * scale);
@@ -551,6 +558,31 @@ export class HalcyonSpaces {
         }
         break;
       }
+    }
+  }
+
+  _refreshLauncher(tab) {
+    const id = this._pinId(tab);
+    if (!id || tab.hasAttribute("pending") || tab.hasAttribute("busy")) {
+      return;
+    }
+    const list = tab.pinned ? Store.data.essentials : Store.spaces.flatMap(s => s.pins);
+    const entry = list.find(e => e.id == id);
+    if (!entry) {
+      return;
+    }
+    const fresh = this._launcherFor(tab, id);
+    const patch = { id, title: fresh.title || entry.title, url: entry.url };
+    if (/^about:(blank|newtab|home)$/.test(entry.url) && Logic.isLauncherURL(fresh.url)) {
+      patch.url = fresh.url;
+    }
+    if (patch.title == entry.title && patch.url == entry.url) {
+      return;
+    }
+    if (tab.pinned) {
+      Store.addEssential(patch);
+    } else {
+      Store.addPin(this.spaceOf(tab), patch);
     }
   }
 

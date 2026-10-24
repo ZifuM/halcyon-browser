@@ -447,3 +447,16 @@ test("swiping sideways on the sidebar switches Space", () => {
   spaces.handleEvent({ type: "wheel", target: null, deltaX: 150, deltaY: 0, deltaMode: 0 });
   assert.equal(spaces.active, work.id);
 });
+
+test("a launcher's title follows the page once it loads (and its URL, if pinned before loading)", () => {
+  const { gBrowser, tabs, sectionsPinned } = makeWindow(["about:newtab"]);
+  sectionsPinned.add(tabs[0]);
+  gBrowser.fire("HalcyonPinnedChange", tabs[0], { pinned: true });
+  tabs[0].linkedBrowser.currentURI.spec = "https://docs.example/";
+  tabs[0].label = "Docs";
+  gBrowser.fire("TabAttrModified", tabs[0], { changed: ["label"] });
+  assert.deepEqual(
+    Store.get("s-personal").pins.map(p => [p.title, p.url]),
+    [["Docs", "https://docs.example/"]]
+  );
+});

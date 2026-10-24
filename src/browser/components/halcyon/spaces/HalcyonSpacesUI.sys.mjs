@@ -279,8 +279,7 @@ export class HalcyonSpacesUI {
         this.html("span", { class: "hx-label", text: STRINGS.color }),
         this.html("div", { class: "hx-color-row" }, [this.wheel, this.swatches]),
       ]),
-      field(STRINGS.intensity, this.chromaInput),
-      field(STRINGS.blend, this.blendInput),
+      this.html("div", { class: "hx-sliders" }, [field(STRINGS.intensity, this.chromaInput), field(STRINGS.blend, this.blendInput)]),
       this.html("label", { class: "hx-field hx-check" }, [this.grainInput, this.html("span", { text: STRINGS.grain })]),
       field(STRINGS.container, this.containerSelect, [this.html("p", { class: "hx-hint", text: STRINGS.containerHint })]),
       this.html("div", { class: "hx-actions" }, [
@@ -301,7 +300,13 @@ export class HalcyonSpacesUI {
     this.editingId = spaceId;
     this._resetDelete();
     this._fillEditor(space);
-    this.panel.openPopup(anchor, "after_start", 0, 0, false, false);
+    // Beside the sidebar, top-aligned, so the whole editor fits; else under what was clicked.
+    const sidebar = this.doc.getElementById("sidebar-main");
+    if (sidebar && sidebar.getBoundingClientRect().width > 0) {
+      this.panel.openPopup(sidebar, "end_before", 4, 8, false, false);
+    } else {
+      this.panel.openPopup(anchor, "after_start", 0, 0, false, false);
+    }
     this.win.setTimeout(() => this.nameInput.focus(), 0);
   }
 

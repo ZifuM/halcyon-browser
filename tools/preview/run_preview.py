@@ -190,9 +190,11 @@ def main() -> int:
     if sp.exists():
         d = json.loads(sp.read_text())
         checks.append(("Spaces: Work is active, its name above Pinned, three dots", d["active"] and d["header"] == "Work" and d["dots"] == 3))
-        checks.append(("Spaces: only Work's tabs are visible", sorted(d["visibleTodayTabs"]) == sorted(
-            ["Q4 planning — Docs", "halcyon-browser: Pull requests", "Roadmap 2027"])))
-        checks.append(("Spaces: Work's pinned tab is a synced launcher", d["pinsInWork"] == ["Roadmap 2027"]))
+        checks.append(("Spaces: only Work's tabs are visible (plus the new tab an empty Space opens with)",
+                       sorted(d["visibleTodayTabs"]) == sorted(
+                           ["Q4 planning — Docs", "halcyon-browser: Pull requests", "Roadmap 2027", "New Tab"])))
+        checks.append(("Spaces: Work's pinned tab is a synced launcher, titled from the page",
+                       d["pinsInWork"] == ["Q4 planning — Docs"]))
         checks.append(("Spaces: the window takes Work's colour", d["hueOnWindow"] == "155"))
     sk = out / "spaces-keys.json"
     if sk.exists():

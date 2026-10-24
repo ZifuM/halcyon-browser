@@ -96,6 +96,16 @@
 
 /* ---- Switcher at the bottom of the sidebar ------------------------------------------------ */
 
+/* The switcher sits under the tab list in the same box: stack them. */
+:root[halcyon-layout] #vertical-tabs[visible] {
+  flex-direction: column;
+
+  > #tabbrowser-tabs {
+    flex: 1;
+    min-height: 0;
+  }
+}
+
 #halcyon-space-bar {
   display: flex;
   align-items: center;
@@ -246,9 +256,17 @@
     display: flex;
     flex-direction: column;
     gap: var(--hx-space-3);
-    width: 300px;
+    width: 320px;
+    max-height: calc(100vh - 80px);
+    overflow-y: auto;
     padding: var(--hx-space-4);
     font-size: var(--hx-font-body);
+  }
+
+  .hx-sliders {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--hx-space-3);
   }
 
   .hx-title {
@@ -289,6 +307,11 @@
     display: grid;
     grid-template-columns: repeat(6, 1fr);
     gap: var(--hx-space-1);
+
+    .hx-icon-choice {
+      height: 28px;
+      font-size: 14px;
+    }
   }
 
   .hx-icon-choice,
