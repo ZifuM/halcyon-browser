@@ -24,6 +24,7 @@ import { PerynCommandBar } from "../commandbar/PerynCommandBar.sys.mjs";
 import { PerynSplit } from "../split/PerynSplit.sys.mjs";
 import { PerynGlance } from "../glance/PerynGlance.sys.mjs";
 import { PerynOnboarding } from "../onboarding/PerynOnboarding.sys.mjs";
+import { PerynLedger, PerynLedgerTabs } from "../privacy/PerynLedger.sys.mjs";
 
 const lazy = {};
 
@@ -84,6 +85,12 @@ export const PerynLayout = {
   // ---- browser-before-ui-startup -----------------------------------------------------------
 
   init() {
+    // The Ledger starts first and regardless of the layout, so it sees startup connections.
+    try {
+      PerynLedger.init();
+    } catch (e) {
+      console.error("Peryn Ledger: start failed", e);
+    }
     if (!this.enabled) {
       return;
     }
@@ -188,6 +195,7 @@ export const PerynLayout = {
     if (!lazy.PrivateBrowsingUtils.isWindowPrivate(win)) {
       parts.spaces = new PerynSpaces(win, { sections });
     }
+    parts.ledgerTabs = new PerynLedgerTabs(win);
     parts.split = new PerynSplit(win);
     parts.glance = new PerynGlance(win, parts);
     // After Spaces, so the command bar can open new tabs in the Space's container.

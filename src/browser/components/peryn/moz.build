@@ -6,7 +6,7 @@
 # patches/browser/components/moz.build.patch. Modules load from
 # moz-src:///browser/components/peryn/<file>.
 
-DIRS += ["commandbar", "glance", "layout", "onboarding", "shield", "spaces", "split"]
+DIRS += ["commandbar", "glance", "layout", "onboarding", "privacy", "shield", "spaces", "split"]
 
 with Files("**"):
     BUG_COMPONENT = ("Firefox", "General")

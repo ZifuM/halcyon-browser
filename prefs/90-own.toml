@@ -70,6 +70,18 @@ why = "Set once the first-run welcome (import, look, protection, default browser
 own = true
 
 [[pref]]
+name = "peryn.ledger.enabled"
+value = true
+why = "The Privacy Ledger: a record, kept only on this computer, of every connection the browser makes by itself and of the trackers blocked on each site. Set false to stop recording."
+own = true
+
+[[pref]]
+name = "peryn.ledger.sites"
+value = true
+why = "Whether the Ledger keeps blocked counts per site (cleared with history, never kept in private windows or with history off). False keeps only daily totals."
+own = true
+
+[[pref]]
 name = "peryn.glance.enabled"
 value = true
 why = "Glance: Alt+click (Option+click) a link to preview it in a card over the page, then close it, keep it as a tab or put it side by side. Set false and Alt+click does what it does in Firefox."

@@ -143,15 +143,20 @@ def cmd_check_mozconfig(p, a):
 
 def cmd_requests(p, a):
     registry = req_registry.load(p.root / "privacy" / "requests.toml")
-    page = req_registry.render_markdown(registry, p.name)
-    target = p.root / "docs" / "EVERY-REQUEST.md"
+    outputs = {
+        p.root / "docs" / "EVERY-REQUEST.md": req_registry.render_markdown(registry, p.name),
+        p.root / "src/browser/components/peryn/privacy/PerynRequests.sys.mjs": req_registry.render_module(registry),
+    }
     if a.write:
-        target.write_text(page, encoding="utf-8", newline="\n")
-        ok(f"Wrote docs/EVERY-REQUEST.md ({len(registry)} entries)")
+        for target, text in outputs.items():
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text(text, encoding="utf-8", newline="\n")
+            ok(f"Wrote {target.relative_to(p.root)} ({len(registry)} entries)")
     elif a.check:
-        if not target.is_file() or target.read_text(encoding="utf-8") != page:
-            raise HxError("docs/EVERY-REQUEST.md is out of date: run `hx requests --write`")
-        ok("docs/EVERY-REQUEST.md matches privacy/requests.toml")
+        for target, text in outputs.items():
+            if not target.is_file() or target.read_text(encoding="utf-8") != text:
+                raise HxError(f"{target.relative_to(p.root)} is out of date: run `hx requests --write`")
+        ok("docs/EVERY-REQUEST.md and the Ledger's registry match privacy/requests.toml")
     else:
         for r in registry:
             print(f"  {r.state:3}  {r.trigger:10}  {r.id:22} {', '.join(r.hosts) or '-'}")

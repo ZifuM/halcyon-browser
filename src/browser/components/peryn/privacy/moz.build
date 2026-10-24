@@ -1,0 +1,12 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+# The Privacy Ledger and privacy page. PerynRequests.sys.mjs is generated from
+# privacy/requests.toml by `hx requests --write` (checked in; CI checks it's current).
+
+MOZ_SRC_FILES += [
+    "PerynLedger.sys.mjs",
+    "PerynLedgerLogic.sys.mjs",
+    "PerynRequests.sys.mjs",
+]

@@ -110,3 +110,42 @@ def render_markdown(requests: list[Request], product: str) -> str:
         "",
     ]
     return "\n".join(out)
+
+
+MODULE_HEADER = """/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+// Generated from privacy/requests.toml by `hx requests --write`. Do not edit here.
+// The every-request registry, for the Privacy Ledger: what each connection the browser makes
+// on its own is for, and how to turn it off.
+"""
+
+
+def render_module(requests: list[Request]) -> str:
+    """The registry as a JS module the browser can read (the Ledger classifies with it)."""
+    import json
+
+    entries = [
+        {"id": r.id, "name": r.name, "purpose": r.purpose, "hosts": list(r.hosts),
+         "state": r.state, "trigger": r.trigger, "switch": r.switch}
+        for r in requests
+    ]
+    body = json.dumps(entries, indent=2, ensure_ascii=False)
+    return MODULE_HEADER + f"""
+export const REQUESTS = Object.freeze({body}.map(entry => Object.freeze(entry)));
+
+/** Whether `host` matches a registry host pattern (`*.example.com` covers subdomains only). */
+export function hostMatches(pattern, host) {{
+  host = String(host).toLowerCase().replace(/\\.$/, "");
+  if (pattern.startsWith("*.")) {{
+    return host.endsWith(pattern.slice(1)) && host != pattern.slice(2);
+  }}
+  return host == pattern;
+}}
+
+/** The registry entry a host belongs to, or null if it isn't listed. */
+export function classify(host) {{
+  return REQUESTS.find(entry => entry.hosts.some(pattern => hostMatches(pattern, host))) ?? null;
+}}
+"""
