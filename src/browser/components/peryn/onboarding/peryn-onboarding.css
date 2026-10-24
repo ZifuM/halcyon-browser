@@ -1,0 +1,233 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+/* First-run welcome (PerynOnboarding.sys.mjs): one card in the middle of the window. */
+
+#peryn-onboarding {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font: menu;
+  font-size: var(--hx-font-body);
+  color: var(--hx-text);
+
+  &[hidden] {
+    display: none;
+  }
+
+  [hidden] {
+    display: none !important;
+  }
+}
+
+.peryn-ob-backdrop {
+  position: absolute;
+  inset: 0;
+  background: light-dark(rgb(20 20 30 / 0.24), rgb(0 0 0 / 0.5));
+  animation: peryn-ob-fade var(--hx-duration) var(--hx-ease-out);
+}
+
+.peryn-ob-card {
+  position: relative;
+  box-sizing: border-box;
+  width: min(520px, calc(100vw - 48px));
+  max-height: calc(100vh - 48px);
+  overflow: auto;
+  padding: 36px 36px 24px;
+  border-radius: 18px;
+  background: var(--hx-surface-card);
+  box-shadow:
+    var(--hx-shadow-overlay),
+    0 0 0 1px light-dark(rgb(0 0 0 / 0.08), rgb(255 255 255 / 0.1));
+  animation: peryn-ob-in var(--hx-duration-slow) var(--hx-ease-spring);
+
+  h1 {
+    margin: 0 0 8px;
+    font-size: 22px;
+    font-weight: 650;
+  }
+}
+
+.peryn-ob-welcome {
+  text-align: center;
+
+  .peryn-ob-actions {
+    justify-content: center;
+  }
+}
+
+.peryn-ob-logo {
+  width: 88px;
+  height: 88px;
+  margin: 4px auto 16px;
+  display: block;
+}
+
+.peryn-ob-text {
+  margin: 0 0 20px;
+  color: var(--hx-text-muted);
+  line-height: 1.5;
+}
+
+.peryn-ob-choices {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hx-space-2);
+  margin-bottom: 20px;
+
+  &.peryn-ob-row {
+    flex-direction: row;
+
+    > .peryn-ob-choice {
+      flex: 1;
+      text-align: center;
+    }
+  }
+}
+
+.peryn-ob-choice {
+  appearance: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 14px;
+  border: 1px solid var(--hx-divider);
+  border-radius: var(--hx-radius-tile);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  transition: background-color var(--hx-duration-fast) var(--hx-ease-out);
+
+  &:hover {
+    background-color: var(--hx-hover);
+  }
+
+  &[aria-pressed="true"] {
+    background-color: var(--hx-selected);
+    border-color: var(--hx-focus-ring);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--hx-focus-ring);
+    outline-offset: 2px;
+  }
+}
+
+.peryn-ob-choice-label {
+  font-weight: 600;
+}
+
+.peryn-ob-choice-hint {
+  color: var(--hx-text-muted);
+  font-size: var(--hx-font-small);
+}
+
+.peryn-ob-status,
+.peryn-ob-default-done {
+  margin: 4px 0 0;
+  min-height: 1.4em;
+  color: var(--hx-text-muted);
+  font-size: var(--hx-font-small);
+}
+
+.peryn-ob-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--hx-space-2);
+}
+
+.peryn-ob-primary,
+.peryn-ob-quiet {
+  appearance: none;
+  padding: 8px 16px;
+  border: none;
+  border-radius: var(--hx-radius-control);
+  font: inherit;
+  font-weight: 600;
+  transition: transform var(--hx-duration-fast) var(--hx-ease-out);
+
+  &:active {
+    transform: scale(0.97);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--hx-focus-ring);
+    outline-offset: 2px;
+  }
+}
+
+.peryn-ob-primary {
+  color: white;
+  background: linear-gradient(135deg, oklch(0.58 0.2 285), oklch(0.62 0.15 240));
+}
+
+.peryn-ob-quiet {
+  color: inherit;
+  background: transparent;
+
+  &:hover {
+    background-color: var(--hx-hover);
+  }
+}
+
+.peryn-ob-close {
+  position: absolute;
+  top: 12px;
+  inset-inline-end: 12px;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: url("chrome://global/skin/icons/close.svg") center / 14px no-repeat transparent;
+  -moz-context-properties: fill;
+  fill: currentColor;
+  color: var(--hx-text-muted);
+
+  &:hover {
+    background-color: var(--hx-hover);
+  }
+}
+
+.peryn-ob-dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 20px;
+}
+
+.peryn-ob-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--hx-divider);
+
+  &[current] {
+    background: var(--hx-focus-ring);
+  }
+}
+
+@keyframes peryn-ob-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+}
+
+@keyframes peryn-ob-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .peryn-ob-backdrop,
+  .peryn-ob-card {
+    animation: none;
+  }
+}

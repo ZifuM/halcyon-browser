@@ -823,6 +823,16 @@ export class PerynCommandBar {
       glanceSplit() {
         this.parts.glance?.split();
       },
+      showWelcome() {
+        this.parts.onboarding?.show();
+      },
+      importBrowser() {
+        this.parts.onboarding?.importFromBrowser();
+      },
+      importArc() {
+        this.parts.onboarding?.show(1);
+        this.parts.onboarding?.importFromArc();
+      },
       editShortcuts() {
         this._cameFromBar = false;
         this.open("shortcuts");

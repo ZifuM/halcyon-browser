@@ -64,6 +64,12 @@ why = "Firefox Sync carries your Spaces to your other devices (only if you sign 
 own = true
 
 [[pref]]
+name = "peryn.onboarding.done"
+value = false
+why = "Set once the first-run welcome (import, look, protection, default browser) has been closed, so it isn't shown again. The command bar's Welcome and Import brings it back."
+own = true
+
+[[pref]]
 name = "peryn.glance.enabled"
 value = true
 why = "Glance: Alt+click (Option+click) a link to preview it in a card over the page, then close it, keep it as a tab or put it side by side. Set false and Alt+click does what it does in Firefox."

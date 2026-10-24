@@ -13,7 +13,7 @@ it. See [docs/OWNERSHIP.md](docs/OWNERSHIP.md) for the eight release-blocking pr
 Phase 1 (Foundation) done: **C0 build pipeline**, **C1 privacy baseline**, **C2 Shield**.
 Phase 2 (Core experience): **C3 Arc-style layout**, **C4 Spaces** and **C5 command bar** done,
 checked in the official Firefox 158.0.1 (see below). Test installers are on the **test-build**
-pre-release. C6 in progress: split view and Glance are in; onboarding and import are next.
+pre-release. C6 in progress: split view, Glance, and the first-run welcome with import are in.
 
 ![Peryn: Essentials, Pinned and Today in the sidebar; the page as a card](docs/images/layout-light.png)
 
@@ -21,12 +21,13 @@ pre-release. C6 in progress: split view and Glance are in; onboarding and import
 | --- | --- |
 | `hx` toolchain | download Firefox, apply our changes, export edits, rebase, build, package |
 | Upstream base | Firefox **158.0.1** Release |
-| Privacy defaults | 114 prefs, every one verified against the Firefox source (or our own code) |
+| Privacy defaults | 115 prefs, every one verified against the Firefox source (or our own code) |
 | Shield | uBlock Origin's default lists in Firefox's in-tree adblock-rust engine: network blocking and element hiding, ~11 µs per request. See [docs/SHIELD.md](docs/SHIELD.md) |
 | Performance budgets | checked in CI: [docs/PERFORMANCE.md](docs/PERFORMANCE.md) |
 | Layout | Arc-style: Essentials grid, Pinned and Today, centred address, page as a card, rail, compact mode (Ctrl+Alt+C). Built on Firefox's own vertical tabs with no patches. See [docs/LAYOUT.md](docs/LAYOUT.md) |
 | Spaces | Named Spaces with their own colour, icon, Pinned tabs and optional container; switch by dot, swipe or Ctrl+Alt+arrows; synced with Firefox Sync. See [docs/SPACES.md](docs/SPACES.md) |
 | Split view and Glance | Up to four panes (grid, one large plus two, stacked) with draggable dividers; Alt+click a link to preview it in a card over the page. See [docs/SPLIT-AND-GLANCE.md](docs/SPLIT-AND-GLANCE.md) |
+| First run | A short welcome: import from any browser (Firefox's wizard) or from Arc (Spaces, pinned tabs, Favorites), look, protection level, default browser asked once. See [docs/ONBOARDING.md](docs/ONBOARDING.md) |
 | Command bar | Ctrl/Cmd+T and Ctrl/Cmd+L: tabs in every Space, bookmarks, history, actions and search in one box; a Rust index (WebAssembly) answers each keystroke in a few ms over 100,000 entries; custom keyboard shortcuts. See [docs/COMMANDBAR.md](docs/COMMANDBAR.md) |
 | UI preview | CI loads our layout into stock Firefox 158.0.1, screenshots every state and checks behaviour in the real browser (`ui-previews` branch) |
 | Compiled out | telemetry upload, Normandy experiments, crash reporter, Mozilla updater, Windows default-browser agent |
@@ -66,7 +67,7 @@ On Windows use `hx.cmd` from the MozillaBuild shell. Full guide: [docs/BUILDING.
 | `prefs/*.toml` | Default preferences, each with a reason; compiled into the build, never locked |
 | `patches/` | One patch per upstream Firefox file we change (`patches/<path>.patch`) |
 | `src/` | New files added to the Firefox tree (no budget cost); `*.tmpl` files get project values filled in |
-| `src/browser/components/peryn/` | The browser's own components: layout (sidebar, compact mode), Spaces, command bar, split view, Glance, Shield, update notifier |
+| `src/browser/components/peryn/` | The browser's own components: layout (sidebar, compact mode), Spaces, command bar, split view, Glance, first-run welcome and Arc import, Shield, update notifier |
 | `privacy/requests.toml` | Every connection the browser may make on its own; drives the public page and the audit |
 | `crates/` | Rust: `omni-index` (the command bar's search, built to WebAssembly) and `shield-check` (Shield corpus and benchmarks against Firefox's engine) |
 | `branding/overlay/` | Logo, icons and brand strings laid over Firefox's unofficial branding |

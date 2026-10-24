@@ -37,6 +37,7 @@ from hx import config, prefs  # noqa: E402
 # Prefs for the preview profile only: skip first-run pages and anything that needs our engine
 # patches (Shield's classifier feature doesn't exist in a stock build).
 USER_JS = {
+    "peryn.onboarding.done": True,  # the scenario opens the welcome itself, at the end
     "browser.aboutwelcome.enabled": False,
     "browser.startup.homepage_override.mstone": "ignore",
     "startup.homepage_welcome_url": "",
@@ -298,6 +299,17 @@ def main() -> int:
         sp = d["split"]
         checks.append(("Glance: Split shows the page and the preview side by side", sp["active"] and sp["tabs"] == 2 and sp["hasPage"]))
         checks.append(("Glance: a click beside the card closes it", d["backdrop"]["closed"] and d["backdrop"]["backOnPage"]))
+    ob = out / "onboarding.json"
+    if ob.exists():
+        d = json.loads(ob.read_text())
+        checks.append(("Welcome: opens on its first step with the logo", d["shown"]["open"] and d["shown"]["welcome"] and d["shown"]["logo"]))
+        i = d["imported"]
+        checks.append(("Welcome: Arc's Spaces, pinned tabs and Favorites come over",
+                       i["ok"] and i["spacesAdded"] >= 1 and i["studioPins"] == ["Design", "Roadmap"] and i["studioIcon"] == "🎨"
+                       and i["essential"] and i["text"].startswith("Imported")))
+        p = d["protection"]
+        checks.append(("Welcome: the protection choice sets Firefox's category", p["balanced"] == "standard" and p["pressed"] == "balanced" and p["strict"] == "strict"))
+        checks.append(("Welcome: Esc closes it and it won't show again by itself", not d["closed"]["open"] and d["closed"]["done"]))
     off = out / "commandbar-off.json"
     if off.exists():
         d = json.loads(off.read_text())

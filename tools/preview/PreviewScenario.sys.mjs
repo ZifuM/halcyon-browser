@@ -303,6 +303,9 @@ async function runScenario(win) {
   // ---- Glance (C6) ----
   await glanceScenario({ win, layout, open, sleep, shot, report });
 
+  // ---- First-run welcome and Arc import (C6) ----
+  await onboardingScenario({ win, layout, sleep, shot, report });
+
   await IOUtils.writeUTF8(PathUtils.join(OUT, "finished"), "ok");
   await sleep(500);
   Services.startup.quit(Ci.nsIAppStartup.eForceQuit);
@@ -590,9 +593,18 @@ async function glanceScenario({ win, layout, open, sleep, shot, report }) {
   const x = area.left + area.width / 2;
   const y = area.top + 220;
   const utils = win.windowUtils;
-  const alt = Ci.nsIDOMWindowUtils.MODIFIER_ALT;
-  utils.sendMouseEvent("mousedown", x, y, 0, 1, alt);
-  utils.sendMouseEvent("mouseup", x, y, 0, 1, alt);
+  const alt = Ci.nsIDOMWindowUtils.MODIFIER_ALT ?? 1;
+  try {
+    for (const type of ["mousedown", "mouseup"]) {
+      if (typeof utils.synthesizeMouseEvent == "function") {
+        utils.synthesizeMouseEvent(type, x, y, { button: 0, clickCount: 1, modifiers: alt }, { isDOMEventSynthesized: false });
+      } else {
+        utils.sendMouseEvent(type, x, y, 0, 1, alt);
+      }
+    }
+  } catch (e) {
+    log(`[scenario] synthesizing the Alt+click failed: ${e}`);
+  }
   let viaClick = false;
   for (let i = 0; i < 30 && !glance.current; i++) {
     await sleep(100);
@@ -688,4 +700,79 @@ async function glanceScenario({ win, layout, open, sleep, shot, report }) {
   await report("glance", { opened, escaped, expanded, split, backdrop });
   gBrowser.removeTab(parent);
   await sleep(500);
+}
+
+/** The welcome: shown, an Arc import into Spaces, protection choice, Esc closes for good. */
+async function onboardingScenario({ win, layout, sleep, shot, report }) {
+  const doc = win.document;
+  const ob = layout.onboarding;
+  const { PerynSpacesStore: Store } = ChromeUtils.importESModule("resource://peryn-preview/spaces/PerynSpacesStore.sys.mjs");
+  const arc = {
+    sidebar: {
+      containers: [
+        { global: {} },
+        {
+          topAppsContainerIDs: [{ default: true }, "top"],
+          spaces: [
+            "s1",
+            { id: "s1", title: "Studio", containerIDs: ["pinned", "p1", "unpinned", "u1"], customInfo: { iconType: { emoji_v2: "🎨" } } },
+          ],
+          items: [
+            "top", { id: "top", childrenIds: ["f1"], data: { itemContainer: { containerType: { topApps: {} } } } },
+            "f1", { id: "f1", parentID: "top", childrenIds: [], title: "Photos", data: { tab: { savedURL: SITE + "photos.html", savedTitle: "Photos" } } },
+            "p1", { id: "p1", childrenIds: ["t1", "t2"], data: { itemContainer: { containerType: { spaceItems: { _0: "s1" } } } } },
+            "t1", { id: "t1", parentID: "p1", childrenIds: [], title: "Design", data: { tab: { savedURL: SITE + "design.html", savedTitle: "Design" } } },
+            "t2", { id: "t2", parentID: "p1", childrenIds: [], title: "Roadmap", data: { tab: { savedURL: SITE + "roadmap.html", savedTitle: "Roadmap" } } },
+          ],
+        },
+      ],
+    },
+  };
+  const path = PathUtils.join(OUT, "StorableSidebar.json");
+  await IOUtils.writeUTF8(path, JSON.stringify(arc));
+  const spacesBefore = Store.spaces.length;
+  Services.prefs.setBoolPref("peryn.onboarding.done", false);
+
+  ob.show();
+  await sleep(1200);
+  const root = doc.getElementById("peryn-onboarding");
+  const visible = step => {
+    const el = root?.querySelector(`.peryn-ob-step[data-step="${step}"]`);
+    return !!el && !el.hidden && el.getBoundingClientRect().height > 0;
+  };
+  const shown = { open: ob.isOpen, welcome: visible("welcome"), logo: (root?.querySelector(".peryn-ob-logo")?.naturalWidth ?? 0) > 0 };
+  await shot("21-welcome");
+
+  ob.go(1);
+  const result = await ob.importFromArc({ path });
+  await sleep(1500);
+  const studio = Store.spaces.find(s => s.name == "Studio");
+  const imported = {
+    importStep: visible("import"),
+    text: root.querySelector(".peryn-ob-status").textContent,
+    spacesAdded: Store.spaces.length - spacesBefore,
+    studioPins: studio?.pins.map(p => p.title) ?? [],
+    studioIcon: studio?.icon ?? "",
+    essential: Store.data.essentials.some(e => e.url.endsWith("photos.html")),
+    ok: !!result,
+  };
+  await shot("22-import-arc");
+
+  ob.go(3);
+  ob.setProtection("balanced");
+  await sleep(300);
+  const balanced = Services.prefs.getStringPref("browser.contentblocking.category", "");
+  const pressed = root.querySelector('[data-group="protection"][aria-pressed="true"]')?.dataset.choice;
+  ob.setProtection("strict");
+  await sleep(300);
+  const strict = Services.prefs.getStringPref("browser.contentblocking.category", "");
+
+  win.dispatchEvent(new win.KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true }));
+  await sleep(500);
+  await report("onboarding", {
+    shown,
+    imported,
+    protection: { balanced, pressed, strict },
+    closed: { open: ob.isOpen, done: Services.prefs.getBoolPref("peryn.onboarding.done", false) },
+  });
 }

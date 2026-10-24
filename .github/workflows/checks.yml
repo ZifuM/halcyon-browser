@@ -31,7 +31,7 @@ jobs:
       - name: Build the command bar index (Rust -> WebAssembly)
         run: rustup target add wasm32-unknown-unknown && python tools/omni/build_wasm.py
       - name: Browser component tests (Node, mocked Firefox APIs)
-        run: python tools/ci/annotate.py "JS tests" -- node --import ./tests/js/register.mjs --test tests/js/test_updates.test.mjs tests/js/test_shield.test.mjs tests/js/test_cosmetic.test.mjs tests/js/test_layout.test.mjs tests/js/test_spaces.test.mjs tests/js/test_omni.test.mjs tests/js/test_commandbar.test.mjs tests/js/test_split.test.mjs tests/js/test_glance.test.mjs
+        run: python tools/ci/annotate.py "JS tests" -- node --import ./tests/js/register.mjs --test tests/js/test_updates.test.mjs tests/js/test_shield.test.mjs tests/js/test_cosmetic.test.mjs tests/js/test_layout.test.mjs tests/js/test_spaces.test.mjs tests/js/test_omni.test.mjs tests/js/test_commandbar.test.mjs tests/js/test_split.test.mjs tests/js/test_glance.test.mjs tests/js/test_onboarding.test.mjs
 
   upstream-compat:
     name: Apply to Firefox and audit
