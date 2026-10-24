@@ -15,4 +15,4 @@ __pycache__/
 
 # Rust build output
 /crates/*/target/
-/src/browser/components/halcyon/commandbar/omni_index.wasm
+/src/browser/components/peryn/commandbar/omni_index.wasm

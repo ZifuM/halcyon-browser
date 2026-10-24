@@ -12,7 +12,7 @@ too) and every host is checked against the registry:
   violation  listed with trigger "user"                 -> happened without any user action
 
 Usage:
-  python3 tools/audit/network_audit.py --browser path/to/halcyon [--seconds 120]
+  python3 tools/audit/network_audit.py --browser path/to/peryn [--seconds 120]
 Exit status 1 if there are violations. Standard library only.
 """
 

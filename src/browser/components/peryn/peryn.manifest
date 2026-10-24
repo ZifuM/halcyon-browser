@@ -1,0 +1,13 @@
+# Startup hooks for the browser's own components. Idle startup runs after the first window is
+# shown and the browser is idle, so nothing here slows down launch. The element-hiding actor is
+# registered before the first window instead (it only declares the actor; nothing is loaded
+# until a page needs it), so the first pages get it too.
+category browser-before-ui-startup moz-src:///browser/components/peryn/shield/ShieldCosmetic.sys.mjs ShieldCosmetic.init
+category browser-idle-startup moz-src:///browser/components/peryn/PerynUpdates.sys.mjs PerynUpdates.init
+category browser-idle-startup moz-src:///browser/components/peryn/shield/ShieldLists.sys.mjs ShieldLists.init
+
+# Window layout (layout/PerynLayout.sys.mjs). Stylesheets go in before the window's first
+# layout so it never paints stock Firefox first; the rest waits for the tab strip to exist.
+category browser-before-ui-startup moz-src:///browser/components/peryn/layout/PerynLayout.sys.mjs PerynLayout.init
+category browser-window-before-initial-xul-layout moz-src:///browser/components/peryn/layout/PerynLayout.sys.mjs PerynLayout.beforeLayout
+category browser-window-domcontentloaded moz-src:///browser/components/peryn/layout/PerynLayout.sys.mjs PerynLayout.onDOMContentLoaded

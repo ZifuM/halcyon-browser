@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 license = "MPL-2.0"
 publish = false
-description = "Halcyon's command-bar index: fuzzy search over tabs, history, bookmarks and actions. No dependencies; compiled to WebAssembly for the browser."
+description = "Peryn's command-bar index: fuzzy search over tabs, history, bookmarks and actions. No dependencies; compiled to WebAssembly for the browser."
 
 [lib]
 crate-type = ["cdylib", "rlib"]

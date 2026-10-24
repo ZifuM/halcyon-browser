@@ -1,5 +1,5 @@
 diff --git a/toolkit/components/content-classifier/nsIContentClassifierService.idl b/toolkit/components/content-classifier/nsIContentClassifierService.idl
-index 3aa1bf2d5e0c548673571602cf2c073471923e93..3227052a65a6dfb973e4b7b4a045ed1b2c167f6a 100644
+index 3aa1bf2d5e0c548673571602cf2c073471923e93..349e212982b0a17e5bc0a2c8714c490d7e901142 100644
 --- a/toolkit/components/content-classifier/nsIContentClassifierService.idl
 +++ b/toolkit/components/content-classifier/nsIContentClassifierService.idl
 @@ -108,6 +108,31 @@ interface nsIContentClassifierService : nsISupports {
@@ -8,7 +8,7 @@ index 3aa1bf2d5e0c548673571602cf2c073471923e93..3227052a65a6dfb973e4b7b4a045ed1b
          in nsIContentClassifierProbeRequest aRequest);
 +
 +    /**
-+     * Halcyon Shield: element hiding. Site-specific cosmetic resources for
++     * Peryn Shield: element hiding. Site-specific cosmetic resources for
 +     * aUrl, merged over the engines that block in this mode (the engines /
 +     * engines.pbmode prefs). aExceptions is passed back to
 +     * getHiddenClassIdSelectors; if aGenericHide is true, generic rules must
@@ -23,7 +23,7 @@ index 3aa1bf2d5e0c548673571602cf2c073471923e93..3227052a65a6dfb973e4b7b4a045ed1b
 +                              out boolean aGenericHide);
 +
 +    /**
-+     * Halcyon Shield: selectors from generic rules matching the classes and
++     * Peryn Shield: selectors from generic rules matching the classes and
 +     * ids found in a page.
 +     */
 +    Array<ACString> getHiddenClassIdSelectors(

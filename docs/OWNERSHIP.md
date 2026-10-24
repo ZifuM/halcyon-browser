@@ -30,7 +30,7 @@ These eight rules are release-blocking: a release that breaks one does not ship.
 | 5 | No background connections the user didn't ask for; every remaining one is listed with an off switch. | `prefs/50-quiet-network.toml`, `privacy/requests.toml`, [EVERY-REQUEST.md](EVERY-REQUEST.md) |
 | 5 | CI proves it: the network audit runs the real build and fails on any connection that isn't listed, or that is listed as off. | `tools/audit/network_audit.py`, `build` workflow |
 | 2 | No system add-on swaps between releases: the browser only changes when the user updates. | `prefs/50-quiet-network.toml` |
-| 7 | Updates: a daily check shows a notification bar with a link; nothing is downloaded or installed automatically, "Not now" silences that version, and the check can be switched off. | `src/browser/components/halcyon/HalcyonUpdates.sys.mjs` |
+| 7 | Updates: a daily check shows a notification bar with a link; nothing is downloaded or installed automatically, "Not now" silences that version, and the check can be switched off. | `src/browser/components/peryn/PerynUpdates.sys.mjs` |
 
 Still to build: onboarding (ask-once default browser), a settings toggle for the update check
 (today: about:config), one-click export (C10).

@@ -1,12 +1,12 @@
 diff --git a/toolkit/components/content-classifier/content_classifier_engine/ContentClassifierEngine.h b/toolkit/components/content-classifier/content_classifier_engine/ContentClassifierEngine.h
-index b907ed7884fe3752f77ee94713d322e06e04de8b..43f0bd25b6b5285c15e653f17e9924e4edb80f04 100644
+index b907ed7884fe3752f77ee94713d322e06e04de8b..34964d446a78021fa1cf34424fe17fe5e4eff91d 100644
 --- a/toolkit/components/content-classifier/content_classifier_engine/ContentClassifierEngine.h
 +++ b/toolkit/components/content-classifier/content_classifier_engine/ContentClassifierEngine.h
 @@ -109,6 +109,32 @@ class ContentClassifierEngine final {
    ContentClassifierEngineResult CheckNetworkRequest(
        const ContentClassifierRequest& aRequest, bool aPreviouslyMatched);
  
-+  // Halcyon Shield: element hiding (cosmetic filters), appended to the arrays.
++  // Peryn Shield: element hiding (cosmetic filters), appended to the arrays.
 +  nsresult UrlCosmeticResources(const nsACString& aUrl,
 +                                nsTArray<nsCString>& aHideSelectors,
 +                                nsTArray<nsCString>& aProceduralActions,

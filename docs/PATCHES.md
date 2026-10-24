@@ -45,7 +45,7 @@ The rebase bot (`.github/workflows/upstream.yml`) opens an issue with the log wh
 | File | Why |
 | --- | --- |
 | `browser/moz.configure` | Don't build-enable Normandy: the browser must not change behaviour from server instructions. |
-| `browser/components/moz.build` | Adds `halcyon` to the component directories. All our own components live in `src/browser/components/halcyon/` behind this one-line hook. |
+| `browser/components/moz.build` | Adds `peryn` to the component directories. All our own components live in `src/browser/components/peryn/` behind this one-line hook. |
 | `toolkit/components/content-classifier/ContentClassifierService.cpp` | Shield: registers the `shield` feature and its list ids in Firefox's content classifier (adblock-rust), and implements the two element-hiding methods below. |
 | `toolkit/components/content-classifier/ContentClassifierRemoteSettingsClient.sys.mjs` | Shield: lists named `shield-*` are read from our list manager (uBlock Origin / EasyList lists) instead of Mozilla's Remote Settings. |
 | `toolkit/components/content-classifier/nsIContentClassifierService.idl` | Shield element hiding: `getCosmeticResources` and `getHiddenClassIdSelectors`. |

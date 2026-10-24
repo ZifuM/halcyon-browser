@@ -11,9 +11,9 @@ ChromeUtils._preload("resource://gre/modules/Timer.sys.mjs", Timer);
 ChromeUtils._preload("resource:///modules/BrowserWindowTracker.sys.mjs", Tracker);
 
 const { compareVersions, parseRelease, shouldCheck, shouldNotify } = await import(
-  "moz-src:///browser/components/halcyon/HalcyonUpdateLogic.sys.mjs"
+  "moz-src:///browser/components/peryn/PerynUpdateLogic.sys.mjs"
 );
-const { HalcyonUpdates } = await import("moz-src:///browser/components/halcyon/HalcyonUpdates.sys.mjs");
+const { PerynUpdates } = await import("moz-src:///browser/components/peryn/PerynUpdates.sys.mjs");
 
 // ---- pure logic -------------------------------------------------------------
 
@@ -94,70 +94,70 @@ beforeEach(() => {
 
 test("a newer release shows the bar; the request carries no cookies or referrer", async () => {
   mockFetch(200, RELEASE);
-  await HalcyonUpdates.maybeCheck();
+  await PerynUpdates.maybeCheck();
   assert.equal(fetchCalls.length, 1);
   assert.equal(fetchCalls[0].url, "https://api.github.com/repos/owner/repo/releases/latest");
   assert.equal(fetchCalls[0].options.credentials, "omit");
   assert.equal(fetchCalls[0].options.referrerPolicy, "no-referrer");
   assert.equal(notifications.length, 1);
   assert.match(notifications[0].opts.label, /Testy 0\.2\.0 is available\. You're on 0\.1\.0/);
-  assert.ok(Services.prefs.getIntPref("halcyon.updates.lastCheckSeconds", 0) > 0);
+  assert.ok(Services.prefs.getIntPref("peryn.updates.lastCheckSeconds", 0) > 0);
 });
 
 test("'See what's new' opens the release page; 'Not now' silences that version", async () => {
   mockFetch(200, RELEASE);
-  await HalcyonUpdates.maybeCheck();
+  await PerynUpdates.maybeCheck();
   const [see, notNow] = notifications[0].buttons;
   see.callback();
   assert.deepEqual(opened, [{ url: RELEASE.html_url, where: "tab" }]);
   notNow.callback();
-  assert.equal(Services.prefs.getStringPref("halcyon.updates.dismissedVersion", ""), "0.2.0");
+  assert.equal(Services.prefs.getStringPref("peryn.updates.dismissedVersion", ""), "0.2.0");
 
   notifications = [];
-  Services.prefs.setIntPref("halcyon.updates.lastCheckSeconds", 0);
-  await HalcyonUpdates.maybeCheck();
+  Services.prefs.setIntPref("peryn.updates.lastCheckSeconds", 0);
+  await PerynUpdates.maybeCheck();
   assert.equal(notifications.length, 0, "dismissed version must not reappear");
 });
 
 test("nothing happens when switched off, offline, recently checked, or up to date", async () => {
   mockFetch(200, RELEASE);
-  Services.prefs.setBoolPref("halcyon.updates.check.enabled", false);
-  await HalcyonUpdates.maybeCheck();
+  Services.prefs.setBoolPref("peryn.updates.check.enabled", false);
+  await PerynUpdates.maybeCheck();
   assert.equal(fetchCalls.length, 0, "switched off: no request at all");
 
   Services.prefs._reset();
   Services.io.offline = true;
-  await HalcyonUpdates.maybeCheck();
+  await PerynUpdates.maybeCheck();
   assert.equal(fetchCalls.length, 0, "offline: no request");
 
   Services.io.offline = false;
-  Services.prefs.setIntPref("halcyon.updates.lastCheckSeconds", Math.floor(Date.now() / 1000) - 60);
-  await HalcyonUpdates.maybeCheck();
+  Services.prefs.setIntPref("peryn.updates.lastCheckSeconds", Math.floor(Date.now() / 1000) - 60);
+  await PerynUpdates.maybeCheck();
   assert.equal(fetchCalls.length, 0, "within the interval: no request");
 
   Services.prefs._reset();
   mockFetch(200, { tag_name: "v0.1.0", html_url: RELEASE.html_url });
-  await HalcyonUpdates.maybeCheck();
+  await PerynUpdates.maybeCheck();
   assert.equal(fetchCalls.length, 1);
   assert.equal(notifications.length, 0, "same version: no bar");
 });
 
 test("no releases yet (404) or a network error is silent", async () => {
   mockFetch(404, { message: "Not Found" });
-  await HalcyonUpdates.maybeCheck();
+  await PerynUpdates.maybeCheck();
   assert.equal(notifications.length, 0);
 
   Services.prefs._reset();
   globalThis.fetch = async () => {
     throw new TypeError("NetworkError");
   };
-  await assert.doesNotReject(HalcyonUpdates.maybeCheck());
+  await assert.doesNotReject(PerynUpdates.maybeCheck());
   assert.equal(notifications.length, 0);
 });
 
 test("init checks once and schedules an hourly re-check", async () => {
   mockFetch(200, RELEASE);
-  HalcyonUpdates.init();
+  PerynUpdates.init();
   await new Promise(r => setImmediate(r));
   assert.equal(fetchCalls.length, 1);
   assert.equal(Timer.intervals.at(-1).ms, 3600000);

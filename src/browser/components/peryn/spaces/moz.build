@@ -1,0 +1,15 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+# Spaces (C4): named, coloured groups of tabs with their own Pinned tabs and optional container,
+# synced through Firefox Sync. Created per window by ../layout/PerynLayout.sys.mjs.
+
+MOZ_SRC_FILES += [
+    "peryn-grain.svg",
+    "peryn-spaces.css",
+    "PerynSpaces.sys.mjs",
+    "PerynSpacesLogic.sys.mjs",
+    "PerynSpacesStore.sys.mjs",
+    "PerynSpacesUI.sys.mjs",
+]

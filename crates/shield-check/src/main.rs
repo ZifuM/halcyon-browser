@@ -10,7 +10,7 @@
 //!   * network blocking: `Request::preparsed` + `check_network_request_subset`
 //!     (toolkit/components/content-classifier/content_classifier_engine/src/lib.rs)
 //!   * element hiding: `url_cosmetic_resources` + `hidden_class_id_selectors` (the FFI functions
-//!     our patch adds to the same file; see src/browser/components/halcyon/shield/).
+//!     our patch adds to the same file; see src/browser/components/peryn/shield/).
 //!
 //!   shield-check --corpus corpus.toml --list a.txt --list b.txt [--bench] [--json out.json]
 //!                [--max-build-ms N] [--max-request-us N] [--max-serialized-kb N]

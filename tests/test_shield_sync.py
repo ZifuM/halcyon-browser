@@ -11,9 +11,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 PATCH = ROOT / "patches/toolkit/components/content-classifier/ContentClassifierService.cpp.patch"
-CATALOG = ROOT / "src/browser/components/halcyon/shield/ShieldListLogic.sys.mjs"
+CATALOG = ROOT / "src/browser/components/peryn/shield/ShieldListLogic.sys.mjs"
 CC = ROOT / "patches/toolkit/components/content-classifier"
-SHIELD_SRC = ROOT / "src/browser/components/halcyon/shield"
+SHIELD_SRC = ROOT / "src/browser/components/peryn/shield"
 
 
 def added_lines(patch: Path) -> str:
@@ -100,9 +100,9 @@ class ElementHidingSyncTests(unittest.TestCase):
         self.assertEqual(listed, present)
 
     def test_actor_registered_at_startup(self):
-        manifest = (ROOT / "src/browser/components/halcyon/halcyon.manifest").read_text(encoding="utf-8")
+        manifest = (ROOT / "src/browser/components/peryn/peryn.manifest").read_text(encoding="utf-8")
         self.assertIn("category browser-before-ui-startup "
-                      "moz-src:///browser/components/halcyon/shield/ShieldCosmetic.sys.mjs "
+                      "moz-src:///browser/components/peryn/shield/ShieldCosmetic.sys.mjs "
                       "ShieldCosmetic.init", manifest)
 
 

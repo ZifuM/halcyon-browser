@@ -2,14 +2,14 @@
 # Renaming the browser = editing [identity] and re-running `hx import`.
 
 [identity]
-name = "Halcyon"                 # Display name (placeholder, not final)
-app_name = "halcyon"             # Binary / package name: lowercase, no spaces
-vendor = "Halcyon"               # Shown in About and installer
-bundle_id = "app.halcyon.browser" # macOS bundle identifier (reverse DNS)
-homepage = "https://github.com/ZifuM/halcyon-browser"
+name = "Peryn"                  # Display name (formerly the working name Halcyon)
+app_name = "peryn"             # Binary / package name: lowercase, no spaces
+vendor = "Peryn"               # Shown in About and installer
+bundle_id = "app.peryn.browser" # macOS bundle identifier (reverse DNS)
+homepage = "https://github.com/ZifuM/halcyon-browser"   # update if the repository is renamed
 
 [version]
-display = "0.1.0"                # Halcyon's own version, shown as "0.1.0 (Firefox 158.0.1)"
+display = "0.1.0"                # Peryn's own version, shown as "0.1.0 (Firefox 158.0.1)"
 
 [updates]
 github_repo = "ZifuM/halcyon-browser"   # where releases are published and checked for

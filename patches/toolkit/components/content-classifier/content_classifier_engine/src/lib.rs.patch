@@ -1,16 +1,16 @@
 diff --git a/toolkit/components/content-classifier/content_classifier_engine/src/lib.rs b/toolkit/components/content-classifier/content_classifier_engine/src/lib.rs
-index b739220db109eb60bc042c675624fe1f64f3b66b..6e5b0f8f4b9556d873e0687c478c3d9b7b325f41 100644
+index b739220db109eb60bc042c675624fe1f64f3b66b..55d983a98ab17788019d333bfe5854af5602a3ad 100644
 --- a/toolkit/components/content-classifier/content_classifier_engine/src/lib.rs
 +++ b/toolkit/components/content-classifier/content_classifier_engine/src/lib.rs
 @@ -182,6 +182,65 @@ pub unsafe extern "C" fn content_classifier_engine_check_network_request_prepars
      NS_OK
  }
  
-+// Halcyon Shield: element hiding. The engine already parses the cosmetic rules in each list;
++// Peryn Shield: element hiding. The engine already parses the cosmetic rules in each list;
 +// these expose them so a content actor can hide ad containers. See
-+// browser/components/halcyon/shield/ShieldCosmetic*.sys.mjs.
++// browser/components/peryn/shield/ShieldCosmetic*.sys.mjs.
 +
-+fn halcyon_extend(out: &mut ThinVec<nsCString>, items: impl IntoIterator<Item = String>) {
++fn peryn_extend(out: &mut ThinVec<nsCString>, items: impl IntoIterator<Item = String>) {
 +    out.extend(items.into_iter().map(|s| nsCString::from(s.as_str())));
 +}
 +
@@ -32,9 +32,9 @@ index b739220db109eb60bc042c675624fe1f64f3b66b..6e5b0f8f4b9556d873e0687c478c3d9b
 +    }
 +    let url_str = String::from_utf8_lossy(url.as_ref()).to_string();
 +    let resources = (*engine).engine.url_cosmetic_resources(&url_str);
-+    halcyon_extend(out_hide_selectors, resources.hide_selectors);
-+    halcyon_extend(out_procedural_actions, resources.procedural_actions);
-+    halcyon_extend(out_exceptions, resources.exceptions);
++    peryn_extend(out_hide_selectors, resources.hide_selectors);
++    peryn_extend(out_procedural_actions, resources.procedural_actions);
++    peryn_extend(out_exceptions, resources.exceptions);
 +    out_injected_script.append(&resources.injected_script);
 +    *out_generichide = resources.generichide;
 +    NS_OK
@@ -61,7 +61,7 @@ index b739220db109eb60bc042c675624fe1f64f3b66b..6e5b0f8f4b9556d873e0687c478c3d9b
 +        to_strings(ids),
 +        &exceptions,
 +    );
-+    halcyon_extend(out_selectors, selectors);
++    peryn_extend(out_selectors, selectors);
 +    NS_OK
 +}
 +

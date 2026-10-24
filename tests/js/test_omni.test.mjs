@@ -8,11 +8,11 @@ import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 
 const { OmniIndex, SimpleIndex, KIND, ALL_KINDS } = await import(
-  "moz-src:///browser/components/halcyon/commandbar/OmniIndex.sys.mjs"
+  "moz-src:///browser/components/peryn/commandbar/OmniIndex.sys.mjs"
 );
 
 const WASM = fileURLToPath(
-  new URL("../../src/browser/components/halcyon/commandbar/omni_index.wasm", import.meta.url)
+  new URL("../../src/browser/components/peryn/commandbar/omni_index.wasm", import.meta.url)
 );
 const bytes = await readFile(WASM);
 const makeWasm = () => OmniIndex.fromBytes(bytes);

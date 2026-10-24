@@ -1,5 +1,5 @@
 # The Arc-style layout (C3). Firefox's own vertical tabs carry the sidebar; our layout component
-# (src/browser/components/halcyon/layout/) styles and extends them. All of these are ordinary
+# (src/browser/components/peryn/layout/) styles and extends them. All of these are ordinary
 # defaults: Settings and about:config can change any of them.
 
 [meta]

@@ -4,7 +4,7 @@ import "./globals.mjs";
 import { test, beforeEach } from "node:test";
 import assert from "node:assert/strict";
 
-const Logic = await import("moz-src:///browser/components/halcyon/spaces/HalcyonSpacesLogic.sys.mjs");
+const Logic = await import("moz-src:///browser/components/peryn/spaces/PerynSpacesLogic.sys.mjs");
 
 // ---- Firefox module mocks -------------------------------------------------------------------
 
@@ -47,11 +47,11 @@ ChromeUtils._preload("resource://gre/modules/ContextualIdentityService.sys.mjs",
 globalThis.Services.startup = { shuttingDown: false };
 globalThis.Services.prefs.removeObserver = () => {};
 
-const { HalcyonSpacesStore: Store } = await import(
-  "moz-src:///browser/components/halcyon/spaces/HalcyonSpacesStore.sys.mjs"
+const { PerynSpacesStore: Store } = await import(
+  "moz-src:///browser/components/peryn/spaces/PerynSpacesStore.sys.mjs"
 );
-const { HalcyonSpaces, SPACE_ATTR, PIN_ID_VALUE } = await import(
-  "moz-src:///browser/components/halcyon/spaces/HalcyonSpaces.sys.mjs"
+const { PerynSpaces, SPACE_ATTR, PIN_ID_VALUE } = await import(
+  "moz-src:///browser/components/peryn/spaces/PerynSpaces.sys.mjs"
 );
 
 let seq = 0;
@@ -165,13 +165,13 @@ test("store: edits write the pref; other writers (Sync) notify windows; own writ
   const changes = [];
   Store.subscribe((data, change) => changes.push(change));
   const space = Store.create({ name: "Work" });
-  assert.equal(JSON.parse(Services.prefs.getStringPref("halcyon.spaces")).spaces.length, 2);
-  Store.observe(null, "nsPref:changed", "halcyon.spaces"); // the echo of our own write
+  assert.equal(JSON.parse(Services.prefs.getStringPref("peryn.spaces")).spaces.length, 2);
+  Store.observe(null, "nsPref:changed", "peryn.spaces"); // the echo of our own write
   assert.deepEqual(changes, [{ created: space.id }]);
 
   // Sync replaces the pref.
-  Services.prefs.setStringPref("halcyon.spaces", JSON.stringify({ spaces: [{ id: "x", name: "From laptop" }] }));
-  Store.observe(null, "nsPref:changed", "halcyon.spaces");
+  Services.prefs.setStringPref("peryn.spaces", JSON.stringify({ spaces: [{ id: "x", name: "From laptop" }] }));
+  Store.observe(null, "nsPref:changed", "peryn.spaces");
   assert.deepEqual(changes.at(-1), { external: true });
   assert.deepEqual(Store.spaces.map(s => s.name), ["From laptop"]);
 });
@@ -313,7 +313,7 @@ function makeWindow(urls = ["https://a/"]) {
   doc.createXULElement = () => ({ setAttribute() {}, addEventListener() {}, append() {} });
   tabs[0].selected = true;
   tracker.windows.push(win);
-  const spaces = new HalcyonSpaces(win, {
+  const spaces = new PerynSpaces(win, {
     sections,
     createUI: () => ({ init() {}, render() {}, uninit() {} }),
   });
@@ -324,8 +324,8 @@ function makeWindow(urls = ["https://a/"]) {
 test("existing tabs join the first Space; the window shows that Space's colour", () => {
   const { tabs, root } = makeWindow(["https://a/", "https://b/"]);
   assert.deepEqual(tabs.map(t => t.getAttribute(SPACE_ATTR)), ["s-personal", "s-personal"]);
-  assert.equal(root.attrs.get("halcyon-space"), "s-personal");
-  assert.equal(root.style.props["--hx-space-hue"], "262");
+  assert.equal(root.attrs.get("peryn-space"), "s-personal");
+  assert.equal(root.style.props["--hx-space-hue"], "268");
 });
 
 test("switching shows only that Space's tabs and selects its most recent tab", () => {
@@ -406,9 +406,9 @@ test("deleting a Space moves its tabs to the neighbouring Space", () => {
 
 test("launchers: pinning records a launcher; another machine's launchers open here; removed ones release", () => {
   const { gBrowser, tabs, spaces, sectionsPinned } = makeWindow(["https://a/", "https://b/"]);
-  // Pinned in this window (HalcyonSections announces it).
+  // Pinned in this window (PerynSections announces it).
   sectionsPinned.add(tabs[1]);
-  gBrowser.fire("HalcyonPinnedChange", tabs[1], { pinned: true });
+  gBrowser.fire("PerynPinnedChange", tabs[1], { pinned: true });
   const pinId = tabValues.get(tabs[1])[PIN_ID_VALUE];
   assert.ok(pinId);
   assert.deepEqual(Store.get("s-personal").pins.map(p => p.url), ["https://b/"]);
@@ -416,8 +416,8 @@ test("launchers: pinning records a launcher; another machine's launchers open he
   // Sync brings a launcher from the laptop, and drops ours.
   const data = structuredClone(Store.data);
   data.spaces[0].pins = [{ id: "p-laptop", url: "https://laptop/", title: "From laptop" }];
-  Services.prefs.setStringPref("halcyon.spaces", JSON.stringify(data));
-  Store.observe(null, "nsPref:changed", "halcyon.spaces");
+  Services.prefs.setStringPref("peryn.spaces", JSON.stringify(data));
+  Store.observe(null, "nsPref:changed", "peryn.spaces");
   const opened = gBrowser.tabs.find(t => t.url == "https://laptop/");
   assert.ok(opened, "missing launcher opened");
   assert.equal(opened.options.createLazyBrowser, true, "unloaded until clicked");
@@ -436,8 +436,8 @@ test("Essentials sync: pinning adds, a remote Essential opens pinned, closing by
 
   const data = structuredClone(Store.data);
   data.essentials.push({ id: "e-cal", url: "https://cal/", title: "Calendar" });
-  Services.prefs.setStringPref("halcyon.spaces", JSON.stringify(data));
-  Store.observe(null, "nsPref:changed", "halcyon.spaces");
+  Services.prefs.setStringPref("peryn.spaces", JSON.stringify(data));
+  Store.observe(null, "nsPref:changed", "peryn.spaces");
   const cal = gBrowser.tabs.find(t => t.url == "https://cal/");
   assert.ok(cal?.pinned);
   assert.equal(Store.data.essentials.length, 2, "opening a launcher doesn't duplicate it");
@@ -457,7 +457,7 @@ test("swiping sideways on the sidebar switches Space", () => {
 test("a launcher's title follows the page once it loads (and its URL, if pinned before loading)", () => {
   const { gBrowser, tabs, sectionsPinned } = makeWindow(["about:newtab"]);
   sectionsPinned.add(tabs[0]);
-  gBrowser.fire("HalcyonPinnedChange", tabs[0], { pinned: true });
+  gBrowser.fire("PerynPinnedChange", tabs[0], { pinned: true });
   tabs[0].linkedBrowser.currentURI.spec = "https://docs.example/";
   tabs[0].label = "Docs";
   gBrowser.fire("TabAttrModified", tabs[0], { changed: ["label"] });

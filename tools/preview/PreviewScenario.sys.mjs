@@ -1,14 +1,14 @@
-/* Halcyon UI preview harness (CI only, never shipped). Loaded by halcyon-preview.cfg.
+/* Peryn UI preview harness (CI only, never shipped). Loaded by peryn-preview.cfg.
  *
- * Registers our layout's window hooks the way halcyon.manifest does (pointing at
- * resource://halcyon-preview/, which the .cfg maps to src/browser/components/halcyon/), then
+ * Registers our layout's window hooks the way peryn.manifest does (pointing at
+ * resource://peryn-preview/, which the .cfg maps to src/browser/components/peryn/), then
  * scripts a session (Essentials, Pinned, Today tabs) and walks through the layout states. At
- * each state it writes <name>.ready to $HALCYON_PREVIEW_OUT and waits for run_preview.py to take
+ * each state it writes <name>.ready to $PERYN_PREVIEW_OUT and waits for run_preview.py to take
  * a screenshot and write <name>.done. Console errors go to console.log in the same folder. */
 
-const OUT = Services.env.get("HALCYON_PREVIEW_OUT");
-const SITE = Services.env.get("HALCYON_PREVIEW_SITE");
-const LAYOUT = "resource://halcyon-preview/layout/HalcyonLayout.sys.mjs";
+const OUT = Services.env.get("PERYN_PREVIEW_OUT");
+const SITE = Services.env.get("PERYN_PREVIEW_SITE");
+const LAYOUT = "resource://peryn-preview/layout/PerynLayout.sys.mjs";
 
 const consoleLines = [];
 let flushQueued = false;
@@ -35,7 +35,7 @@ export const PreviewScenario = {
             if (!(message.flags & Ci.nsIScriptError.warningFlag)) {
               log(`[error] ${message.errorMessage} (${message.sourceName}:${message.lineNumber})`);
             }
-          } else if (/halcyon/i.test(message.message)) {
+          } else if (/peryn/i.test(message.message)) {
             log(`[console] ${message.message}`);
           }
         } catch (e) {
@@ -48,15 +48,15 @@ export const PreviewScenario = {
       const msg = subject.wrappedJSObject;
       if (msg?.level == "error" || msg?.level == "warn") {
         const text = (msg.arguments || []).map(a => (a?.stack ? `${a}\n${a.stack}` : String(a))).join(" ");
-        if (/halcyon/i.test(text) || /halcyon/i.test(msg.filename || "")) {
+        if (/peryn/i.test(text) || /peryn/i.test(msg.filename || "")) {
           log(`[console.${msg.level}] ${text} (${msg.filename}:${msg.lineNumber})`);
         }
       }
     }, "console-api-log-event");
     for (const [category, method] of [
-      ["browser-before-ui-startup", "HalcyonLayout.init"],
-      ["browser-window-before-initial-xul-layout", "HalcyonLayout.beforeLayout"],
-      ["browser-window-domcontentloaded", "HalcyonLayout.onDOMContentLoaded"],
+      ["browser-before-ui-startup", "PerynLayout.init"],
+      ["browser-window-before-initial-xul-layout", "PerynLayout.beforeLayout"],
+      ["browser-window-domcontentloaded", "PerynLayout.onDOMContentLoaded"],
     ]) {
       Services.catMan.addCategoryEntry(category, LAYOUT, method, false, true);
     }
@@ -90,8 +90,8 @@ async function runScenario(win) {
   win.moveTo(0, 0);
   win.resizeTo(1440, 900);
 
-  const { HalcyonLayout } = ChromeUtils.importESModule(LAYOUT);
-  const layout = HalcyonLayout.forWindow(win);
+  const { PerynLayout } = ChromeUtils.importESModule(LAYOUT);
+  const layout = PerynLayout.forWindow(win);
   if (!layout) {
     throw new Error("layout did not attach to the window");
   }
@@ -120,7 +120,7 @@ async function runScenario(win) {
     tabs: gBrowser.tabs.map(t => ({
       title: t.label,
       essential: t.pinned,
-      pinned: t.hasAttribute("halcyon-pinned"),
+      pinned: t.hasAttribute("peryn-pinned"),
     })),
   });
 
@@ -135,11 +135,11 @@ async function runScenario(win) {
       hidden: el.hidden || el.collapsed,
       width: Math.round(el.getBoundingClientRect().width),
     })),
-    copyLinkWidget: !!CustomizableUI.getWidget("halcyon-copy-link-button")?.provider,
+    copyLinkWidget: !!CustomizableUI.getWidget("peryn-copy-link-button")?.provider,
     copyLinkAfterUrlbar:
-      CustomizableUI.getWidgetIdsInArea("nav-bar").indexOf("halcyon-copy-link-button") ==
+      CustomizableUI.getWidgetIdsInArea("nav-bar").indexOf("peryn-copy-link-button") ==
       CustomizableUI.getWidgetIdsInArea("nav-bar").indexOf("urlbar-container") + 1,
-    toolbarSetupDone: Services.prefs.getBoolPref("halcyon.layout.toolbarSetupDone", false),
+    toolbarSetupDone: Services.prefs.getBoolPref("peryn.layout.toolbarSetupDone", false),
   });
 
   await shot("01-expanded-light");
@@ -171,14 +171,14 @@ async function runScenario(win) {
   const doc = win.document;
   const root = doc.documentElement;
   const compactState = () => ({
-    compact: root.hasAttribute("halcyon-compact"),
-    reveal: root.getAttribute("halcyon-reveal") || "",
+    compact: root.hasAttribute("peryn-compact"),
+    reveal: root.getAttribute("peryn-reveal") || "",
   });
-  doc.getElementById("halcyon-key-compact").doCommand();
+  doc.getElementById("peryn-key-compact").doCommand();
   await sleep(1200);
   const afterToggle = compactState();
   await shot("04-compact");
-  doc.getElementById("halcyon-edge-sidebar").dispatchEvent(new win.MouseEvent("mouseenter"));
+  doc.getElementById("peryn-edge-sidebar").dispatchEvent(new win.MouseEvent("mouseenter"));
   await sleep(900);
   const afterEdge = compactState();
   await shot("05-compact-sidebar");
@@ -186,11 +186,11 @@ async function runScenario(win) {
   await sleep(900);
   const afterFocus = compactState();
   await shot("06-compact-both");
-  doc.getElementById("halcyon-edge-sidebar").dispatchEvent(new win.MouseEvent("mouseleave"));
+  doc.getElementById("peryn-edge-sidebar").dispatchEvent(new win.MouseEvent("mouseleave"));
   gBrowser.selectedBrowser.focus();
   await sleep(1000);
   const afterLeave = compactState();
-  doc.getElementById("halcyon-key-compact").doCommand();
+  doc.getElementById("peryn-key-compact").doCommand();
   await sleep(1000);
   await report("compact", { afterToggle, afterEdge, afterFocus, afterLeave, afterOff: compactState() });
 
@@ -222,8 +222,8 @@ async function runScenario(win) {
   await sleep(500);
 
   // ---- Spaces (C4) ----
-  const { HalcyonSpacesStore: Store } = ChromeUtils.importESModule(
-    "resource://halcyon-preview/spaces/HalcyonSpacesStore.sys.mjs"
+  const { PerynSpacesStore: Store } = ChromeUtils.importESModule(
+    "resource://peryn-preview/spaces/PerynSpacesStore.sys.mjs"
   );
   const spaces = layout.spaces;
   Store.update(Store.spaces[0].id, { icon: "🏠" });
@@ -239,16 +239,16 @@ async function runScenario(win) {
   await report("spaces", {
     names: Store.spaces.map(s => s.name),
     active: spaces.active == work.id,
-    header: doc.querySelector("#halcyon-space-header .halcyon-space-name")?.textContent,
-    dots: doc.querySelectorAll(".halcyon-space-dot").length,
+    header: doc.querySelector("#peryn-space-header .peryn-space-name")?.textContent,
+    dots: doc.querySelectorAll(".peryn-space-dot").length,
     visibleTodayTabs: gBrowser.visibleTabs.filter(t => !t.pinned).map(t => t.label),
     pinsInWork: Store.get(work.id).pins.map(p => p.title || p.url),
     hueOnWindow: root.style.getPropertyValue("--hx-space-hue"),
   });
   await shot("08-space-work");
 
-  const header = doc.getElementById("halcyon-space-header");
-  const editor = doc.getElementById("halcyon-space-editor");
+  const header = doc.getElementById("peryn-space-header");
+  const editor = doc.getElementById("peryn-space-editor");
   const editorShown = new Promise(resolve => editor.addEventListener("popupshown", resolve, { once: true }));
   spaces.ui.openEditor(work.id, header);
   await Promise.race([editorShown, sleep(3000)]);
@@ -257,7 +257,7 @@ async function runScenario(win) {
   editor.hidePopup();
   await sleep(400);
 
-  doc.getElementById("halcyon-key-space-next").doCommand();
+  doc.getElementById("peryn-key-space-next").doCommand();
   await sleep(900);
   const afterNext = Store.get(spaces.active)?.name;
   await shot("10-space-weekend");
@@ -267,9 +267,9 @@ async function runScenario(win) {
   await sleep(800);
   const afterCloseLast = {
     stayed: spaces.active == weekendId,
-    selectedInSpace: gBrowser.selectedTab.getAttribute("halcyon-space") == weekendId,
+    selectedInSpace: gBrowser.selectedTab.getAttribute("peryn-space") == weekendId,
   };
-  doc.getElementById("halcyon-key-space-1").doCommand();
+  doc.getElementById("peryn-key-space-1").doCommand();
   await sleep(900);
   // Another machine's changes arriving through Firefox Sync: its prefs engine writes the synced
   // pref, exactly like this. A new Space and a new Essential should appear here.
@@ -277,11 +277,11 @@ async function runScenario(win) {
   const remote = structuredClone(Store.data);
   remote.spaces.push({ id: "s-laptop", name: "Laptop", icon: "💻", color: { hue: 200, hue2: 240, chroma: 0.05 }, pins: [] });
   remote.essentials.push({ id: "e-laptop", url: `${SITE}weather.html`, title: "Weather from the laptop" });
-  Services.prefs.setStringPref("halcyon.spaces", JSON.stringify(remote));
+  Services.prefs.setStringPref("peryn.spaces", JSON.stringify(remote));
   await sleep(1500);
   await report("sync", {
-    syncedByFirefoxSync: syncBranch.getChildList("").includes("halcyon.spaces") && syncBranch.getBoolPref("halcyon.spaces"),
-    dots: doc.querySelectorAll(".halcyon-space-dot").length,
+    syncedByFirefoxSync: syncBranch.getChildList("").includes("peryn.spaces") && syncBranch.getBoolPref("peryn.spaces"),
+    dots: doc.querySelectorAll(".peryn-space-dot").length,
     laptopEssential: gBrowser.tabs.some(t => t.pinned && t.label.includes("Weather from the laptop")),
   });
   await shot("11-after-sync");
@@ -307,10 +307,10 @@ async function commandBarScenario({ win, layout, open, sleep, shot, report }) {
   const doc = win.document;
   const { gBrowser } = win;
   const { PlacesUtils } = ChromeUtils.importESModule("resource://gre/modules/PlacesUtils.sys.mjs");
-  const { HalcyonCommandIndex } = ChromeUtils.importESModule(
-    "resource://halcyon-preview/commandbar/HalcyonCommandIndex.sys.mjs"
+  const { PerynCommandIndex } = ChromeUtils.importESModule(
+    "resource://peryn-preview/commandbar/PerynCommandIndex.sys.mjs"
   );
-  const { OmniIndex } = ChromeUtils.importESModule("resource://halcyon-preview/commandbar/OmniIndex.sys.mjs");
+  const { OmniIndex } = ChromeUtils.importESModule("resource://peryn-preview/commandbar/OmniIndex.sys.mjs");
   const bar = layout.commandBar;
 
   // A history to search: a few pages you'd recognise, then thousands of others.
@@ -334,14 +334,14 @@ async function commandBarScenario({ win, layout, open, sleep, shot, report }) {
   await PlacesUtils.bookmarks.insert({
     parentGuid: PlacesUtils.bookmarks.toolbarGuid,
     url: "https://github.com/ZifuM/halcyon-browser",
-    title: "Halcyon on GitHub",
+    title: "Peryn on GitHub",
   });
-  await HalcyonCommandIndex.ready();
-  await HalcyonCommandIndex.loadPlaces();
+  await PerynCommandIndex.ready();
+  await PerynCommandIndex.loadPlaces();
 
-  const input = doc.querySelector("#halcyon-commandbar .hx-cb-input");
+  const input = doc.querySelector("#peryn-commandbar .hx-cb-input");
   const rows = () =>
-    [...doc.querySelectorAll("#halcyon-commandbar .hx-cb-row")].map(el => ({
+    [...doc.querySelectorAll("#peryn-commandbar .hx-cb-row")].map(el => ({
       type: el.dataset.type,
       kind: el.dataset.kind,
       title: el.querySelector(".hx-cb-title")?.textContent,
@@ -354,7 +354,7 @@ async function commandBarScenario({ win, layout, open, sleep, shot, report }) {
   };
   const press = (key, extra = {}) =>
     input.dispatchEvent(new win.KeyboardEvent("keydown", { key, bubbles: true, cancelable: true, ...extra }));
-  const isOpen = () => !doc.getElementById("halcyon-commandbar").hidden;
+  const isOpen = () => !doc.getElementById("peryn-commandbar").hidden;
 
   // Ctrl/Cmd+T: Firefox's own key, now pointed at the bar.
   const newTabKey = doc.getElementById("key_newNavigatorTab");
@@ -366,7 +366,7 @@ async function commandBarScenario({ win, layout, open, sleep, shot, report }) {
   const rustRows = rows();
   await shot("12-commandbar-rust");
   await type("@tabs ");
-  const chip = doc.querySelector("#halcyon-commandbar .hx-cb-chip");
+  const chip = doc.querySelector("#peryn-commandbar .hx-cb-chip");
   const tabsFilter = { chip: !chip.hidden && chip.textContent, rows: rows().map(r => r.kind) };
   press("Escape"); // clears the filter
   await type("> zoom");
@@ -377,7 +377,7 @@ async function commandBarScenario({ win, layout, open, sleep, shot, report }) {
   press("Backspace");
   await sleep(300);
   const chipCleared = chip.hidden;
-  await type("halcyon on");
+  await type("peryn on");
   const bookmarkRows = rows();
   await type("learn rust");
   press("Enter");
@@ -452,33 +452,33 @@ async function commandBarScenario({ win, layout, open, sleep, shot, report }) {
     await sleep(300);
   };
   await record({ key: "U", code: "KeyU", ctrlKey: true, shiftKey: true });
-  const userKey = doc.getElementById("halcyon-shortcut-copy-link");
-  const first = { pref: Services.prefs.getStringPref("halcyon.shortcuts", ""), key: userKey?.getAttribute("key"), modifiers: userKey?.getAttribute("modifiers") };
+  const userKey = doc.getElementById("peryn-shortcut-copy-link");
+  const first = { pref: Services.prefs.getStringPref("peryn.shortcuts", ""), key: userKey?.getAttribute("key"), modifiers: userKey?.getAttribute("modifiers") };
   await record({ key: "r", code: "KeyR", ctrlKey: true });
-  const asked = rows()[0]?.title && doc.querySelector("#halcyon-commandbar .hx-cb-sub")?.textContent;
+  const asked = rows()[0]?.title && doc.querySelector("#peryn-commandbar .hx-cb-sub")?.textContent;
   press("r", { code: "KeyR", ctrlKey: true });
   await sleep(300);
   const reloadKey = doc.getElementById("key_reload");
-  const taken = { reloadDisabled: reloadKey.getAttribute("disabled") == "true", pref: Services.prefs.getStringPref("halcyon.shortcuts", "") };
+  const taken = { reloadDisabled: reloadKey.getAttribute("disabled") == "true", pref: Services.prefs.getStringPref("peryn.shortcuts", "") };
   await shot("15-shortcut-taken");
   press("Enter");
   await sleep(100);
   press("Backspace");
   await sleep(300);
-  const givenBack = { reloadDisabled: reloadKey.getAttribute("disabled") == "true", ours: !!doc.getElementById("halcyon-shortcut-copy-link") };
+  const givenBack = { reloadDisabled: reloadKey.getAttribute("disabled") == "true", ours: !!doc.getElementById("peryn-shortcut-copy-link") };
   press("Escape");
   await sleep(300);
   await report("shortcuts", { editorRows, first, asked, taken, givenBack });
 
   // Duplicate tabs: the same page is open in Personal and in Work.
   // (Pinned tabs and Essentials are never closed, so count only the closable repeats.)
-  const Logic = ChromeUtils.importESModule("resource://halcyon-preview/commandbar/HalcyonCommandLogic.sys.mjs");
+  const Logic = ChromeUtils.importESModule("resource://peryn-preview/commandbar/PerynCommandLogic.sys.mjs");
   const repeats = () =>
     Logic.findDuplicates(
       gBrowser.tabs.filter(t => !t.closing).map(t => ({
         url: t.linkedBrowser.currentURI.spec,
         essential: t.pinned,
-        pinned: t.hasAttribute("halcyon-pinned"),
+        pinned: t.hasAttribute("peryn-pinned"),
         selected: t.selected,
         lastAccessed: t.lastAccessed,
       }))
@@ -497,13 +497,13 @@ async function commandBarScenario({ win, layout, open, sleep, shot, report }) {
   await report("duplicates", { repeatsBefore, duplicateRows, repeatsAfter: repeats() });
 
   // Off switch: Firefox's keys go back to what they did.
-  Services.prefs.setBoolPref("halcyon.commandbar.enabled", false);
+  Services.prefs.setBoolPref("peryn.commandbar.enabled", false);
   await sleep(300);
   const off = {
     newTabCommand: newTabKey.getAttribute("command"),
     addressCommand: doc.getElementById("focusURLBar").getAttribute("command"),
   };
-  Services.prefs.clearUserPref("halcyon.commandbar.enabled");
+  Services.prefs.clearUserPref("peryn.commandbar.enabled");
   await sleep(300);
   await report("commandbar-off", { off, backOn: !newTabKey.hasAttribute("command") });
 }

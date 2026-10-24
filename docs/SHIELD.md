@@ -24,7 +24,7 @@ Firefox's own tracking protection does.
 The engine already parses the cosmetic (`##`) rules in every list; our patches expose its two
 lookups. For each page and frame:
 
-1. When the document starts, the `HalcyonShieldCosmetic` actor asks for the site's resources
+1. When the document starts, the `PerynShieldCosmetic` actor asks for the site's resources
    (site-specific rules plus generic rules that aren't simple classes or ids) and loads them as a
    user-level `!important` stylesheet, so the page's own CSS can't un-hide anything.
 2. Once the page is parsed, and as it changes, the actor sends the classes and ids it hasn't
@@ -52,9 +52,9 @@ cookies or referrer, and ETags mean unchanged lists aren't downloaded again. See
 | Pref | Default | Effect |
 | --- | --- | --- |
 | `privacy.trackingprotection.content.protection.enabled` | true | Shield on or off |
-| `halcyon.shield.cosmetic.enabled` | true | Element hiding (false: block requests only) |
-| `halcyon.shield.updates.enabled` | true | List downloads (false: keep the last lists) |
-| `halcyon.shield.list.<id>.enabled` | see above | One list on or off |
+| `peryn.shield.cosmetic.enabled` | true | Element hiding (false: block requests only) |
+| `peryn.shield.updates.enabled` | true | List downloads (false: keep the last lists) |
+| `peryn.shield.list.<id>.enabled` | see above | One list on or off |
 
 ## How it is tested
 

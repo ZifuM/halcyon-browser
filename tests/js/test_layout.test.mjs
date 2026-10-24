@@ -8,11 +8,11 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
-const LAYOUT_DIR = path.join(ROOT, "src/browser/components/halcyon/layout");
+const LAYOUT_DIR = path.join(ROOT, "src/browser/components/peryn/layout");
 
-const Logic = await import("moz-src:///browser/components/halcyon/layout/HalcyonLayoutLogic.sys.mjs");
+const Logic = await import("moz-src:///browser/components/peryn/layout/PerynLayoutLogic.sys.mjs");
 
-// Fake session store for HalcyonSections (it loads it lazily).
+// Fake session store for PerynSections (it loads it lazily).
 const saved = new Map();
 ChromeUtils._preload("moz-src:///browser/components/sessionstore/SessionStore.sys.mjs", {
   SessionStore: {
@@ -25,8 +25,8 @@ ChromeUtils._preload("moz-src:///browser/components/sessionstore/SessionStore.sy
     },
   },
 });
-const { HalcyonSections, STRINGS } = await import(
-  "moz-src:///browser/components/halcyon/layout/HalcyonSections.sys.mjs"
+const { PerynSections, STRINGS } = await import(
+  "moz-src:///browser/components/peryn/layout/PerynSections.sys.mjs"
 );
 
 // ---- section rules ------------------------------------------------------------------------
@@ -219,7 +219,7 @@ function makeWindow(names, essentials = 0) {
   return { win, gBrowser, tabs, tabContainer };
 }
 
-const order = tabs => tabs.map(t => (t.pinned ? `E:${t.label}` : t.hasAttribute("halcyon-pinned") ? `P:${t.label}` : t.label));
+const order = tabs => tabs.map(t => (t.pinned ? `E:${t.label}` : t.hasAttribute("peryn-pinned") ? `P:${t.label}` : t.label));
 
 beforeEach(() => {
   saved.clear();
@@ -228,25 +228,25 @@ beforeEach(() => {
 
 test("pinning moves a tab to the end of Pinned and saves it; unpinning moves it to the top of Today", () => {
   const { win, gBrowser, tabs, tabContainer } = makeWindow(["mail", "a", "b", "c", "d"], 1);
-  const s = new HalcyonSections(win);
+  const s = new PerynSections(win);
   s.init();
   s.setPinned(tabs[3], true); // c
   assert.deepEqual(order(gBrowser.tabs), ["E:mail", "P:c", "a", "b", "d"]);
   s.setPinned(gBrowser.tabs[4], true); // d
   assert.deepEqual(order(gBrowser.tabs), ["E:mail", "P:c", "P:d", "a", "b"]);
-  assert.ok(tabContainer.hasAttribute("halcyon-has-pinned"));
-  assert.equal(saved.get(gBrowser.tabs[1])["halcyon-pinned"], "1");
+  assert.ok(tabContainer.hasAttribute("peryn-has-pinned"));
+  assert.equal(saved.get(gBrowser.tabs[1])["peryn-pinned"], "1");
 
   s.setPinned(gBrowser.tabs[1], false); // c back to Today
   assert.deepEqual(order(gBrowser.tabs), ["E:mail", "P:d", "c", "a", "b"]);
-  assert.equal(saved.get(gBrowser.tabs[2])["halcyon-pinned"], undefined);
+  assert.equal(saved.get(gBrowser.tabs[2])["peryn-pinned"], undefined);
   s.setPinned(gBrowser.tabs[1], false);
-  assert.ok(!tabContainer.hasAttribute("halcyon-has-pinned"));
+  assert.ok(!tabContainer.hasAttribute("peryn-has-pinned"));
 });
 
 test("dragging across the divider pins and unpins", () => {
   const { win, gBrowser } = makeWindow(["a", "b", "c", "d"]);
-  const s = new HalcyonSections(win);
+  const s = new PerynSections(win);
   s.init();
   s.setPinned(gBrowser.tabs[0], true);
   s.setPinned(gBrowser.tabs[1], true);
@@ -261,7 +261,7 @@ test("dragging across the divider pins and unpins", () => {
 
 test("new tabs open at the top of Today, also when opened from a pinned tab", () => {
   const { win, gBrowser } = makeWindow(["e", "a", "b"], 1);
-  const s = new HalcyonSections(win);
+  const s = new PerynSections(win);
   s.init();
   s.setPinned(gBrowser.tabs[1], true); // a
   gBrowser.open("new"); // Firefox put it at the end
@@ -271,9 +271,9 @@ test("new tabs open at the top of Today, also when opened from a pinned tab", ()
 });
 
 test("with Firefox placement, only tabs landing inside Pinned are moved", () => {
-  Services.prefs.setStringPref("halcyon.tabs.newTabPosition", "firefox");
+  Services.prefs.setStringPref("peryn.tabs.newTabPosition", "firefox");
   const { win, gBrowser } = makeWindow(["a", "b", "c"]);
-  const s = new HalcyonSections(win);
+  const s = new PerynSections(win);
   s.init();
   s.setPinned(gBrowser.tabs[0], true);
   s.setPinned(gBrowser.tabs[1], true);
@@ -285,7 +285,7 @@ test("with Firefox placement, only tabs landing inside Pinned are moved", () => 
 
 test("session restore: restored tabs aren't moved on open; Pinned is regrouped after marking", async () => {
   const { win, gBrowser, tabContainer } = makeWindow(["x"]);
-  const s = new HalcyonSections(win);
+  const s = new PerynSections(win);
   s.init();
   // Restore announces tabs without fromExternal, in saved order: today1, pin1, today2, pin2.
   const t1 = gBrowser.open("today1", 1, {});
@@ -293,8 +293,8 @@ test("session restore: restored tabs aren't moved on open; Pinned is regrouped a
   const t2 = gBrowser.open("today2", 3, {});
   const p2 = gBrowser.open("pin2", 4, {});
   assert.deepEqual(order(gBrowser.tabs), ["x", "today1", "pin1", "today2", "pin2"]);
-  saved.set(p1, { "halcyon-pinned": "1" });
-  saved.set(p2, { "halcyon-pinned": "1" });
+  saved.set(p1, { "peryn-pinned": "1" });
+  saved.set(p2, { "peryn-pinned": "1" });
   // Restoring marks the selected tab first, the rest after.
   for (const tab of [p2, t1, p1, t2]) tabContainer.fire("SSTabRestoring", tab);
   await new Promise(r => setTimeout(r, 5));
@@ -303,18 +303,18 @@ test("session restore: restored tabs aren't moved on open; Pinned is regrouped a
 
 test("becoming an Essential or joining a group drops Pinned; an ex-Essential leaves Pinned", () => {
   const { win, gBrowser, tabContainer } = makeWindow(["e", "a", "b", "c"], 1);
-  const s = new HalcyonSections(win);
+  const s = new PerynSections(win);
   s.init();
   s.setPinned(gBrowser.tabs[1], true);
   s.setPinned(gBrowser.tabs[2], true);
   const a = gBrowser.tabs[1];
   a.pinned = true;
   tabContainer.fire("TabPinned", a);
-  assert.equal(a.hasAttribute("halcyon-pinned"), false);
+  assert.equal(a.hasAttribute("peryn-pinned"), false);
   const b = gBrowser.tabs[2];
   b.group = {};
   tabContainer.fire("TabGrouped", b);
-  assert.equal(b.hasAttribute("halcyon-pinned"), false);
+  assert.equal(b.hasAttribute("peryn-pinned"), false);
 
   // Unpinning an Essential: Firefox puts it first after the Essentials, inside Pinned.
   b.group = null;
@@ -329,24 +329,24 @@ test("becoming an Essential or joining a group drops Pinned; an ex-Essential lea
 
 test("saved Pinned state is read back for tabs already in the window", () => {
   const { win, gBrowser } = makeWindow(["a", "b"]);
-  saved.set(gBrowser.tabs[0], { "halcyon-pinned": "1" });
-  new HalcyonSections(win).init();
-  assert.ok(gBrowser.tabs[0].hasAttribute("halcyon-pinned"));
-  assert.ok(!gBrowser.tabs[1].hasAttribute("halcyon-pinned"));
+  saved.set(gBrowser.tabs[0], { "peryn-pinned": "1" });
+  new PerynSections(win).init();
+  assert.ok(gBrowser.tabs[0].hasAttribute("peryn-pinned"));
+  assert.ok(!gBrowser.tabs[1].hasAttribute("peryn-pinned"));
   assert.equal(STRINGS.pin, "Pin to Sidebar");
 });
 
 // ---- stylesheets ------------------------------------------------------------------------------
 
 test("every --hx-* property the layout uses is defined in the tokens", () => {
-  const tokens = fs.readFileSync(path.join(LAYOUT_DIR, "halcyon-tokens.css"), "utf8");
+  const tokens = fs.readFileSync(path.join(LAYOUT_DIR, "peryn-tokens.css"), "utf8");
   const defined = new Set([...tokens.matchAll(/(--hx-[a-z0-9-]+)\s*:/g)].map(m => m[1]));
   for (const file of Logic.STYLESHEETS) {
     const css = fs.readFileSync(path.join(LAYOUT_DIR, file), "utf8");
     for (const [, name] of css.matchAll(/var\((--hx-[a-z0-9-]+)/g)) {
       // A few have inline fallbacks on purpose (var(--hx-x, default)).
       if (!defined.has(name) && !new RegExp(`var\\(${name},`).test(css)) {
-        assert.fail(`${file} uses ${name}, which halcyon-tokens.css doesn't define`);
+        assert.fail(`${file} uses ${name}, which peryn-tokens.css doesn't define`);
       }
     }
   }

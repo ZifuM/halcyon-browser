@@ -1,0 +1,17 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+# The Arc-style window layout (C3): design tokens, sidebar sections, top bar, compact mode.
+# Stylesheets ship next to the modules (moz-src:///browser/components/peryn/layout/), which
+# find them relative to themselves.
+
+MOZ_SRC_FILES += [
+    "peryn-compact.css",
+    "peryn-layout.css",
+    "peryn-tokens.css",
+    "PerynCompact.sys.mjs",
+    "PerynLayout.sys.mjs",
+    "PerynLayoutLogic.sys.mjs",
+    "PerynSections.sys.mjs",
+]

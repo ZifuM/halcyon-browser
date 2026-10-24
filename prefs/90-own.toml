@@ -4,97 +4,97 @@
 title = "Our own features"
 
 [[pref]]
-name = "halcyon.updates.check.enabled"
+name = "peryn.updates.check.enabled"
 value = true
 why = "Daily check for a newer release (notification only; never downloads or installs by itself). Set false to stop it."
 own = true
 
 [[pref]]
-name = "halcyon.updates.check.intervalHours"
+name = "peryn.updates.check.intervalHours"
 value = 24
 why = "Minimum hours between update checks."
 own = true
 
 [[pref]]
-name = "halcyon.shield.updates.enabled"
+name = "peryn.shield.updates.enabled"
 value = true
 why = "Keep Shield's filter lists up to date (checked hourly, downloaded when a list's own expiry passes). Set false to stop downloads; the last lists keep working."
 own = true
 
 [[pref]]
-name = "halcyon.shield.cosmetic.enabled"
+name = "peryn.shield.cosmetic.enabled"
 value = true
 why = "Shield element hiding: hides ad containers and leftover blank boxes using the same lists that block requests. Set false to block requests only."
 own = true
 
 [[pref]]
-name = "halcyon.layout.enabled"
+name = "peryn.layout.enabled"
 value = true
 why = "The Arc-style layout (tinted backdrop, page as a card, sidebar sections, compact mode). Set false for stock Firefox chrome; applies to new windows."
 own = true
 
 [[pref]]
-name = "halcyon.layout.compact"
+name = "peryn.layout.compact"
 value = false
 why = "Compact mode: sidebar and top bar hide until the pointer reaches the window edge. Ctrl+Alt+C (Cmd+Option+C) toggles it."
 own = true
 
 [[pref]]
-name = "halcyon.layout.compact.hideDelayMs"
+name = "peryn.layout.compact.hideDelayMs"
 value = 300
 why = "How long compact mode waits after the pointer leaves before hiding the sidebar or top bar."
 own = true
 
 [[pref]]
-name = "halcyon.tabs.newTabPosition"
+name = "peryn.tabs.newTabPosition"
 value = "top"
 why = "New tabs open at the top of Today, under + New Tab (as in Arc). Set to \"firefox\" for Firefox's placement (after the current tab or at the end)."
 own = true
 
 [[pref]]
-name = "halcyon.spaces"
+name = "peryn.spaces"
 value = ""
 why = "Your Spaces (names, icons, colours, containers, pinned tabs, Essentials) as JSON. Edited through the Space editor; empty means one default Space."
 own = true
 
 [[pref]]
-name = "services.sync.prefs.sync.halcyon.spaces"
+name = "services.sync.prefs.sync.peryn.spaces"
 value = true
 why = "Firefox Sync carries your Spaces to your other devices (only if you sign in and keep Settings syncing). End-to-end encrypted."
 own = true
 
 [[pref]]
-name = "halcyon.commandbar.enabled"
+name = "peryn.commandbar.enabled"
 value = true
 why = "The command bar: one box for open tabs (in every Space), bookmarks, history, actions and search. Set false to turn it off everywhere."
 own = true
 
 [[pref]]
-name = "halcyon.commandbar.onNewTab"
+name = "peryn.commandbar.onNewTab"
 value = true
 why = "Ctrl/Cmd+T opens the command bar (Enter on an empty bar still opens a blank tab). Set false for Firefox's new tab."
 own = true
 
 [[pref]]
-name = "halcyon.commandbar.onAddressKey"
+name = "peryn.commandbar.onAddressKey"
 value = true
 why = "Ctrl/Cmd+L (and Alt+D) open the command bar on the current page's address. Set false to focus the address bar instead; F6 always does."
 own = true
 
 [[pref]]
-name = "halcyon.commandbar.historyLimit"
+name = "peryn.commandbar.historyLimit"
 value = 100000
 why = "How many history entries (most used first) the command bar searches. Everything stays in memory on this device."
 own = true
 
 [[pref]]
-name = "halcyon.shortcuts"
+name = "peryn.shortcuts"
 value = "{}"
 why = "Custom keyboard shortcuts for command bar actions, set in the Keyboard Shortcuts editor (search the command bar for it)."
 own = true
 
 [[pref]]
-name = "services.sync.prefs.sync.halcyon.shortcuts"
+name = "services.sync.prefs.sync.peryn.shortcuts"
 value = true
 why = "Firefox Sync carries your custom shortcuts to your other devices (only if you sign in and keep Settings syncing). End-to-end encrypted."
 own = true

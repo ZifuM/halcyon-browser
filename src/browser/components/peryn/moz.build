@@ -1,0 +1,23 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+# Home of the browser's own components (src/, not patches). Hooked into the build by
+# patches/browser/components/moz.build.patch. Modules load from
+# moz-src:///browser/components/peryn/<file>.
+
+DIRS += ["commandbar", "layout", "shield", "spaces"]
+
+with Files("**"):
+    BUG_COMPONENT = ("Firefox", "General")
+
+MOZ_SRC_FILES += [
+    "PerynBuildInfo.sys.mjs",
+    "PerynUpdateLogic.sys.mjs",
+    "PerynUpdates.sys.mjs",
+]
+
+EXTRA_COMPONENTS += [
+    "peryn.manifest",
+]
+

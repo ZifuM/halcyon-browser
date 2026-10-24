@@ -52,19 +52,19 @@ Spaces are replaced, its tabs move into the first Space, and any of its pinned t
 in the account are unpinned (they stay open). Edits made on two devices at the same moment: the
 later one wins.
 
-Under the hood the data is one preference, `halcyon.spaces`, which Firefox Sync's preferences
-engine carries because `services.sync.prefs.sync.halcyon.spaces` is on. Turn that off to keep
+Under the hood the data is one preference, `peryn.spaces`, which Firefox Sync's preferences
+engine carries because `services.sync.prefs.sync.peryn.spaces` is on. Turn that off to keep
 Spaces on this device only.
 
 ## How it's built
 
-| Piece | File (in `src/browser/components/halcyon/spaces/`) |
+| Piece | File (in `src/browser/components/peryn/spaces/`) |
 | --- | --- |
-| Data model: validation, edits, colours, launcher reconciliation (pure, unit-tested) | `HalcyonSpacesLogic.sys.mjs` |
-| The shared copy, saved in the synced pref; containers | `HalcyonSpacesStore.sys.mjs` |
-| One window: membership, switching, new tabs, shortcuts, swipe, launchers | `HalcyonSpaces.sys.mjs` |
-| Space name, switcher, editor, Move to Space | `HalcyonSpacesUI.sys.mjs` |
-| Styling and the switch animation | `halcyon-spaces.css` |
+| Data model: validation, edits, colours, launcher reconciliation (pure, unit-tested) | `PerynSpacesLogic.sys.mjs` |
+| The shared copy, saved in the synced pref; containers | `PerynSpacesStore.sys.mjs` |
+| One window: membership, switching, new tabs, shortcuts, swipe, launchers | `PerynSpaces.sys.mjs` |
+| Space name, switcher, editor, Move to Space | `PerynSpacesUI.sys.mjs` |
+| Styling and the switch animation | `peryn-spaces.css` |
 
 Hiding other Spaces' tabs uses Firefox's own tab hiding (the mechanism tab-group extensions
 use), so hidden tabs keep running, stay in session restore, and come back without reloading.

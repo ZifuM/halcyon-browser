@@ -7,7 +7,7 @@ const MOCKS = {
   "resource://gre/modules/XPCOMUtils.sys.mjs": "mocks/XPCOMUtils.mjs",
   "resource://gre/modules/Timer.sys.mjs": "mocks/Timer.mjs",
   "resource:///modules/BrowserWindowTracker.sys.mjs": "mocks/BrowserWindowTracker.mjs",
-  "moz-src:///browser/components/halcyon/HalcyonBuildInfo.sys.mjs": "mocks/HalcyonBuildInfo.mjs",
+  "moz-src:///browser/components/peryn/PerynBuildInfo.sys.mjs": "mocks/PerynBuildInfo.mjs",
 };
 const MOZ_SRC = "moz-src:///";
 

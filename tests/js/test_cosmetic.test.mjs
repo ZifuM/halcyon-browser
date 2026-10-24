@@ -10,7 +10,7 @@ import { fileURLToPath } from "node:url";
 import * as Timer from "./mocks/Timer.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
-const LOGIC_URL = "moz-src:///browser/components/halcyon/shield/ShieldCosmeticLogic.sys.mjs";
+const LOGIC_URL = "moz-src:///browser/components/peryn/shield/ShieldCosmeticLogic.sys.mjs";
 
 const Logic = await import(LOGIC_URL);
 const allowList = new Set();
@@ -21,13 +21,13 @@ ChromeUtils._preload("resource://gre/modules/ContentBlockingAllowList.sys.mjs", 
 });
 
 const { ShieldCosmeticParent, clearShieldCosmeticCache } = await import(
-  "moz-src:///browser/components/halcyon/shield/ShieldCosmeticParent.sys.mjs"
+  "moz-src:///browser/components/peryn/shield/ShieldCosmeticParent.sys.mjs"
 );
 const { ShieldCosmeticChild } = await import(
-  "moz-src:///browser/components/halcyon/shield/ShieldCosmeticChild.sys.mjs"
+  "moz-src:///browser/components/peryn/shield/ShieldCosmeticChild.sys.mjs"
 );
 const { ShieldCosmetic, ACTOR_NAME, ACTOR_OPTIONS } = await import(
-  "moz-src:///browser/components/halcyon/shield/ShieldCosmetic.sys.mjs"
+  "moz-src:///browser/components/peryn/shield/ShieldCosmetic.sys.mjs"
 );
 
 const tick = () => new Promise(r => setImmediate(r));
@@ -170,9 +170,9 @@ test("parent: site resources become a stylesheet; cached per origin and per priv
 test("parent: nothing when element hiding is off, Shield is off, or the site is allow-listed", () => {
   const browser = {};
   const parent = makeParent({ browser });
-  Services.prefs.setBoolPref("halcyon.shield.cosmetic.enabled", false);
+  Services.prefs.setBoolPref("peryn.shield.cosmetic.enabled", false);
   assert.equal(parent.siteResources("https://a.example/"), null);
-  Services.prefs.setBoolPref("halcyon.shield.cosmetic.enabled", true);
+  Services.prefs.setBoolPref("peryn.shield.cosmetic.enabled", true);
   Services.prefs.setBoolPref("privacy.trackingprotection.content.protection.enabled", false);
   assert.equal(parent.siteResources("https://a.example/"), null);
   Services.prefs.setBoolPref("privacy.trackingprotection.content.protection.enabled", true);
@@ -342,7 +342,7 @@ test("child: ignores other documents' events and does nothing when the parent sa
   await tick();
   assert.equal(globalThis.__classifierCalls.length, 0);
 
-  Services.prefs.setBoolPref("halcyon.shield.cosmetic.enabled", false);
+  Services.prefs.setBoolPref("peryn.shield.cosmetic.enabled", false);
   child.handleEvent({ type: "DOMDocElementInserted", target: page.doc });
   await tick();
   child.handleEvent({ type: "DOMContentLoaded", target: page.doc });
@@ -359,12 +359,12 @@ test("actor registration: once, http(s) only, all frames, behind the element-hid
   assert.equal(options, ACTOR_OPTIONS);
   assert.deepEqual(options.matches, ["http://*/*", "https://*/*"]);
   assert.equal(options.allFrames, true);
-  assert.equal(options.enablePreference, "halcyon.shield.cosmetic.enabled");
+  assert.equal(options.enablePreference, "peryn.shield.cosmetic.enabled");
   assert.deepEqual(Object.keys(options.child.events).sort(), ["DOMContentLoaded", "DOMDocElementInserted"]);
   for (const side of ["parent", "child"]) {
     const rel = options[side].esModuleURI.replace("moz-src:///", "");
     assert.ok(fs.existsSync(path.join(ROOT, "src", rel)), rel);
   }
   const ownPrefs = fs.readFileSync(path.join(ROOT, "prefs/90-own.toml"), "utf8");
-  assert.match(ownPrefs, /name = "halcyon\.shield\.cosmetic\.enabled"\r?\nvalue = true/);
+  assert.match(ownPrefs, /name = "peryn\.shield\.cosmetic\.enabled"\r?\nvalue = true/);
 });

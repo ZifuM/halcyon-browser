@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-//! omni-index: the search behind Halcyon's command bar.
+//! omni-index: the search behind Peryn's command bar.
 //!
 //! Holds every searchable thing (open tabs, history, bookmarks, actions) as a title and a URL,
 //! and answers a query with the best matches, fast enough to run on every keystroke over a
@@ -881,7 +881,7 @@ mod tests {
             idx.add(Kind::Tab, "Pull requests · halcyon-browser", "https://github.com/ZifuM/halcyon-browser/pulls", 10.0, 0.0),
             idx.add(Kind::Bookmark, "Mozilla Developer Network", "https://developer.mozilla.org/en-US/", 30.0, 30.0),
             idx.add(Kind::History, "Weather — Sydney", "https://weather.example/au/sydney", 5.0, 200.0),
-            idx.add(Kind::Action, "New Space", "halcyon:new-space", 50.0, 0.0),
+            idx.add(Kind::Action, "New Space", "peryn:new-space", 50.0, 0.0),
             idx.add(Kind::History, "Café menu", "https://café.example/", 1.0, 1.0),
         ];
         (idx, ids)

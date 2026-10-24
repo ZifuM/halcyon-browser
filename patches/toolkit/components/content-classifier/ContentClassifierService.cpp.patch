@@ -1,5 +1,5 @@
 diff --git a/toolkit/components/content-classifier/ContentClassifierService.cpp b/toolkit/components/content-classifier/ContentClassifierService.cpp
-index 3ff3514fb215a5aceb30ae370c58d431255ee499..437ffd8d0706850e2db5160b3f6a43803e6d7b20 100644
+index 3ff3514fb215a5aceb30ae370c58d431255ee499..ec3f9fe5b415e2f65241e58c16b16ed9fac71433 100644
 --- a/toolkit/components/content-classifier/ContentClassifierService.cpp
 +++ b/toolkit/components/content-classifier/ContentClassifierService.cpp
 @@ -67,6 +67,16 @@ constexpr nsLiteralCString kMinorExceptionListIds[] = {
@@ -7,7 +7,7 @@ index 3ff3514fb215a5aceb30ae370c58d431255ee499..437ffd8d0706850e2db5160b3f6a4380
  constexpr nsLiteralCString kHarmfulAddonListIds[] = {
      "mozilla-harmful-addon"_ns};
 +// Shield, the browser's built-in ad and tracker blocker. Its filter lists are downloaded and
-+// preprocessed by browser/components/halcyon/shield/ShieldLists.sys.mjs and served to this service
++// preprocessed by browser/components/peryn/shield/ShieldLists.sys.mjs and served to this service
 +// through the RS client's getListBytes("shield-<id>"); disabled lists come back empty. Keep in
 +// sync with SHIELD_LISTS in ShieldListLogic.sys.mjs (checked by tests/test_shield_sync.py).
 +constexpr nsLiteralCString kShieldListIds[] = {
@@ -39,7 +39,7 @@ index 3ff3514fb215a5aceb30ae370c58d431255ee499..437ffd8d0706850e2db5160b3f6a4380
    promise.forget(aPromise);
    return NS_OK;
  }
-+// Halcyon Shield: element hiding. Synchronous: each lookup is a few hash
++// Peryn Shield: element hiding. Synchronous: each lookup is a few hash
 +// probes in already-built engines (about 0.1 ms with the default lists).
 +NS_IMETHODIMP ContentClassifierService::GetCosmeticResources(
 +    const nsACString& aUrl, bool aPrivateBrowsing,

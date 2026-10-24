@@ -4,7 +4,7 @@ without a full Firefox build.
 
 The real crate needs Gecko's generated XPCOM bindings, so it can't be checked on its own. The
 functions we add only touch etp_engine, nsstring and thin-vec, which build standalone, so this
-copies the "Halcyon Shield" section of the patched lib.rs into a scratch crate next to a tiny
+copies the "Peryn Shield" section of the patched lib.rs into a scratch crate next to a tiny
 stand-in for nserror and runs `cargo check` against Firefox's vendored crates (offline).
 
     python3 tools/shield/ffi_check.py [--engine engine] [--work DIR]
@@ -23,11 +23,11 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 LIB_RS = "toolkit/components/content-classifier/content_classifier_engine/src/lib.rs"
-START = "// Halcyon Shield: element hiding."
+START = "// Peryn Shield: element hiding."
 END = "struct SchemelessSiteResolver {}"
 
 PRELUDE = """#![allow(dead_code)]
-// Stand-ins for the bits of the real crate the Halcyon section uses.
+// Stand-ins for the bits of the real crate the Peryn section uses.
 mod nserror {
     #[repr(transparent)]
     #[allow(non_camel_case_types)]
@@ -63,7 +63,7 @@ def main() -> int:
 
     lib = (engine / LIB_RS).read_text()
     if START not in lib or END not in lib:
-        print(f"error: the Halcyon section isn't in {LIB_RS} (run `hx import` first)", file=sys.stderr)
+        print(f"error: the Peryn section isn't in {LIB_RS} (run `hx import` first)", file=sys.stderr)
         return 2
     if not (engine / "xpcom/rust/nsstring/Cargo.toml").exists():
         print("error: xpcom/rust/nsstring is missing from the checkout", file=sys.stderr)

@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parents[2]
 CRATE = ROOT / "crates" / "omni-index"
 TARGET = "wasm32-unknown-unknown"
 BUILT = CRATE / "target" / TARGET / "release" / "omni_index.wasm"
-DEST = ROOT / "src" / "browser" / "components" / "halcyon" / "commandbar" / "omni_index.wasm"
+DEST = ROOT / "src" / "browser" / "components" / "peryn" / "commandbar" / "omni_index.wasm"
 MAX_BYTES = 256 * 1024
 
 

@@ -8,8 +8,8 @@ import * as Timer from "./mocks/Timer.mjs";
 
 ChromeUtils._preload("resource://gre/modules/Timer.sys.mjs", Timer);
 
-const Logic = await import("moz-src:///browser/components/halcyon/shield/ShieldListLogic.sys.mjs");
-const { ShieldLists } = await import("moz-src:///browser/components/halcyon/shield/ShieldLists.sys.mjs");
+const Logic = await import("moz-src:///browser/components/peryn/shield/ShieldListLogic.sys.mjs");
+const { ShieldLists } = await import("moz-src:///browser/components/peryn/shield/ShieldLists.sys.mjs");
 
 const noFetch = async url => {
   throw new Error(`unexpected fetch ${url}`);
@@ -155,7 +155,7 @@ beforeEach(() => {
   fetchLog = [];
   // Only EasyList enabled, to keep tests small.
   for (const list of Logic.SHIELD_LISTS) {
-    Services.prefs.setBoolPref(`halcyon.shield.list.${list.id}.enabled`, list.id === "easylist");
+    Services.prefs.setBoolPref(`peryn.shield.list.${list.id}.enabled`, list.id === "easylist");
   }
   globalThis.__classifierCalls.length = 0;
 });
@@ -202,9 +202,9 @@ test("disabled, unknown and not-yet-downloaded lists give empty bytes", async ()
 
 test("no downloads when list updates are switched off or offline", async () => {
   serve({ [PRIMARY("easylist")]: { body: "||ads.example^\n" } });
-  Services.prefs.setBoolPref("halcyon.shield.updates.enabled", false);
+  Services.prefs.setBoolPref("peryn.shield.updates.enabled", false);
   assert.deepEqual(await ShieldLists.updateStale(), []);
-  Services.prefs.setBoolPref("halcyon.shield.updates.enabled", true);
+  Services.prefs.setBoolPref("peryn.shield.updates.enabled", true);
   Services.io.offline = true;
   assert.deepEqual(await ShieldLists.updateStale(), []);
   assert.equal(fetchLog.length, 0);
@@ -219,12 +219,12 @@ test("turning a list off rebuilds without it; turning one on downloads it first"
   await ShieldLists._updating;
   globalThis.__classifierCalls.length = 0;
 
-  Services.prefs.setBoolPref("halcyon.shield.list.easylist.enabled", false);
+  Services.prefs.setBoolPref("peryn.shield.list.easylist.enabled", false);
   await new Promise(r => setImmediate(r));
   assert.deepEqual(globalThis.__classifierCalls.at(-1), { updated: ["shield-easylist"], removed: [] });
   assert.equal((await ShieldLists.getListBytes("easylist")).length, 0);
 
-  Services.prefs.setBoolPref("halcyon.shield.list.easyprivacy.enabled", true);
+  Services.prefs.setBoolPref("peryn.shield.list.easyprivacy.enabled", true);
   await new Promise(r => setTimeout(r, 10));
   await ShieldLists._updating;
   assert.equal(IOUtils._files.get("/profile/shield/easyprivacy.txt"), "||tracker.example^\n");

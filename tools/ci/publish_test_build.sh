@@ -25,7 +25,7 @@ branch=$(gh api "repos/$repo" --jq .default_branch)
 tip=$(gh api "repos/$repo/commits/$branch" --jq .sha)
 
 title="Test build ($(date -u +%Y-%m-%d), ${sha::7})"
-notes="Unsigned test build of Halcyon for Windows (x64), built from ${sha::7}. Windows SmartScreen will warn because it isn't code-signed yet: choose More info, then Run anyway. The .zip is a portable copy that needs no install."
+notes="Unsigned test build of Peryn for Windows (x64), built from ${sha::7}. Windows SmartScreen will warn because it isn't code-signed yet: choose More info, then Run anyway. The .zip is a portable copy that needs no install."
 for attempt in 1 2 3; do
   if err=$(gh release create test-build --repo "$repo" --prerelease --target "$tip" \
              --title "$title" --notes "$notes" out/* 2>&1); then

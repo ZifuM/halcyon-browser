@@ -12,7 +12,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const logicPath = path.join(here, "../../src/browser/components/halcyon/shield/ShieldListLogic.sys.mjs");
+const logicPath = path.join(here, "../../src/browser/components/peryn/shield/ShieldListLogic.sys.mjs");
 const { SHIELD_LISTS, assembleList } = await import(logicPath);
 
 const args = process.argv.slice(2);

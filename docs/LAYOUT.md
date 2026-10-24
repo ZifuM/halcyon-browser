@@ -1,9 +1,9 @@
 # The Arc-style layout
 
-Halcyon's window follows Arc's layout: tabs in a sidebar, a slim top bar, and the page as a
+Peryn's window follows Arc's layout: tabs in a sidebar, a slim top bar, and the page as a
 rounded card floating on a soft Space-coloured backdrop.
 
-![Halcyon window: Essentials grid, Pinned and Today tabs in the sidebar, page as a card](images/layout-light.png)
+![Peryn window: Essentials grid, Pinned and Today tabs in the sidebar, page as a card](images/layout-light.png)
 
 ## What's where
 
@@ -21,21 +21,21 @@ rounded card floating on a soft Space-coloured backdrop.
 
 ## How it's built
 
-Firefox already has vertical tabs, a collapsible sidebar and pinned tabs. Halcyon builds on
+Firefox already has vertical tabs, a collapsible sidebar and pinned tabs. Peryn builds on
 them instead of replacing them, so it inherits their accessibility, drag and drop, tab groups,
 split view and session restore, and it costs **no patches to Firefox's files**.
 
-| Piece | File (in `src/browser/components/halcyon/layout/`) |
+| Piece | File (in `src/browser/components/peryn/layout/`) |
 | --- | --- |
-| Design tokens (colours, spacing, radii, type, motion) | `halcyon-tokens.css` |
-| Layout: backdrop, card, sidebar, Essentials, top bar | `halcyon-layout.css` |
-| Compact mode styling | `halcyon-compact.css` |
-| Window wiring: loads the sheets before first paint, first-run top bar, copy link | `HalcyonLayout.sys.mjs` |
-| Pinned and Today sections | `HalcyonSections.sys.mjs` |
-| Compact mode behaviour | `HalcyonCompact.sys.mjs` |
-| Pure rules shared by the above (unit-tested) | `HalcyonLayoutLogic.sys.mjs` |
+| Design tokens (colours, spacing, radii, type, motion) | `peryn-tokens.css` |
+| Layout: backdrop, card, sidebar, Essentials, top bar | `peryn-layout.css` |
+| Compact mode styling | `peryn-compact.css` |
+| Window wiring: loads the sheets before first paint, first-run top bar, copy link | `PerynLayout.sys.mjs` |
+| Pinned and Today sections | `PerynSections.sys.mjs` |
+| Compact mode behaviour | `PerynCompact.sys.mjs` |
+| Pure rules shared by the above (unit-tested) | `PerynLayoutLogic.sys.mjs` |
 
-The module hooks into Firefox's per-window startup categories from `halcyon.manifest`:
+The module hooks into Firefox's per-window startup categories from `peryn.manifest`:
 stylesheets load at `browser-window-before-initial-xul-layout`, so a window never paints stock
 Firefox first; the rest attaches at `browser-window-domcontentloaded`.
 
@@ -49,16 +49,16 @@ Firefox first; the rest attaches at `browser-window-domcontentloaded`.
   and the page never re-lays-out while chrome slides. A test fails if anything else is animated.
   The OS reduced-motion setting turns the motion off.
 * **Themes.** Lightweight themes keep their colours; only the layout applies to them.
-* **Off switch.** `halcyon.layout.enabled = false` gives stock Firefox chrome in new windows.
+* **Off switch.** `peryn.layout.enabled = false` gives stock Firefox chrome in new windows.
 
 ## Settings (about:config for now)
 
 | Pref | Default | Effect |
 | --- | --- | --- |
-| `halcyon.layout.enabled` | true | The whole layout |
-| `halcyon.layout.compact` | false | Compact mode |
-| `halcyon.layout.compact.hideDelayMs` | 300 | Delay before hidden chrome slides away again |
-| `halcyon.tabs.newTabPosition` | `top` | `top`: new tabs at the top of Today. `firefox`: Firefox's placement (never inside Pinned) |
+| `peryn.layout.enabled` | true | The whole layout |
+| `peryn.layout.compact` | false | Compact mode |
+| `peryn.layout.compact.hideDelayMs` | 300 | Delay before hidden chrome slides away again |
+| `peryn.tabs.newTabPosition` | `top` | `top`: new tabs at the top of Today. `firefox`: Firefox's placement (never inside Pinned) |
 | `sidebar.verticalTabs` | true | Tabs in the sidebar |
 | `sidebar.visibility` | `always-show` | Firefox's sidebar mode |
 

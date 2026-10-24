@@ -58,7 +58,7 @@ class Project:
 
     @property
     def branding_engine_rel(self) -> str:
-        """Branding directory inside the engine tree, e.g. browser/branding/halcyon."""
+        """Branding directory inside the engine tree, e.g. browser/branding/peryn."""
         return f"browser/branding/{self.app_name}"
 
     @property

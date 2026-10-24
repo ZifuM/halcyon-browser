@@ -41,14 +41,14 @@ ChromeUtils._preload("resource://gre/modules/ContextualIdentityService.sys.mjs",
   ContextualIdentityService: { getPublicIdentities: () => [], getUserContextLabel: () => "" },
 });
 
-const Logic = await import("moz-src:///browser/components/halcyon/commandbar/HalcyonCommandLogic.sys.mjs");
-const { OmniIndex, SimpleIndex } = await import("moz-src:///browser/components/halcyon/commandbar/OmniIndex.sys.mjs");
-const { HalcyonCommandIndex: Index } = await import(
-  "moz-src:///browser/components/halcyon/commandbar/HalcyonCommandIndex.sys.mjs"
+const Logic = await import("moz-src:///browser/components/peryn/commandbar/PerynCommandLogic.sys.mjs");
+const { OmniIndex, SimpleIndex } = await import("moz-src:///browser/components/peryn/commandbar/OmniIndex.sys.mjs");
+const { PerynCommandIndex: Index } = await import(
+  "moz-src:///browser/components/peryn/commandbar/PerynCommandIndex.sys.mjs"
 );
-const { HalcyonShortcuts } = await import("moz-src:///browser/components/halcyon/commandbar/HalcyonShortcuts.sys.mjs");
-const { HalcyonSpacesStore: Spaces } = await import(
-  "moz-src:///browser/components/halcyon/spaces/HalcyonSpacesStore.sys.mjs"
+const { PerynShortcuts } = await import("moz-src:///browser/components/peryn/commandbar/PerynShortcuts.sys.mjs");
+const { PerynSpacesStore: Spaces } = await import(
+  "moz-src:///browser/components/peryn/spaces/PerynSpacesStore.sys.mjs"
 );
 const { KIND } = Logic;
 // Loose matching ("ghub" for GitHub) kicks in when exact matches are few, so tests that expect
@@ -58,7 +58,7 @@ const TABS = 1 << KIND.tab;
 Spaces.create({ name: "Work", icon: "💼" });
 
 const wasmBytes = await readFile(
-  fileURLToPath(new URL("../../src/browser/components/halcyon/commandbar/omni_index.wasm", import.meta.url))
+  fileURLToPath(new URL("../../src/browser/components/peryn/commandbar/omni_index.wasm", import.meta.url))
 );
 
 // ---- input -----------------------------------------------------------------------------------
@@ -280,16 +280,16 @@ test("shortcuts: keyset from the pref, Firefox keys given back when removed", ()
     { tag: "menuitem", key: "key_reload", label: "Reload" },
   ]);
   const ran = [];
-  const shortcuts = new HalcyonShortcuts(win, { run: id => ran.push(id) });
+  const shortcuts = new PerynShortcuts(win, { run: id => ran.push(id) });
   shortcuts.init();
-  assert.equal(win.document.getElementById("halcyon-shortcuts-keyset"), null, "no shortcuts, no keyset");
+  assert.equal(win.document.getElementById("peryn-shortcuts-keyset"), null, "no shortcuts, no keyset");
   assert.equal(shortcuts.displayFor(Logic.actionById("find")), "Ctrl+F", "Firefox's own shortcut is shown");
 
   // A new shortcut nobody uses.
   assert.deepEqual(shortcuts.conflictsFor("accel+shift+U", "copy-link"), []);
   shortcuts.set("copy-link", "accel+shift+U");
   shortcuts.build(); // the fake prefs don't notify observers of string prefs
-  const key = win.document.getElementById("halcyon-shortcut-copy-link");
+  const key = win.document.getElementById("peryn-shortcut-copy-link");
   assert.equal(key.getAttribute("key"), "U");
   assert.equal(key.getAttribute("modifiers"), "accel,shift");
   key.fire("command");
@@ -313,7 +313,7 @@ test("shortcuts: keyset from the pref, Firefox keys given back when removed", ()
   shortcuts.set("find", "");
   shortcuts.build();
   assert.equal(win.document.getElementById("key_reload").getAttribute("disabled"), null);
-  assert.equal(win.document.getElementById("halcyon-shortcuts-keyset"), null);
+  assert.equal(win.document.getElementById("peryn-shortcuts-keyset"), null);
   assert.equal(shortcuts.displayFor(Logic.actionById("find")), "Ctrl+F", "Firefox's own key shows again");
   shortcuts.uninit();
 });

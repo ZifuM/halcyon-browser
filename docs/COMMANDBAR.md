@@ -78,10 +78,10 @@ private windows' tabs.
 | --- | --- |
 | Search core: Rust, compiled to WebAssembly | `crates/omni-index/` → `omni_index.wasm` |
 | JavaScript side of the index, and a fallback | `src/.../commandbar/OmniIndex.sys.mjs` |
-| What gets indexed: Places, tabs, actions, Spaces | `HalcyonCommandIndex.sys.mjs` |
-| The bar itself, Firefox's keys | `HalcyonCommandBar.sys.mjs`, `halcyon-commandbar.css` |
-| Custom shortcuts | `HalcyonShortcuts.sys.mjs` |
-| Rules (filters, ordering, shortcut parsing; unit-tested) | `HalcyonCommandLogic.sys.mjs` |
+| What gets indexed: Places, tabs, actions, Spaces | `PerynCommandIndex.sys.mjs` |
+| The bar itself, Firefox's keys | `PerynCommandBar.sys.mjs`, `peryn-commandbar.css` |
+| Custom shortcuts | `PerynShortcuts.sys.mjs` |
+| Rules (filters, ordering, shortcut parsing; unit-tested) | `PerynCommandLogic.sys.mjs` |
 
 ### The index
 
@@ -121,7 +121,7 @@ they show up immediately. The bar asks for one search per frame however fast you
 
 Once the browser is idle after startup (or as soon as you first open the bar), the index loads
 the 100,000 most-used history entries and all bookmarks from Firefox's database
-(`halcyon.commandbar.historyLimit`), in chunks with breaks so the browser never stalls.
+(`peryn.commandbar.historyLimit`), in chunks with breaks so the browser never stalls.
 Places notifications keep it current: visits, new titles, removals, cleared history, bookmarks
 added, removed or renamed. A full reload happens at most every 30 minutes, in the background; it updates entries in place,
 so searching keeps working while it runs.
@@ -137,11 +137,11 @@ commands back. Menus, the + New Tab button and the address bar are untouched.
 
 | Pref | Default | Effect |
 | --- | --- | --- |
-| `halcyon.commandbar.enabled` | true | The whole command bar |
-| `halcyon.commandbar.onNewTab` | true | Ctrl/Cmd+T opens the bar (false: Firefox's new tab) |
-| `halcyon.commandbar.onAddressKey` | true | Ctrl/Cmd+L and Alt+D open the bar (false: the address bar) |
-| `halcyon.commandbar.historyLimit` | 100000 | History entries searched (most used first) |
-| `halcyon.shortcuts` | `{}` | Your shortcuts, as set in the editor |
+| `peryn.commandbar.enabled` | true | The whole command bar |
+| `peryn.commandbar.onNewTab` | true | Ctrl/Cmd+T opens the bar (false: Firefox's new tab) |
+| `peryn.commandbar.onAddressKey` | true | Ctrl/Cmd+L and Alt+D open the bar (false: the address bar) |
+| `peryn.commandbar.historyLimit` | 100000 | History entries searched (most used first) |
+| `peryn.shortcuts` | `{}` | Your shortcuts, as set in the editor |
 
 ## Building the index
 
@@ -149,7 +149,7 @@ The WebAssembly module is built from source before every import and never checke
 
 ```sh
 rustup target add wasm32-unknown-unknown    # once
-python3 tools/omni/build_wasm.py            # -> src/browser/components/halcyon/commandbar/omni_index.wasm
+python3 tools/omni/build_wasm.py            # -> src/browser/components/peryn/commandbar/omni_index.wasm
 cd crates/omni-index && cargo test --release && cargo run --release --bin omni-bench
 ```
 

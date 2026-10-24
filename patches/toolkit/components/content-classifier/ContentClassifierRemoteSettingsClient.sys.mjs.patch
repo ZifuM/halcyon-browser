@@ -1,5 +1,5 @@
 diff --git a/toolkit/components/content-classifier/ContentClassifierRemoteSettingsClient.sys.mjs b/toolkit/components/content-classifier/ContentClassifierRemoteSettingsClient.sys.mjs
-index acee03492b3314691dce458b47b45572a41cba1a..44ad31f69e579e56201560211775c8e216ec6abb 100644
+index acee03492b3314691dce458b47b45572a41cba1a..842e1ac4d47778c75bd2d1aca73a04a189fd2745 100644
 --- a/toolkit/components/content-classifier/ContentClassifierRemoteSettingsClient.sys.mjs
 +++ b/toolkit/components/content-classifier/ContentClassifierRemoteSettingsClient.sys.mjs
 @@ -152,6 +152,13 @@ export class ContentClassifierRemoteSettingsClient {
@@ -9,7 +9,7 @@ index acee03492b3314691dce458b47b45572a41cba1a..44ad31f69e579e56201560211775c8e2
 +    // Shield lists come from the browser's own list manager, not Remote Settings.
 +    if (name.startsWith("shield-")) {
 +      const { ShieldLists } = ChromeUtils.importESModule(
-+        "moz-src:///browser/components/halcyon/shield/ShieldLists.sys.mjs"
++        "moz-src:///browser/components/peryn/shield/ShieldLists.sys.mjs"
 +      );
 +      return ShieldLists.getListBytes(name.slice("shield-".length));
 +    }

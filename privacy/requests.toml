@@ -57,7 +57,7 @@ purpose = "Once a day, asks GitHub whether a newer release exists and shows a no
 hosts = ["api.github.com"]
 state = "on"
 trigger = "background"
-switch = "about:config: halcyon.updates.check.enabled = false"
+switch = "about:config: peryn.updates.check.enabled = false"
 
 [[request]]
 id = "shield-lists"
@@ -66,7 +66,7 @@ purpose = "Downloads the ad and tracker blocking lists (uBlock filters, EasyList
 hosts = ["ublockorigin.github.io", "cdn.jsdelivr.net"]
 state = "on"
 trigger = "background"
-switch = "about:config: halcyon.shield.updates.enabled = false (the last downloaded lists keep blocking)"
+switch = "about:config: peryn.shield.updates.enabled = false (the last downloaded lists keep blocking)"
 
 [[request]]
 id = "push"

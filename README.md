@@ -1,6 +1,6 @@
-# Halcyon
+# Peryn
 
-> Working name. The browser's name lives in one place, `project.toml`; renaming is a one-line edit.
+> Formerly worked on as Halcyon. The browser's name lives in one place, `project.toml`.
 
 A fast, beautiful, private browser built on Firefox's Gecko engine, with an Arc-style layout,
 built-in ad and tracker blocking, and zero telemetry.
@@ -15,7 +15,7 @@ Phase 2 (Core experience): **C3 Arc-style layout**, **C4 Spaces** and **C5 comma
 checked in the official Firefox 158.0.1 (see below). Test installers are on the **test-build**
 pre-release. Next: C6.
 
-![Halcyon: Essentials, Pinned and Today in the sidebar; the page as a card](docs/images/layout-light.png)
+![Peryn: Essentials, Pinned and Today in the sidebar; the page as a card](docs/images/layout-light.png)
 
 | Area | State |
 | --- | --- |
@@ -65,7 +65,7 @@ On Windows use `hx.cmd` from the MozillaBuild shell. Full guide: [docs/BUILDING.
 | `prefs/*.toml` | Default preferences, each with a reason; compiled into the build, never locked |
 | `patches/` | One patch per upstream Firefox file we change (`patches/<path>.patch`) |
 | `src/` | New files added to the Firefox tree (no budget cost); `*.tmpl` files get project values filled in |
-| `src/browser/components/halcyon/` | The browser's own components: layout (sidebar, compact mode), Spaces, command bar, Shield, update notifier |
+| `src/browser/components/peryn/` | The browser's own components: layout (sidebar, compact mode), Spaces, command bar, Shield, update notifier |
 | `privacy/requests.toml` | Every connection the browser may make on its own; drives the public page and the audit |
 | `crates/` | Rust: `omni-index` (the command bar's search, built to WebAssembly) and `shield-check` (Shield corpus and benchmarks against Firefox's engine) |
 | `branding/overlay/` | Logo, icons and brand strings laid over Firefox's unofficial branding |

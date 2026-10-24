@@ -1,12 +1,12 @@
 diff --git a/browser/components/moz.build b/browser/components/moz.build
-index 8a1611d5d14fa692c086e0c35ce608f3de2dfaf6..7db67f2de585b339ca80de4da06eea13a3928e4c 100644
+index 8a1611d5d14fa692c086e0c35ce608f3de2dfaf6..0bdab12a225e3b3824d01088a147850440406c25 100644
 --- a/browser/components/moz.build
 +++ b/browser/components/moz.build
 @@ -43,6 +43,7 @@ DIRS += [
      "extensions",
      "firefoxview",
      "genai",
-+    "halcyon",  # the browser's own components: src/browser/components/halcyon
++    "peryn",  # the browser's own components: src/browser/components/peryn
      "ipprotection",
      "messagepreview",
      "migration",

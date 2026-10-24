@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Screenshot Halcyon's UI in a stock Firefox, without building anything.
+"""Screenshot Peryn's UI in a stock Firefox, without building anything.
 
 Loads our layout modules and default prefs into an official Firefox release (the version in
-project.toml) through autoconfig, scripts a session (halcyon-preview.cfg) and takes an X
+project.toml) through autoconfig, scripts a session (peryn-preview.cfg) and takes an X
 screenshot at each layout state. Run it under Xvfb:
 
     xvfb-run -a -s "-screen 0 1440x900x24" \\
@@ -64,16 +64,16 @@ def install(firefox: Path, out: Path) -> None:
     """Autoconfig loader, the scenario script and our default prefs, into the Firefox folder."""
     (firefox / "defaults/pref").mkdir(parents=True, exist_ok=True)
     shutil.copy(HERE / "autoconfig.js", firefox / "defaults/pref/autoconfig.js")
-    shutil.copy(HERE / "halcyon-preview.cfg", firefox / "halcyon-preview.cfg")
+    shutil.copy(HERE / "peryn-preview.cfg", firefox / "peryn-preview.cfg")
     project = config.load(ROOT)
     groups = prefs.load_groups(ROOT / "prefs")
     target = firefox / "browser/defaults/preferences"
     target.mkdir(parents=True, exist_ok=True)
-    (target / "halcyon-prefs.js").write_text(prefs.compile_js(groups, project.name), newline="\n")
+    (target / "peryn-prefs.js").write_text(prefs.compile_js(groups, project.name), newline="\n")
 
 
 def make_profile() -> Path:
-    profile = Path(tempfile.mkdtemp(prefix="halcyon-preview-profile-"))
+    profile = Path(tempfile.mkdtemp(prefix="peryn-preview-profile-"))
     lines = [f"user_pref({json.dumps(k)}, {js_value(v)});" for k, v in USER_JS.items()]
     (profile / "user.js").write_text("\n".join(lines) + "\n", newline="\n")
     return profile
@@ -109,10 +109,10 @@ def main() -> int:
 
     env = dict(os.environ)
     env.update({
-        "HALCYON_PREVIEW_SRC": str(ROOT / "src/browser/components/halcyon"),
-        "HALCYON_PREVIEW_TOOLS": str(HERE),
-        "HALCYON_PREVIEW_OUT": str(out),
-        "HALCYON_PREVIEW_SITE": site,
+        "PERYN_PREVIEW_SRC": str(ROOT / "src/browser/components/peryn"),
+        "PERYN_PREVIEW_TOOLS": str(HERE),
+        "PERYN_PREVIEW_OUT": str(out),
+        "PERYN_PREVIEW_SITE": site,
         "MOZ_ENABLE_WAYLAND": "0",
         "MOZ_CRASHREPORTER_DISABLE": "1",
     })
@@ -173,7 +173,7 @@ def main() -> int:
         placed = data["placements"]
         checks.append(("Copy-link button sits right after the address", data.get("copyLinkAfterUrlbar") is True))
         expected = ["sidebar-button", "back-button", "forward-button", "stop-reload-button",
-                    "urlbar-container", "halcyon-copy-link-button"]
+                    "urlbar-container", "peryn-copy-link-button"]
         checks.append(("Top bar: sidebar, back, forward, reload, address, copy link (in order)",
                        [w for w in placed if w in expected] == expected))
         checks.append(("No AI or sign-in buttons in the top bar",
@@ -206,7 +206,7 @@ def main() -> int:
     sy = out / "sync.json"
     if sy.exists():
         d = json.loads(sy.read_text())
-        checks.append(("Sync: Firefox Sync's prefs engine carries halcyon.spaces", d["syncedByFirefoxSync"]))
+        checks.append(("Sync: Firefox Sync's prefs engine carries peryn.spaces", d["syncedByFirefoxSync"]))
         checks.append(("Sync: a Space from another machine appears", d["dots"] == 4))
         checks.append(("Sync: an Essential from another machine opens here (unloaded)", d["laptopEssential"]))
     tab_menu = out / "tab-menu.json"
@@ -230,7 +230,7 @@ def main() -> int:
                        d["tabsFilter"]["chip"] == "Tabs" and d["tabsFilter"]["rows"] and set(d["tabsFilter"]["rows"]) == {"0"}))
         checks.append(("Command bar: \"> zoom\" lists the zoom actions", [r["title"] for r in d["zoomRows"]][:1] in (["Zoom In"], ["Zoom Out"], ["Reset Zoom"])))
         checks.append(("Command bar: Backspace on an empty bar removes the filter chip", d.get("chipCleared") is True))
-        checks.append(("Command bar: bookmarks are found", any(r["title"] == "Halcyon on GitHub" and r["kind"] == "1" for r in d["bookmarkRows"])))
+        checks.append(("Command bar: bookmarks are found", any(r["title"] == "Peryn on GitHub" and r["kind"] == "1" for r in d["bookmarkRows"])))
         checks.append(("Command bar: Enter opens the top result in a new tab and closes the bar",
                        d["afterEnter"]["closed"] and d["afterEnter"]["newTab"] and "rust-lang.org/learn" in d["afterEnter"]["url"]))
         checks.append(("Command bar: Ctrl+L opens it on this page's address",
@@ -264,12 +264,12 @@ def main() -> int:
     errors = []
     if (out / "console.log").exists():
         errors = [l for l in (out / "console.log").read_text().splitlines()
-                  if ("halcyon" in l.lower() or "[scenario]" in l)
+                  if ("peryn" in l.lower() or "[scenario]" in l)
                   and "first window ready" not in l and "addons.xpi" not in l]
 
     if not (out / "started").exists():
         status += " (autoconfig never ran: check defaults/pref/autoconfig.js and the .cfg)"
-    lines = ["# Halcyon UI preview", "", f"Scenario: **{status}**", ""]
+    lines = ["# Peryn UI preview", "", f"Scenario: **{status}**", ""]
     lines += [f"- {'PASS' if ok else 'FAIL'}: {name}" for name, ok in checks]
     lines += ["", f"Screenshots: {', '.join(shots) or 'none'}", ""]
     if errors:
