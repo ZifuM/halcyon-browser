@@ -132,7 +132,11 @@ function makeWindow(labels = ["a", "b"]) {
     },
   };
   const documentElement = new El("html");
+  const winListeners = new Map();
   const win = {
+    winListeners,
+    addEventListener: (type, fn) => winListeners.set(type, fn),
+    removeEventListener: type => winListeners.delete(type),
     gBrowser,
     document: {
       documentElement,
@@ -330,6 +334,23 @@ test("Esc from the preview closes it; from any other page it does nothing", () =
   assert.equal(gBrowser.selectedTab, tab);
   glance.closeFor(tab.linkedBrowser);
   assert.equal(gBrowser.selectedTab, tabs[0]);
+});
+
+test("Esc in the browser's own UI closes the preview, but not in text fields", () => {
+  const { glance, gBrowser, tabs, win } = setUp(["a", "b"]);
+  const key = target => {
+    const ev = { key: "Escape", type: "keydown", target, defaultPrevented: false, preventDefault() { this.defaultPrevented = true; } };
+    win.winListeners.get("keydown")(ev);
+    return ev;
+  };
+  const tab = glance.open("https://x.test/");
+  const field = { closest: sel => (sel.includes("#urlbar") ? {} : null) };
+  assert.ok(!key(field).defaultPrevented);
+  assert.equal(gBrowser.selectedTab, tab, "the address bar keeps its Esc");
+  const button = { closest: () => null };
+  assert.ok(key(button).defaultPrevented);
+  assert.equal(gBrowser.selectedTab, tabs[0]);
+  assert.ok(!key(button).defaultPrevented, "nothing open: Esc is left alone");
 });
 
 test("the backdrop and buttons work", () => {

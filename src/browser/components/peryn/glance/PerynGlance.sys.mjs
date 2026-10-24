@@ -76,9 +76,13 @@ export class PerynGlance {
     this.win.PerynGlance = this;
     this.gBrowser.tabContainer.addEventListener("TabSelect", this.handleEvent);
     this.gBrowser.tabContainer.addEventListener("TabClose", this.handleEvent);
+    // Esc while the browser's own UI has focus (the card's buttons, the sidebar). Esc in the
+    // page comes through the actor; the address bar and other text fields keep their own Esc.
+    this.win.addEventListener("keydown", this.handleEvent);
   }
 
   uninit() {
+    this.win.removeEventListener("keydown", this.handleEvent);
     this.gBrowser.tabContainer.removeEventListener("TabSelect", this.handleEvent);
     this.gBrowser.tabContainer.removeEventListener("TabClose", this.handleEvent);
     if (this.win.PerynGlance == this) {
@@ -190,6 +194,11 @@ export class PerynGlance {
       : this.gBrowser.addTabSplitView([parent, tab], { insertBefore: parent });
     this.gBrowser.selectedTab = made ? tab : parent;
     return tab;
+  }
+
+  /** Places whose own Esc comes first: text fields, the address bar, our other overlays. */
+  _keepsOwnEscape(target) {
+    return !!target?.closest?.("#urlbar, input, textarea, [contenteditable], #peryn-commandbar, #peryn-onboarding");
   }
 
   // ---- showing -----------------------------------------------------------------------------
@@ -318,6 +327,12 @@ export class PerynGlance {
   handleEvent(event) {
     const tab = event.target;
     switch (event.type) {
+      case "keydown":
+        if (event.key == "Escape" && this.current && !event.defaultPrevented && !this._keepsOwnEscape(event.target)) {
+          event.preventDefault();
+          this.close();
+        }
+        break;
       case "TabSelect": {
         // Went somewhere other than the page underneath: the preview stays, as a tab.
         const previous = event.detail?.previousTab;
