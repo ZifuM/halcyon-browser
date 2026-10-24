@@ -13,6 +13,7 @@
 import { OmniIndex } from "./OmniIndex.sys.mjs";
 import * as Logic from "./HalcyonCommandLogic.sys.mjs";
 import { HalcyonSpacesStore as Store } from "../spaces/HalcyonSpacesStore.sys.mjs";
+import { setTimeout } from "resource://gre/modules/Timer.sys.mjs";
 
 const { KIND } = Logic;
 
@@ -36,6 +37,8 @@ const PLACES_EVENTS = [
 /** Reload history and bookmarks in full at most this often (frecency drifts over time). */
 const FULL_RELOAD_MS = 30 * 60 * 1000;
 const RELOAD_DEBOUNCE_MS = 2000;
+/** Rows added between breaks, so loading 100,000 entries never holds up the browser. */
+const LOAD_CHUNK = 4000;
 
 const PLACES_SQL = `
   SELECT h.url AS url,
@@ -176,24 +179,45 @@ class CommandIndex {
         bookmarked: !!row.getResultByName("bookmarked"),
       });
     });
-    this.replacePlaces(rows);
+    await this.replacePlaces(rows);
   }
 
-  /** Replace all history and bookmark entries (rows as loadPlaces makes them). */
-  replacePlaces(rows, now = Date.now()) {
-    this._dropAll("h:");
-    this._dropAll("b:");
+  /**
+   * Bring history and bookmark entries in line with `rows` (as loadPlaces makes them): new
+   * ones added, changed ones updated, missing ones removed. Works in chunks with breaks in
+   * between, and never empties the index first, so searching keeps working throughout.
+   */
+  async replacePlaces(rows, now = Date.now()) {
     this._maxFrecency = rows.reduce((max, r) => Math.max(max, r.frecency || 0), 1);
+    const seen = new Set();
+    let n = 0;
     for (const row of rows) {
       if (!Logic.indexable(row.url)) {
         continue;
       }
       const boost = Logic.boostFromFrecency(row.frecency, this._maxFrecency);
       const age = Logic.ageDays(row.visited, now);
-      if (row.bookmarked) {
-        this._put(KIND.bookmark, `b:${row.url}`, row.title, row.url, Math.max(boost, 20), age);
+      const [kind, key, b] = row.bookmarked
+        ? [KIND.bookmark, `b:${row.url}`, Math.max(boost, 20)]
+        : [KIND.history, `h:${row.url}`, boost];
+      seen.add(key);
+      const existing = this.entries.get(this.byKey.get(key));
+      if (existing && existing.title == (row.title || row.url)) {
+        if (Math.abs(existing.boost - b) > 0.5 || Math.abs(existing.age - age) > 0.5) {
+          existing.boost = b;
+          existing.age = age;
+          this.index.touch(existing.id, b, age);
+        }
       } else {
-        this._put(KIND.history, `h:${row.url}`, row.title, row.url, boost, age);
+        this._put(kind, key, row.title, row.url, b, age);
+      }
+      if (++n % LOAD_CHUNK == 0) {
+        await new Promise(resolve => setTimeout(resolve, 0));
+      }
+    }
+    for (const key of [...this.byKey.keys()]) {
+      if ((key.startsWith("h:") || key.startsWith("b:")) && !seen.has(key)) {
+        this._drop(key);
       }
     }
     this._placesLoaded = now;
@@ -204,7 +228,6 @@ class CommandIndex {
     if (this._reloadTimer) {
       return;
     }
-    const { setTimeout } = ChromeUtils.importESModule("resource://gre/modules/Timer.sys.mjs");
     this._reloadTimer = setTimeout(() => {
       this._reloadTimer = 0;
       this.loadPlaces().catch(e => console.error("Halcyon command bar: history reload failed", e));

@@ -16,7 +16,8 @@ rounded card floating on a soft Space-coloured backdrop.
 | Top bar | Sidebar button, back, forward, reload, the address (centred) with a copy-link button, downloads, extensions. |
 | Content card | The page, inset 8 px from the window with 10 px corners. |
 | Rail | Click the sidebar button to collapse the sidebar to icons. |
-| Compact mode | **Ctrl+Alt+C** (Cmd+Option+C on macOS). The sidebar and top bar slide away; they come back when the pointer reaches the window edge, when you press Ctrl/Cmd+L, or while a menu opened from them is up. |
+| Compact mode | **Ctrl+Alt+C** (Cmd+Option+C on macOS). The sidebar and top bar slide away; they come back when the pointer reaches the window edge, when the address bar has focus (F6), or while a menu opened from them is up. |
+| Command bar | **Ctrl/Cmd+T** and **Ctrl/Cmd+L** open it over the page. See [COMMANDBAR.md](COMMANDBAR.md). |
 
 ## How it's built
 
@@ -84,6 +85,5 @@ Screenshots are published to the `ui-previews` branch on every change.
 | --- | --- |
 | Archive button in the bottom row | With auto-archive (C8) |
 | Arc's "pinned tab resets to its URL when closed" | Later; Pinned tabs are synced launchers already ([SPACES.md](SPACES.md)) |
-| Command bar on Ctrl/Cmd+T and Ctrl/Cmd+L | C5 |
 | Localised strings (menu labels are English-only) | With the browser's own localisation files |
 | Frame-time measurement of the motion | When builds resume (Xvfb in CI renders in software, so its timings mean little) |

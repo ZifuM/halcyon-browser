@@ -14,6 +14,8 @@ from __future__ import annotations
 import json
 import re
 import shutil
+import subprocess
+import sys
 from dataclasses import dataclass, field
 from pathlib import Path, PurePosixPath
 
@@ -158,7 +160,7 @@ def import_changes(project: Project, force: bool = False, allow_over_budget: boo
     for patch in patches:
         _check_patch_header(patch, patch_target(project, patch))
     prefs_mod.load_groups(project.prefs_dir)  # raises on invalid pref files
-    _check_src_listings(project.src_dir)
+    _check_src_listings(project.src_dir, auto_build=True)
 
     # A previous import that stopped on a conflict leaves generated files uncommitted on purpose
     # (so conflicts can be resolved in place); those are not user edits.
@@ -226,14 +228,31 @@ def import_changes(project: Project, force: bool = False, allow_over_budget: boo
 
 _LISTED_RE = re.compile(r"MOZ_SRC_FILES\s*\+=\s*\[(.*?)\]", re.S)
 
-# Files our moz.build files list but that are built before import rather than checked in.
+# Files our moz.build files list but that are built before import rather than checked in:
+# name -> (script under the project root, hint).
 _BUILT_BEFORE_IMPORT = {
-    "omni_index.wasm": "python3 tools/omni/build_wasm.py (needs `rustup target add wasm32-unknown-unknown`)",
+    "omni_index.wasm": ("tools/omni/build_wasm.py",
+                        "python3 tools/omni/build_wasm.py (needs Rust from rustup.rs)"),
 }
 
 
-def _check_src_listings(src_dir: Path) -> None:
+def _build_missing(src_dir: Path, auto_build: bool) -> None:
+    """Build what's built before import (the command bar's WebAssembly) if it's missing."""
+    if not auto_build:
+        return
+    root = src_dir.parent
+    for build in sorted(src_dir.rglob("moz.build")):
+        for block in _LISTED_RE.findall(build.read_text(encoding="utf-8")):
+            for name in re.findall(r'"([^"]+)"', block):
+                if name in _BUILT_BEFORE_IMPORT and not (build.parent / name).exists():
+                    script = root / _BUILT_BEFORE_IMPORT[name][0]
+                    info(f"Building {name} ({script.relative_to(root).as_posix()})")
+                    subprocess.run([sys.executable, str(script)], cwd=root, check=False)
+
+
+def _check_src_listings(src_dir: Path, auto_build: bool = False) -> None:
     """Every file a src/ moz.build lists must exist, or the build fails hours later."""
+    _build_missing(src_dir, auto_build)
     missing = []
     for build in sorted(src_dir.rglob("moz.build")):
         for block in _LISTED_RE.findall(build.read_text(encoding="utf-8")):
@@ -245,7 +264,7 @@ def _check_src_listings(src_dir: Path) -> None:
         lines = []
         for rel, name in missing:
             how = _BUILT_BEFORE_IMPORT.get(name)
-            lines.append(f"src/{rel.as_posix()}" + (f"  (build it: {how})" if how else ""))
+            lines.append(f"src/{rel.as_posix()}" + (f"  (build it: {how[1]})" if how else ""))
         raise HxError("Files listed in moz.build are missing:\n  " + "\n  ".join(lines))
 
 

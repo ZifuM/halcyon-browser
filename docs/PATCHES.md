@@ -51,6 +51,7 @@ The rebase bot (`.github/workflows/upstream.yml`) opens an issue with the log wh
 | `toolkit/components/content-classifier/nsIContentClassifierService.idl` | Shield element hiding: `getCosmeticResources` and `getHiddenClassIdSelectors`. |
 | `toolkit/components/content-classifier/content_classifier_engine/ContentClassifierEngine.h` | Shield element hiding: engine wrapper methods for the two lookups. |
 | `toolkit/components/content-classifier/content_classifier_engine/src/lib.rs` | Shield element hiding: exposes the engine's existing cosmetic-filter lookups over FFI. Type-checked in CI by `tools/shield/ffi_check.py`. |
+| `dom/security/nsContentSecurityUtils.cpp` | Command bar: lets `OmniIndex.sys.mjs` compile its WebAssembly search index. Firefox treats WebAssembly compilation in privileged code like `eval()` and allows it only for listed files (its own devtools are listed the same way). One line in that list; the module never calls `eval()`. See [COMMANDBAR.md](COMMANDBAR.md). |
 
 The five content-classifier patches are one feature (Shield). They hook into code Mozilla is
 actively developing, so they are the likeliest to conflict on a rebase; each one is small and

@@ -408,3 +408,26 @@ test("index: compacts after many tab refreshes, keeping everything findable", as
   assert.equal(Index.search("zoom in")[0].entry.title, "Zoom In");
   assert.ok(Index._added < 200);
 });
+
+test("index: a reload updates entries in place and drops what's gone", async t => {
+  // The Timer mock doesn't keep Node alive; the chunked load waits on it.
+  const keepAlive = globalThis.setInterval(() => {}, 1000);
+  t.after(() => globalThis.clearInterval(keepAlive));
+  Index._reset();
+  globalThis.__placesRows = rows;
+  await Index.ready({ index: await OmniIndex.fromBytes(wasmBytes) });
+  const before = Index.search("daily")[0].entry.id;
+  await Index.replacePlaces([
+    { ...rows[1], frecency: 9000 },
+    { url: "https://later.example/", title: "Added Later", frecency: 10, visited: 0, bookmarked: false },
+    { ...rows[0], bookmarked: false },
+  ]);
+  assert.equal(Index.search("daily")[0].entry.id, before, "same entry, new score");
+  assert.equal(Index.search("added later").length, 1);
+  assert.deepEqual(Index.search("rust"), [], "gone from Places, gone from the index");
+  assert.equal(Index.search("github")[0].entry.kind, KIND.history, "no longer bookmarked");
+  // Big loads take breaks but finish.
+  const many = Array.from({ length: 9000 }, (_, i) => ({ url: `https://m${i}.example/`, title: `Many ${i}`, frecency: i, visited: 0, bookmarked: false }));
+  await Index.replacePlaces(many);
+  assert.equal(Index.search("many 8999")[0].entry.title, "Many 8999");
+});

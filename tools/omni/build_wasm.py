@@ -21,10 +21,18 @@ DEST = ROOT / "src" / "browser" / "components" / "halcyon" / "commandbar" / "omn
 MAX_BYTES = 256 * 1024
 
 
+def ensure_target() -> None:
+    """Add the WebAssembly target if rustup is how Rust was installed (quick when present)."""
+    if shutil.which("rustup"):
+        subprocess.run(["rustup", "target", "add", TARGET], check=False,
+                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--dest", type=Path, default=DEST)
     args = parser.parse_args()
+    ensure_target()
     subprocess.run(
         ["cargo", "build", "--release", "--lib", "--target", TARGET],
         cwd=CRATE,

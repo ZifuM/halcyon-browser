@@ -406,19 +406,19 @@ async function commandBarScenario({ win, layout, open, sleep, shot, report }) {
   for (let i = 0; i < 3000; i++) {
     vocab.push(words[i % words.length].slice(0, 2 + (i % 5)) + String.fromCharCode(97 + (i % 26)) + (i > 200 ? i : ""));
   }
-  const t0 = Cu.now();
+  const t0 = ChromeUtils.now();
   for (let i = 0; i < 100000; i++) {
     const title = Array.from({ length: 3 + rand(5) }, () => vocab[Math.min(vocab.length - 1, Math.floor(rand(vocab.length) * Math.random() ** 2))]).join(" ");
     big.add(2, title, `https://${vocab[rand(400)]}.example/${rand(100000)}`, rand(100), rand(365));
   }
   big.prepare();
-  const buildMs = Cu.now() - t0;
+  const buildMs = ChromeUtils.now() - t0;
   const times = [];
   for (const phrase of ["rust g", "github pull", "sydney weather", "ghub", "travel hotel", "news 42", "docs css"]) {
     for (let end = 1; end <= phrase.length; end++) {
-      const t = Cu.now();
+      const t = ChromeUtils.now();
       big.query(phrase.slice(0, end), { limit: 9 });
-      times.push(Cu.now() - t);
+      times.push(ChromeUtils.now() - t);
     }
   }
   times.sort((a, b) => a - b);

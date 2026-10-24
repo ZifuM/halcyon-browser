@@ -13,11 +13,16 @@ A first build compiles all of Firefox: plan for **1–3 hours** on a modern 8-co
 
 Everything else (clang, Rust, Node, the macOS SDK, sccache) is installed by `hx bootstrap`.
 
+The command bar's index is a small Rust crate built to WebAssembly before importing. It needs
+Rust from [rustup.rs](https://rustup.rs) (separate from the toolchain `hx bootstrap` installs for
+Firefox) and its WebAssembly target: `rustup target add wasm32-unknown-unknown`.
+
 ## 2. Build
 
 ```sh
 ./hx doctor                  # checks Python, git, disk, RAM
 ./hx download                # Firefox 158.0.1 source -> engine/
+python3 tools/omni/build_wasm.py   # the command bar's index (Rust -> WebAssembly)
 ./hx import                  # apply our changes
 ./hx bootstrap               # one-time toolchain install
 ./hx build --profile dev     # fast optimised build, no LTO/PGO

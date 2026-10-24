@@ -24,6 +24,18 @@ frame at document start and small follow-ups as the page changes.
 The engine is built off the main thread whenever lists change, and the browser keeps using the
 previous engine until the new one is ready.
 
+## Command bar (checked by the `omni-index` job, and in Firefox by the `ui-preview` workflow)
+
+Synthetic history with a realistic spread of words and sites, queried letter by letter as typed
+("r", "ru", "rus", "rust", "rust ", "rust g", ...).
+
+| Metric | Baseline (Oct 2026) | Budget |
+| --- | --- | --- |
+| Build the index, 100,000 entries (native) | about 90 ms | 600 ms |
+| Per keystroke, 100,000 entries, p95 (native) | about 2.5 ms | 8 ms |
+| Per keystroke, 100,000 entries, p95 (Firefox's WebAssembly) | measured by the preview | 16 ms (one frame) |
+| `omni_index.wasm` size | 93 KB | 256 KB |
+
 ## Coming with the builds (after C3)
 
 These need a running browser and are measured once builds resume:

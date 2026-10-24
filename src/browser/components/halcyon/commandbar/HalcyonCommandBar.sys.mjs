@@ -90,8 +90,9 @@ export class HalcyonCommandBar {
     this._applyPrefs();
     Services.prefs.addObserver("halcyon.commandbar.", this._onPref);
     this.shortcuts.init();
-    // Start loading the index in the background (the first window does the work).
-    this.win.setTimeout(() => HalcyonCommandIndex.ready().catch(console.error), 0);
+    // Load the index once the browser is idle after startup (the first window does the work;
+    // opening the bar sooner loads it right away).
+    ChromeUtils.idleDispatch(() => HalcyonCommandIndex.ready().catch(console.error), { timeout: 15000 });
   }
 
   uninit() {
