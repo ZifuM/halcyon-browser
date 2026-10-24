@@ -330,7 +330,7 @@ test("existing tabs join the first Space; the window shows that Space's colour",
 
 test("switching shows only that Space's tabs and selects its most recent tab", () => {
   const work = Store.create({ name: "Work" });
-  const { gBrowser, tabs, spaces, root } = makeWindow(["https://a/", "https://b/"]);
+  const { win, gBrowser, tabs, spaces, root } = makeWindow(["https://a/", "https://b/"]);
   spaces.switchTo(work.id);
   // An empty Space gets a new tab.
   const workTab = gBrowser.selectedTab;
@@ -343,6 +343,7 @@ test("switching shows only that Space's tabs and selects its most recent tab", (
   assert.equal(gBrowser.tabs.at(-1).getAttribute(SPACE_ATTR), work.id, "new tabs join the active Space");
 
   gBrowser.selectedTab = tabs[1]; // e.g. "switch to tab" from the address bar
+  win.runTimers();
   assert.equal(spaces.active, "s-personal", "selecting a hidden tab switches to its Space");
   assert.ok(workTab.hidden);
   tabs[0].lastAccessed = clock + 100;
@@ -474,9 +475,9 @@ test("closing a Space's last tab keeps you in that Space with a fresh tab", () =
   spaces.switchTo(work.id);
   const only = gBrowser.selectedTab;
   win.runTimers();
-  // Firefox: mark closing, move the selection (to the Essential), then announce the close.
-  only.closing = true;
+  // Firefox: move the selection (to the Essential), then mark the tab closing and remove it.
   gBrowser.selectedTab = mail;
+  only.closing = true;
   gBrowser.tabs.splice(gBrowser.tabs.indexOf(only), 1);
   win.runTimers();
   assert.equal(spaces.active, work.id);
